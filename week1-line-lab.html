@@ -1,0 +1,1395 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Line Lab — ห้องทดลองเส้นตรง (สัปดาห์ที่ 1)</title>
+<style>
+  :root{
+    --bg:#f4f6fb; --card:#ffffff; --ink:#1f2937; --muted:#6b7280;
+    --line:#4f46e5; --line-soft:#e0e7ff;
+    --target:#f59e0b; --target-soft:#fef3c7;
+    --ok:#16a34a; --grid:#e8ebf2; --axis:#9aa3b2; --ball:#ef4444;
+    --shadow:0 6px 22px rgba(31,41,55,.08);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font-family:'Noto Sans Thai','Sarabun',system-ui,-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--ink);line-height:1.45;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+  header{padding:14px 20px;background:linear-gradient(120deg,#4f46e5,#6366f1);color:#fff;box-shadow:var(--shadow);flex:0 0 auto}
+  #fsBtn{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:8px;padding:7px 12px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;white-space:nowrap}
+  header h1{margin:0;font-size:20px;font-weight:700;letter-spacing:.2px}
+  header p{margin:2px 0 0;font-size:13px;opacity:.9}
+  .wrap{max-width:1180px;width:100%;margin:0 auto;padding:14px 20px 16px;flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+  .tabs{display:flex;gap:8px;margin:0 0 12px;flex-wrap:wrap;flex:0 0 auto}
+  .tab{flex:0 0 auto;padding:9px 16px;border:1px solid #d7dbe6;background:#fff;border-radius:999px;cursor:pointer;font-size:14px;font-weight:600;color:#475569;transition:.15s}
+  .tab:hover{border-color:#a5b4fc}
+  .tab.active{background:var(--line);color:#fff;border-color:var(--line)}
+  .tab.assign{border-color:#16a34a;color:#15803d}
+  .tab.assign.active{background:#16a34a;color:#fff;border-color:#16a34a}
+  .layout{display:flex;gap:18px;align-items:stretch;flex:1 1 auto;min-height:0}
+  .plot-card{flex:1 1 auto;background:var(--card);border-radius:16px;padding:10px;box-shadow:var(--shadow);min-width:0;min-height:0;display:flex}
+  #plot{flex:1 1 auto;min-width:0;min-height:0;display:block;border-radius:10px;touch-action:none;cursor:crosshair;background:#fff}
+  .side{flex:0 0 360px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;min-height:0;padding-right:6px}
+  @media (max-width:880px){
+    html,body{height:auto;overflow:auto}
+    body{display:block}
+    .wrap{display:block;padding:16px 20px 40px}
+    .layout{flex-direction:column;min-height:0}
+    .plot-card{height:60vh}
+    .side{flex:1 1 auto;width:100%;overflow:visible}
+  }
+  .panel{background:var(--card);border-radius:16px;padding:16px;box-shadow:var(--shadow)}
+  .eq{font-size:26px;font-weight:800;text-align:center;padding:6px 0 10px;font-family:'Cambria Math','Times New Roman',serif;letter-spacing:.5px}
+  .eq .m{color:var(--line)} .eq .b{color:var(--ok)}
+  .row{display:flex;align-items:center;gap:10px;margin:12px 0}
+  .row label{flex:0 0 116px;font-size:14px;font-weight:600}
+  .row label small{display:block;font-weight:400;color:var(--muted);font-size:11px}
+  input[type=range]{flex:1;accent-color:var(--line)}
+  .chip{flex:0 0 58px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums;background:#f1f3f9;border-radius:8px;padding:4px 0;font-size:15px}
+  .toggles{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:6px}
+  .toggles label{display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;color:#475569}
+  .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  button.act{flex:1;padding:10px 12px;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-size:14px;font-family:inherit;transition:.15s}
+  .b-primary{background:var(--line);color:#fff} .b-primary:hover{background:#4338ca}
+  .b-ghost{background:#eef1f8;color:#3730a3} .b-ghost:hover{background:#e0e4f3}
+  .b-ok{background:var(--ok);color:#fff} .b-ok:hover{background:#15803d}
+  .hint{font-size:13px;color:var(--muted);margin-top:8px}
+  .teach-cap{margin-top:10px;padding:10px 12px;border-radius:10px;background:#eef2ff;color:#3730a3;font-weight:600;font-size:14px;min-height:20px;display:none;line-height:1.4}
+  .exname{flex:1;padding:9px;border:2px solid #e0e4f3;border-radius:8px;font-size:15px;font-family:inherit}
+  .exq{padding:11px 0;border-top:1px solid #eef1f8}
+  .exq:first-child{border-top:none}
+  .exqt{font-size:14px;font-weight:600;margin-bottom:6px;line-height:1.45}
+  .exrow{display:flex;gap:8px;align-items:center}
+  .exrow input{width:120px;padding:8px;border:2px solid #e0e4f3;border-radius:8px;font-size:15px;font-family:inherit}
+  .exfb{font-size:13px;font-weight:700}
+  .exfb.ok{color:#16a34a} .exfb.no{color:#dc2626}
+  .stat{display:flex;justify-content:space-between;gap:8px;margin:6px 0;font-size:14px}
+  .stat b{font-variant-numeric:tabular-nums}
+  .feedback{margin-top:10px;padding:10px 12px;border-radius:10px;font-weight:600;font-size:14px;display:none}
+  .feedback.show{display:block}
+  .f-ok{background:var(--target-soft);color:#92400e}
+  .f-great{background:#dcfce7;color:#166534}
+  .f-bad{background:#fee2e2;color:#991b1b}
+  .big{font-size:20px;font-weight:800;text-align:center;margin:6px 0}
+  .big .v{color:var(--line)}
+  details{margin-top:14px;font-size:13px;color:#475569}
+  summary{cursor:pointer;font-weight:600;color:var(--line)}
+  details ul{margin:8px 0 0;padding-left:20px}
+  .nav{font-size:13px;margin-top:10px} .nav a{color:var(--line);text-decoration:none;font-weight:600}
+  .hidden{display:none !important}
+
+  /* ---- Assignment / worksheet ---- */
+  #panel-assign{border:2px solid #bbf7d0}
+  .ws-title{font-size:18px;font-weight:800;color:#15803d;margin:0 0 2px}
+  .ws-sub{font-size:12.5px;color:var(--muted);margin:0 0 12px}
+  .names{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+  .names label{flex:1 1 100%;font-size:12px;font-weight:600;color:#374151}
+  .names input{width:100%;padding:8px 10px;border:1.5px solid #d1d5db;border-radius:8px;font-size:14px;font-family:inherit;margin-top:3px}
+  .names .half{flex:1 1 45%}
+  .sect{margin:16px 0;padding-top:12px;border-top:1px dashed #d1d5db}
+  .sect h4{margin:0 0 8px;font-size:14.5px;color:#1f2937}
+  .sect h4 .badge{background:#dcfce7;color:#166534;border-radius:6px;padding:1px 8px;font-size:11px;margin-left:6px;font-weight:700}
+  .task{font-size:13.5px;margin:10px 0;color:#374151}
+  .task .qn{font-weight:700;color:#15803d}
+  .ti{width:100%;padding:7px 9px;border:1.5px solid #d1d5db;border-radius:7px;font-size:14px;font-family:inherit;margin-top:5px}
+  textarea.ti{min-height:54px;resize:vertical}
+  .inline-i{display:inline-block;width:78px;padding:3px 6px;border:1.5px solid #d1d5db;border-radius:6px;font-size:14px;font-family:inherit;text-align:center}
+  .check-mini{padding:6px 12px;border:none;border-radius:8px;background:#eef1f8;color:#3730a3;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;margin-top:6px}
+  .task-fb{font-size:13px;font-weight:700;margin-top:5px;min-height:16px}
+  .tf-ok{color:#15803d} .tf-bad{color:#b91c1c}
+  .cap-wrap{margin-top:8px;border:1.5px solid #d1d5db;border-radius:8px;padding:6px;background:#fafafa}
+  .cap-ph{font-size:12.5px;color:#9ca3af;text-align:center;padding:18px 0}
+  .cap-img{display:none;width:100%;border-radius:5px}
+  .auto-stat{background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:8px;padding:10px 12px;font-size:14px}
+  .auto-stat b{color:#15803d}
+  .submit-box{margin-top:16px;padding:14px;background:#f0fdf4;border-radius:12px;text-align:center}
+  .submit-box .note{font-size:12.5px;color:#15803d;margin-top:8px;line-height:1.5}
+  .print-only{display:none}
+
+  @media print{
+    @page{margin:14mm}
+    body{background:#fff}
+    body *{visibility:hidden}
+    #panel-assign, #panel-assign *{visibility:visible}
+    #panel-assign{position:absolute;left:0;top:0;width:100%;border:none;box-shadow:none;padding:0}
+    .no-print{display:none !important}
+    .print-only{display:block}
+    .ti,.inline-i,.names input{border:none;border-bottom:1.2px solid #555;border-radius:0}
+    .cap-wrap{break-inside:avoid}
+    .sect{break-inside:avoid}
+  }
+
+  /* ---- Roblox Gamification Upgrades ---- */
+  header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+  header .controls { display: flex; align-items: center; gap: 12px; }
+  #soundToggle { background: rgba(255,255,255,0.18); border: none; font-size: 16px; width: 38px; height: 38px; border-radius: 50%; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.15s; }
+  #soundToggle:hover { background: rgba(255,255,255,0.3); transform: scale(1.05); }
+  .coin-bag { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; border: 2px solid #fff; border-radius: 999px; padding: 6px 14px; font-weight: 800; font-size: 15px; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(217,119,6,0.35); animation: coinFloat 2s ease-in-out infinite alternate; }
+  @keyframes coinFloat { 0% { transform: translateY(0); } 100% { transform: translateY(-2px); } }
+
+  /* Pet Panel styles */
+  .pet-panel { display: flex; gap: 12px; align-items: center; background: linear-gradient(135deg, #eff6ff, #dbeafe); border: 1.5px solid #bfdbfe; border-radius: 16px; padding: 12px; margin-bottom: 12px; position: relative; }
+  .pet-avatar-container { flex: 0 0 54px; text-align: center; }
+  .pet-avatar { font-size: 38px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); animation: petWiggle 2.5s ease-in-out infinite; }
+  @keyframes petWiggle { 0%, 100% { transform: rotate(0) translateY(0); } 50% { transform: rotate(6deg) translateY(-3px); } }
+  .pet-bubble { flex: 1; background: #fff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 8px 12px; font-size: 12.5px; position: relative; color: #1e3a8a; line-height: 1.4; box-shadow: 0 2px 6px rgba(30,58,138,0.04); min-height: 48px; }
+  .pet-bubble::after { content: ''; position: absolute; left: -8px; top: 18px; width: 0; height: 0; border-top: 6px solid transparent; border-bottom: 6px solid transparent; border-right: 8px solid #fff; }
+  .pet-bubble::before { content: ''; position: absolute; left: -9px; top: 18px; width: 0; height: 0; border-top: 6px solid transparent; border-bottom: 6px solid transparent; border-right: 8px solid #bfdbfe; }
+  .pet-select-btn { font-size: 11px; padding: 2px 6px; border: 1px solid #bfdbfe; background: #fff; border-radius: 6px; cursor: pointer; color: #2563eb; font-weight: 600; margin-top: 4px; display: inline-block; }
+  .pet-select-btn:hover { background: #eff6ff; }
+
+  /* Shop Drawer styles */
+  .shop-panel { background: #fafafa; border: 2px dashed #cbd5e1; margin-top: 14px; border-radius: 16px; padding: 16px; box-shadow: var(--shadow); }
+  .shop-title { font-size: 15px; font-weight: 800; color: #1e293b; margin: 0 0 10px; display: flex; align-items: center; gap: 6px; }
+  .shop-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px; }
+  .shop-item { background: #fff; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 10px; text-align: center; cursor: pointer; transition: 0.15s; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; min-height: 105px; }
+  .shop-item:hover { border-color: #cbd5e1; transform: translateY(-1px); }
+  .shop-item.owned { border-color: #cbd5e1; background: #f8fafc; }
+  .shop-item.active { border-color: #4f46e5; background: #eeeffe; box-shadow: 0 0 0 2px #c7d2fe; }
+  .shop-item .item-title { font-size: 12.5px; font-weight: 700; color: #334155; margin-bottom: 4px; }
+  .shop-item .item-desc { font-size: 10.5px; color: #64748b; line-height: 1.25; margin-bottom: 8px; flex-grow: 1; }
+  .shop-item .buy-btn { font-size: 11px; font-weight: 700; padding: 5px 8px; border: none; border-radius: 6px; cursor: pointer; width: 100%; transition: 0.1s; }
+  .shop-item .buy-btn.buy { background: #f59e0b; color: #fff; }
+  .shop-item .buy-btn.buy:hover { background: #d97706; }
+  .shop-item .buy-btn.use { background: #e2e8f0; color: #475569; }
+  .shop-item .buy-btn.use:hover { background: #cbd5e1; }
+  .shop-item .buy-btn.active { background: #4f46e5; color: #fff; cursor: default; }
+
+  /* Physics Highway Track */
+  .physics-highway-container { margin-top: 14px; background: #eef2ff; border-radius: 12px; padding: 14px 12px; border: 1.5px solid #e0e7ff; }
+  .physics-highway-title { font-size: 13px; font-weight: 700; color: #3730a3; margin-bottom: 8px; display: flex; justify-content: space-between; }
+  .physics-highway-title span { font-family: monospace; font-size: 11.5px; color: #4f46e5; }
+  .physics-highway { height: 42px; background: #334155; border-radius: 8px; position: relative; overflow: hidden; border-bottom: 4px solid #1e293b; display: flex; align-items: center; }
+  .highway-line { position: absolute; width: 100%; height: 2px; border-top: 2.5px dashed #fcd34d; opacity: 0.7; }
+  .highway-car { position: absolute; font-size: 26px; top: 4px; left: 0; transition: transform 0.1s linear; will-change: left; z-index: 10; transform: translateX(-50%); }
+  .highway-start { position: absolute; height: 100%; width: 4px; background: #ef4444; left: 50%; opacity: 0.8; z-index: 5; transform: translateX(-50%); }
+  .highway-start-label { position: absolute; font-size: 9px; color: #fecaca; background: #ef4444; border-radius: 3px; padding: 1px 4px; font-weight: 700; bottom: 2px; left: calc(50% + 8px); z-index: 6; }
+
+  /* Quest Map */
+  .quest-container { margin-bottom: 12px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 10px 14px; }
+  .quest-title { font-size: 13px; font-weight: 700; color: #475569; margin: 0 0 8px; display: flex; justify-content: space-between; }
+  .quest-map { display: flex; justify-content: space-between; align-items: center; position: relative; padding: 4px 10px; margin-top: 6px; }
+  .quest-map::before { content: ''; position: absolute; left: 16px; right: 16px; top: 14px; height: 3px; background: #cbd5e1; z-index: 1; }
+  .quest-step { width: 28px; height: 28px; border-radius: 50%; background: #fff; border: 2.5px solid #cbd5e1; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: #64748b; z-index: 2; cursor: pointer; transition: 0.15s; }
+  .quest-step.active { border-color: #f59e0b; background: #fef3c7; color: #b45309; box-shadow: 0 0 0 3px rgba(245,158,11,0.2); transform: scale(1.15); }
+  .quest-step.done { border-color: #10b981; background: #dcfce7; color: #15803d; }
+  .quest-step.boss { border-color: #ef4444; color: #b91c1c; font-size: 13px; }
+  .quest-step.boss.active { background: #fee2e2; box-shadow: 0 0 0 3px rgba(239,68,68,0.25); }
+
+  /* Confetti Overlay */
+  #confetti-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100; border-radius: 10px; }
+  .plot-card { position: relative; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>📈 Line Lab</h1>
+    <p>สัปดาห์ที่ 1 · ระนาบพิกัด (coordinate plane) และเส้นตรง y = m·x + b · ลากจุด หรือเลื่อนแถบเพื่อเปลี่ยนเส้น</p>
+  </div>
+  <div class="controls no-print">
+    <button id="fsBtn">⛶ เต็มจอ</button>
+    <button id="soundToggle" title="เปิด/ปิดเสียง">🔊</button>
+    <div class="coin-bag">🪙 <span id="coinCount">0</span></div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="tabs">
+    <button class="tab active" data-mode="explore">🔎 Explore</button>
+    <button class="tab" data-mode="challenge">🎯 Challenge</button>
+    <button class="tab" data-mode="physics">🚗 Physics</button>
+    <button class="tab" data-mode="game">⭐ Game</button>
+    <button class="tab" data-mode="exercises">✏️ Exercises</button>
+    <button class="tab assign" data-mode="assign">📝 Assignment</button>
+  </div>
+
+  <div class="layout">
+    <div class="plot-card">
+      <canvas id="plot"></canvas>
+      <canvas id="confetti-canvas"></canvas>
+    </div>
+
+    <div class="side">
+      <!-- Companion Pet (Mascot) -->
+      <div class="pet-panel no-print" id="petPanel">
+        <div class="pet-avatar-container">
+          <div class="pet-avatar" id="petAvatar">🐱</div>
+          <button class="pet-select-btn" id="petSelectBtn">สลับคู่หู</button>
+        </div>
+        <div class="pet-bubble">
+          <div id="petBubbleText">ยินดีต้อนรับ! ข้าคือ MathCat 🐱 มาลุยสมการเส้นตรงกันเถอะ! ลองลากจุดหรือขยับแถบข้างล่างเลย</div>
+        </div>
+      </div>
+
+      <!-- Equation + sliders (shared) -->
+      <div class="panel" id="panel-controls">
+        <div class="eq" id="eq"></div>
+        <div class="row">
+          <label>ความชัน <small>slope (m)</small></label>
+          <input type="range" id="mSlider" min="-10" max="10" step="0.25" value="1">
+          <div class="chip" id="mChip">1.00</div>
+        </div>
+        <div class="row">
+          <label>จุดตัดแกน Y <small>y-intercept (b)</small></label>
+          <input type="range" id="bSlider" min="-10" max="10" step="0.5" value="0">
+          <div class="chip" id="bChip">0.0</div>
+        </div>
+        <div class="toggles">
+          <label><input type="checkbox" id="tGrid" checked> grid</label>
+          <label><input type="checkbox" id="tTri" checked> rise/run</label>
+          <label><input type="checkbox" id="tSnap" checked> snap</label>
+        </div>
+        <div class="btns"><button class="act b-ghost" id="resetBtn">↺ รีเซ็ต (reset)</button></div>
+      </div>
+
+      <!-- Customize Shop (ร้านค้าตกแต่งเส้น) -->
+      <div class="panel shop-panel no-print" id="panel-shop">
+        <div class="shop-title">🛍️ ร้านค้าแต่งกราฟ <span style="font-size:11px;font-weight:normal;color:var(--muted);margin-left:auto">ใช้เหรียญ 🪙 ซื้อ</span></div>
+        <div class="shop-grid">
+          <div class="shop-item active" data-id="skin_default">
+            <div class="item-title">เส้นมาตรฐาน</div>
+            <div class="item-desc">น้ำเงินคลาสสิก</div>
+            <button class="buy-btn active">ใช้งานอยู่</button>
+          </div>
+          <div class="shop-item" data-id="skin_neon">
+            <div class="item-title">ดาบเลเซอร์นีออน</div>
+            <div class="item-desc">ม่วงเรืองแสงเรืองรอง</div>
+            <button class="buy-btn buy" data-cost="50">🪙 50</button>
+          </div>
+          <div class="shop-item" data-id="trail_sparkle">
+            <div class="item-title">ละอองดาวระยิบ</div>
+            <div class="item-desc">ดาวสีทองปลิวตามจุดที่ลาก</div>
+            <button class="buy-btn buy" data-cost="100">🪙 100</button>
+          </div>
+          <div class="shop-item" data-id="trail_rainbow">
+            <div class="item-title">ฟองสบู่สีรุ้ง</div>
+            <div class="item-desc">วงกลมขยายตัวสีรุ้ง</div>
+            <button class="buy-btn buy" data-cost="180">🪙 180</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Explore -->
+      <div class="panel" id="panel-explore">
+        <div class="stat"><span>ความชัน = (rise ÷ run)</span><b id="slopeFrac">2 ÷ 2 = 1.00</b></div>
+        <div class="stat"><span>เส้นตัดแกน Y ที่จุด</span><b id="bPoint">(0, 0)</b></div>
+        <div class="hint">💡 ลองลากจุดสีน้ำเงินสองจุดบนกราฟ แล้วดูว่า m กับ b เปลี่ยนอย่างไร · m บวก = เส้นขึ้น, m ลบ = เส้นลง, |m| มาก = ชันมาก</div>
+        <div class="btns"><button class="act b-primary" id="teachBtn">▶ สอนแบบเคลื่อนไหว: ความชัน &amp; จุดตัดแกน Y</button></div>
+        <div class="teach-cap" id="teachCap"></div>
+      </div>
+
+      <!-- Challenge -->
+      <div class="panel hidden" id="panel-challenge">
+        <div class="big">🎯 จับคู่เส้น<span style="color:var(--target)">สีส้ม (เป้าหมาย)</span>ให้ตรง!</div>
+        <div class="stat"><span>คะแนนรวม (score)</span><b id="cScore">0</b></div>
+        <div class="stat"><span>รอบที่ (round)</span><b id="cRound">0</b></div>
+        <div class="stat"><span>ดาวที่ได้ (stars)</span><b id="cStars">⭐ 0</b></div>
+        <div class="feedback" id="cFeedback"></div>
+        <div class="btns"><button class="act b-ok" id="checkBtn">✓ ตรวจคำตอบ (check)</button><button class="act b-primary" id="newTargetBtn">🎲 เป้าหมายใหม่</button></div>
+        <div class="hint">ปรับ m และ b ให้เส้นน้ำเงินทับเส้นประสีส้มให้พอดี แล้วกด "ตรวจคำตอบ" · คะแนนจะถูกบันทึกลงใบงานอัตโนมัติ</div>
+      </div>
+
+      <!-- Physics -->
+      <div class="panel hidden" id="panel-physics">
+        <div class="big">🚗 กราฟ ระยะทาง–เวลา (distance–time)</div>
+        <div class="big">ความเร็ว (speed) = ความชัน = <span class="v" id="speedVal">1.00</span> ม./วินาที</div>
+        <div class="stat"><span>ระยะทาง (distance)</span><b id="distEq">d = 1·t + 0</b></div>
+        <div class="stat"><span>เวลา (time) t</span><b id="tVal">0.0 s</b></div>
+
+        <!-- Physics Highway Track (1D physical representation) -->
+        <div class="physics-highway-container">
+          <div class="physics-highway-title">
+            <span>ถนนแสดงการเคลื่อนที่จริง (d)</span>
+            <span>d = <span id="distVal">0.0</span> ม.</span>
+          </div>
+          <div class="physics-highway">
+            <div class="highway-start"></div>
+            <div class="highway-start-label">d = 0</div>
+            <div class="highway-line"></div>
+            <div class="highway-car" id="highwayCar">🚗</div>
+          </div>
+        </div>
+
+        <div class="btns"><button class="act b-primary" id="playBtn">▶ เล่น (play)</button><button class="act b-ghost" id="rewindBtn">⏮ เริ่มใหม่</button></div>
+        <div class="hint">💡 เส้นเดียวกับที่เรียนตอนต้น! ตอนนี้แกนนอน = เวลา, แกนตั้ง = ระยะทาง · เส้นยิ่งชัน = วิ่งยิ่งเร็ว · b = จุดเริ่มต้น</div>
+      </div>
+
+      <!-- GAME: Star Catcher -->
+      <div class="panel hidden" id="panel-game">
+        <div class="big">⭐ เก็บดาว — ลากเส้นให้ผ่านดาวที่เรียงเป็นเส้นตรง!</div>
+
+        <!-- Quest Map UI -->
+        <div class="quest-container">
+          <div class="quest-title">แผนที่ภารกิจ (Quest Map) <span style="font-size:11px;font-weight:normal;color:var(--muted);margin-left:auto">สู้ด่านบอสเมื่อครบด่าน 4</span></div>
+          <div class="quest-map" id="questMap">
+            <div class="quest-step active" data-lvl="1">1</div>
+            <div class="quest-step" data-lvl="2">2</div>
+            <div class="quest-step" data-lvl="3">3</div>
+            <div class="quest-step" data-lvl="4">4</div>
+            <div class="quest-step boss" data-lvl="5" title="บอสด่านสุดท้าย">👑</div>
+          </div>
+        </div>
+
+        <div class="hint" id="gStory" style="font-size:14px;color:#1f2937;font-weight:600"></div>
+        <div class="stat"><span>เลเวล (level)</span><b id="gLevel">1</b></div>
+        <div class="stat"><span>เก็บได้ (collected)</span><b id="gCount">0 / 0</b></div>
+        <div class="stat"><span>คะแนนเกม (score)</span><b id="gScore">0</b></div>
+        <div class="stat"><span>สถิติดีสุด (best)</span><b id="gBest">0</b></div>
+        <div class="feedback" id="gFeedback"></div>
+        <div class="btns"><button class="act b-primary" id="gNewBtn">🎲 เลเวลใหม่</button><button class="act b-ghost" id="gHintBtn">💡 ใบ้</button></div>
+        <div class="hint">ดาวสีฟ้าเรียงเป็นเส้นตรงอยู่ (มีดาวลวงปนมา) — ปรับ m, b หรือลากเส้นให้ผ่านดาวให้ได้มากที่สุด ดาวที่เก็บได้จะเป็นสีทอง ✨ · เก็บครบดวงที่เรียงกัน = ผ่านเลเวล!</div>
+      </div>
+
+      <!-- EXERCISES: per-student (seeded), auto-checked -->
+      <div class="panel hidden" id="panel-exercises">
+        <div class="big">✏️ แบบฝึกหัดเฉพาะคน</div>
+        <div class="row"><label style="flex:0 0 auto">ชื่อ/เลขที่</label><input id="exName" class="exname" type="text" placeholder="พิมพ์ชื่อ → รับโจทย์ของคุณ"></div>
+        <div class="btns"><button class="act b-primary" id="exGenBtn">📝 สร้างโจทย์ของฉัน</button></div>
+        <div class="stat" style="margin-top:10px"><span>ทำถูก (score)</span><b id="exScore">0 / 0</b></div>
+        <div id="exList"></div>
+        <div class="hint">โจทย์สร้างจากชื่อของคุณ — แต่ละคนได้ตัวเลขไม่เหมือนกัน · ใช้กราฟด้านซ้ายช่วยคิดได้ · กรอกคำตอบแล้วกด "ตรวจ"</div>
+      </div>
+
+      <!-- ASSIGNMENT -->
+      <div class="panel hidden" id="panel-assign">
+        <p class="ws-title">📝 ใบงานสัปดาห์ที่ 1 — เส้นตรง y = m·x + b</p>
+        <p class="ws-sub">ทำให้ครบทุกข้อ แล้วกดปุ่มล่างสุดเพื่อบันทึกเป็น PDF ส่งใน Google Classroom</p>
+
+        <div class="names">
+          <label>ชื่อ–สกุล<input class="ti" id="stuName" placeholder="พิมพ์ชื่อ-สกุล"></label>
+          <label class="half">ห้อง/เลขที่<input class="ti" id="stuClass" placeholder="เช่น 2/1 เลขที่ 5"></label>
+          <label class="half">วันที่<input class="ti" id="stuDate" placeholder="วว/ดด/ปป"></label>
+        </div>
+
+        <div class="sect">
+          <h4>ส่วน A · สำรวจแล้วตอบ <span class="badge">เปิดแท็บ "สำรวจ"</span></h4>
+          <div class="task"><span class="qn">A1.</span> ลากเส้นให้ "ชันขึ้นมาก" — ค่า m ที่ได้ประมาณ <input class="inline-i" id="a1"> และเส้นนี้ m เป็นบวกหรือลบ? <input class="inline-i" id="a1b"></div>
+          <div class="task"><span class="qn">A2.</span> เลื่อน b ไปที่ 4 — เส้นตัดแกน Y ที่จุดใด? <input class="inline-i" id="a2"></div>
+          <div class="task"><span class="qn">A3.</span> ถ้า m = 0 เส้นจะมีลักษณะอย่างไร? <input class="ti" id="a3" placeholder="อธิบายสั้น ๆ"></div>
+        </div>
+
+        <div class="sect">
+          <h4>ส่วน B · ตั้งค่าให้ตรงเป้า (ตรวจอัตโนมัติ) <span class="badge">ใช้แถบ m, b</span></h4>
+          <div class="task"><span class="qn">B1.</span> ปรับแอปให้ได้เส้น <b>y = 2x − 3</b> แล้วกดปุ่มตรวจ
+            <button class="check-mini no-print" id="ckB1">✓ ตรวจ B1</button>
+            <div class="task-fb" id="fbB1"></div></div>
+          <div class="task"><span class="qn">B2.</span> ปรับแอปให้ได้เส้น <b>y = −0.5x + 5</b> แล้วกดปุ่มตรวจ
+            <button class="check-mini no-print" id="ckB2">✓ ตรวจ B2</button>
+            <div class="task-fb" id="fbB2"></div></div>
+        </div>
+
+        <div class="sect">
+          <h4>ส่วน C · สร้างกราฟแล้วบันทึกภาพ <span class="badge">📸 แนบรูป</span></h4>
+          <div class="task"><span class="qn">C1.</span> สร้างเส้น <b>y = −x + 2</b> บนกราฟ แล้วกด "บันทึกภาพ" เพื่อแนบลงใบงาน
+            <button class="check-mini no-print" id="capC1">📸 บันทึกภาพกราฟ C1</button>
+            <div class="cap-wrap"><div class="cap-ph" id="phC1">(ยังไม่ได้บันทึกภาพ — ปรับกราฟแล้วกดปุ่มด้านบน)</div><img class="cap-img" id="imgC1" alt="กราฟ C1"></div></div>
+          <div class="task"><span class="qn">C2.</span> สร้างเส้น "ของตัวเอง" ที่<b>ผ่านจุด (0, 4)</b> (ตั้ง b = 4) แล้วบันทึกภาพ พร้อมเขียนสมการของเส้น: y = <input class="inline-i" id="c2eq" style="width:130px">
+            <button class="check-mini no-print" id="capC2">📸 บันทึกภาพกราฟ C2</button>
+            <div class="cap-wrap"><div class="cap-ph" id="phC2">(ยังไม่ได้บันทึกภาพ)</div><img class="cap-img" id="imgC2" alt="กราฟ C2"></div></div>
+        </div>
+
+        <div class="sect">
+          <h4>ส่วน D · เกมท้าทาย (บันทึกอัตโนมัติ) <span class="badge">เล่นแท็บ "ท้าทาย"</span></h4>
+          <div class="task">เล่นโหมดท้าทายอย่างน้อย <b>5 รอบ</b> แล้วกลับมาที่นี่ — คะแนนจะถูกดึงมาอัตโนมัติ
+            <button class="check-mini no-print" id="pullScore" style="margin-left:6px">↻ ดึงคะแนนล่าสุด</button></div>
+          <div class="auto-stat">ผลเกมท้าทาย: เล่นไป <b id="aRound">0</b> รอบ · ได้ <b id="aStars">0</b> ⭐ · คะแนนรวม <b id="aScore">0</b></div>
+        </div>
+
+        <div class="sect">
+          <h4>ส่วน E · สรุปสิ่งที่เรียนรู้ (Exit ticket)</h4>
+          <div class="task"><span class="qn">E1.</span> "ความชัน (m) มากขึ้น" ในกราฟระยะทาง–เวลา หมายความว่าวัตถุเคลื่อนที่อย่างไร?
+            <textarea class="ti" id="e1" placeholder="ตอบที่นี่..."></textarea></div>
+          <div class="task"><span class="qn">E2.</span> วันนี้ฉันเข้าใจเรื่องอะไรชัดขึ้น และยังสงสัยเรื่องอะไร?
+            <textarea class="ti" id="e2" placeholder="ตอบที่นี่..."></textarea></div>
+        </div>
+
+        <div class="submit-box">
+          <button class="act b-ok no-print" id="printBtn" style="font-size:15px">💾 บันทึก PDF เพื่อส่ง Google Classroom</button>
+          <div class="note no-print">กดปุ่ม → ในหน้าต่างพิมพ์ เลือกปลายทาง (Destination) เป็น <b>"บันทึกเป็น PDF / Save as PDF"</b> → กด Save → อัปโหลดไฟล์ใน Google Classroom</div>
+          <div class="print-only" style="font-size:11px;color:#888;margin-top:8px">สร้างจาก Line Lab · Math in Motion</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const canvas=document.getElementById('plot'),ctx=canvas.getContext('2d');
+  const R=10; let cssW=0,cssH=0,dpr=1,scale=1,ox=0,oy=0,pad=8;
+
+  // Load saved gamification data or use defaults
+  let savedCoins = parseInt(localStorage.getItem('math_coins') || '0');
+  let savedUnlocked = JSON.parse(localStorage.getItem('math_unlocked') || '["skin_default"]');
+  let savedSkin = localStorage.getItem('math_active_skin') || 'skin_default';
+  let savedTrail = localStorage.getItem('math_active_trail') || 'trail_none';
+  let savedSound = localStorage.getItem('math_sound_enabled') !== 'false';
+  let savedPet = localStorage.getItem('math_active_pet') || 'cat';
+
+  const S={m:1,b:0,pts:[{x:-3},{x:3}],mode:'explore',grid:true,tri:true,snap:true,drag:-1,
+    target:null,score:0,round:0,stars:0,playing:false,t:0,lastTs:0,
+    gstars:[],level:1,gameScore:0,best:0,levelWon:false,animOn:false,animT:0,animLast:0,
+    coins:savedCoins,unlocked:savedUnlocked,activeSkin:savedSkin,activeTrail:savedTrail,
+    soundEnabled:savedSound,activePet:savedPet,particles:[],ex:{probs:[],correct:[]}};
+
+  function snap(v){return S.snap?Math.round(v*2)/2:v;}
+  function clamp(v,a,b){return Math.min(b,Math.max(a,v));}
+  function yAt(x){return S.m*x+S.b;}
+  function g(i){return document.getElementById(i);}
+
+  // ---- Sound Synth Module (Web Audio API) ----
+  let audioCtx = null;
+  function initAudio() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+  }
+
+  function playSynth(type) {
+    if (!S.soundEnabled) return;
+    try {
+      initAudio();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      
+      const now = audioCtx.currentTime;
+      if (type === 'click') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.exponentialRampToValueAtTime(300, now + 0.08);
+        gain.gain.setValueAtTime(0.04, now);
+        gain.gain.linearRampToValueAtTime(0.001, now + 0.08);
+        osc.start(now);
+        osc.stop(now + 0.08);
+      } else if (type === 'star') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523.25, now); // C5
+        osc.frequency.setValueAtTime(659.25, now + 0.06); // E5
+        osc.frequency.setValueAtTime(783.99, now + 0.12); // G5
+        osc.frequency.setValueAtTime(1046.50, now + 0.18); // C6
+        gain.gain.setValueAtTime(0.06, now);
+        gain.gain.linearRampToValueAtTime(0.001, now + 0.3);
+        osc.start(now);
+        osc.stop(now + 0.3);
+      } else if (type === 'match') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.15);
+        gain.gain.setValueAtTime(0.05, now);
+        gain.gain.linearRampToValueAtTime(0.001, now + 0.15);
+        osc.start(now);
+        osc.stop(now + 0.15);
+      } else if (type === 'perfect') {
+        const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+        notes.forEach((freq, idx) => {
+          const t = now + idx * 0.07;
+          const o = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          o.connect(g);
+          g.connect(audioCtx.destination);
+          o.type = 'sine';
+          o.frequency.setValueAtTime(freq, t);
+          g.gain.setValueAtTime(0.06, t);
+          g.gain.linearRampToValueAtTime(0.001, t + 0.25);
+          o.start(t);
+          o.stop(t + 0.25);
+        });
+      } else if (type === 'fail') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.linearRampToValueAtTime(110, now + 0.25);
+        gain.gain.setValueAtTime(0.05, now);
+        gain.gain.linearRampToValueAtTime(0.001, now + 0.25);
+        osc.start(now);
+        osc.stop(now + 0.25);
+      } else if (type === 'buy') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(987.77, now); // B5
+        osc.frequency.setValueAtTime(1318.51, now + 0.08); // E6
+        gain.gain.setValueAtTime(0.06, now);
+        gain.gain.linearRampToValueAtTime(0.001, now + 0.22);
+        osc.start(now);
+        osc.stop(now + 0.22);
+      } else if (type === 'levelup') {
+        const melody = [523.25, 523.25, 523.25, 523.25, 659.25, 587.33, 659.25, 783.99, 1046.50];
+        const durs = [0.08, 0.08, 0.08, 0.12, 0.12, 0.08, 0.08, 0.08, 0.3];
+        let currTime = now;
+        melody.forEach((freq, idx) => {
+          const o = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          o.connect(g);
+          g.connect(audioCtx.destination);
+          o.type = 'square';
+          o.frequency.setValueAtTime(freq, currTime);
+          g.gain.setValueAtTime(0.03, currTime);
+          g.gain.linearRampToValueAtTime(0.001, currTime + durs[idx]);
+          o.start(currTime);
+          o.stop(currTime + durs[idx]);
+          currTime += durs[idx] * 0.9;
+        });
+      }
+    } catch(e) {
+      console.warn("Audio Context blocked: ", e);
+    }
+  }
+
+  // ---- Particle Engine (Dragging trails) ----
+  function addParticles(x, y, count) {
+    if (S.activeTrail === 'trail_none') return;
+    const px = toPx(x, y);
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 0.4 + Math.random() * 1.5;
+      S.particles.push({
+        x: px.px,
+        y: px.py,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 0.4,
+        size: 3 + Math.random() * 5,
+        alpha: 1,
+        color: S.activeTrail === 'trail_sparkle' ? '#eab308' : `hsl(${Math.random() * 360}, 90%, 60%)`,
+        life: 0,
+        maxLife: 20 + Math.random() * 20
+      });
+    }
+  }
+
+  function updateParticles() {
+    for (let i = S.particles.length - 1; i >= 0; i--) {
+      const p = S.particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life++;
+      p.alpha = 1 - p.life / p.maxLife;
+      if (p.life >= p.maxLife) {
+        S.particles.splice(i, 1);
+      }
+    }
+  }
+
+  function drawParticles() {
+    ctx.save();
+    S.particles.forEach(p => {
+      ctx.globalAlpha = p.alpha;
+      ctx.fillStyle = p.color;
+      if (S.activeTrail === 'trail_sparkle') {
+        ctx.beginPath();
+        const r = p.size;
+        for (let i = 0; i < 5; i++) {
+          const a = (Math.PI / 2.5) * i - Math.PI / 2;
+          const x = p.x + r * Math.cos(a);
+          const y = p.y + r * Math.sin(a);
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+          const a2 = a + Math.PI / 5;
+          const x2 = p.x + (r * 0.45) * Math.cos(a2);
+          const y2 = p.y + (r * 0.45) * Math.sin(a2);
+          ctx.lineTo(x2, y2);
+        }
+        ctx.closePath();
+        ctx.fill();
+      } else {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    });
+    ctx.restore();
+  }
+
+  // ---- Confetti Canvas Overlay ----
+  const confettiCanvas = document.getElementById('confetti-canvas');
+  const cCtx = confettiCanvas.getContext('2d');
+  let confettis = [];
+  let confettiAnimActive = false;
+
+  function resizeConfetti() {
+    const r = canvas.getBoundingClientRect();
+    confettiCanvas.width = r.width;
+    confettiCanvas.height = r.height;
+  }
+
+  function triggerConfetti() {
+    resizeConfetti();
+    confettis = [];
+    const colors = ['#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#818cf8', '#ec4899'];
+    for (let i = 0; i < 70; i++) {
+      confettis.push({
+        x: confettiCanvas.width / 2,
+        y: confettiCanvas.height / 2 - 20,
+        vx: (Math.random() - 0.5) * 7,
+        vy: (Math.random() - 0.85) * 6 - 2.5,
+        size: 4 + Math.random() * 4,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rotation: Math.random() * Math.PI * 2,
+        rotationSpeed: (Math.random() - 0.5) * 0.15,
+        alpha: 1,
+        life: 0,
+        maxLife: 70 + Math.random() * 40
+      });
+    }
+    if (!confettiAnimActive) {
+      confettiAnimActive = true;
+      requestAnimationFrame(confettiTick);
+    }
+  }
+
+  function confettiTick() {
+    cCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    let active = false;
+    for (let i = confettis.length - 1; i >= 0; i--) {
+      const p = confettis[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.12; // gravity
+      p.vx *= 0.98; // drag
+      p.rotation += p.rotationSpeed;
+      p.life++;
+      p.alpha = 1 - p.life / p.maxLife;
+      if (p.life < p.maxLife) {
+        active = true;
+        cCtx.save();
+        cCtx.globalAlpha = p.alpha;
+        cCtx.fillStyle = p.color;
+        cCtx.translate(p.x, p.y);
+        cCtx.rotate(p.rotation);
+        cCtx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+        cCtx.restore();
+      }
+    }
+    if (active) {
+      requestAnimationFrame(confettiTick);
+    } else {
+      confettiAnimActive = false;
+      cCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    }
+  }
+
+  // ---- Companion Pet Mascot Feedback ----
+  const PET_DATA = {
+    cat: { avatar: '🐱', name: 'MathCat' },
+    dog: { avatar: '🐶', name: 'RoboDog' },
+    gator: { avatar: '🐊', name: 'PythaGator' }
+  };
+
+  function updatePetTalk(msg) {
+    g('petBubbleText').innerHTML = `<b>${PET_DATA[S.activePet].name}</b>: ${msg}`;
+    g('petAvatar').textContent = PET_DATA[S.activePet].avatar;
+  }
+
+  function handlePetReact(trigger, data) {
+    if (trigger === 'mChange') {
+      const val = parseFloat(data);
+      if (val > 0) {
+        updatePetTalk(`ความชัน m = ${val.toFixed(2)} (เป็นบวก) กราฟเฉียงขึ้น ยิ่งมากยิ่งชัน! เหมือนวิ่งไปข้างหน้าด้วยความเร็วเพิ่มขึ้นนะ 🚀`);
+      } else if (val < 0) {
+        updatePetTalk(`ความชัน m = ${val.toFixed(2)} (เป็นลบ) กราฟเฉียงลง! รถกำลังเคลื่อนที่ถอยหลังจ้า 🚗💨`);
+      } else {
+        updatePetTalk(`ความชัน m = 0.00! กราฟนอนราบขนานไปกับแกนนอน แปลว่าวัตถุจอดนิ่งสนิทนะ จอดป้ายนิ่งกริ๊บ! 💤`);
+      }
+    } else if (trigger === 'bChange') {
+      const val = parseFloat(data);
+      updatePetTalk(`จุดตัดแกน Y เป็น b = ${val.toFixed(1)} กราฟตัดแกน Y ที่พิกัด (0, ${val.toFixed(1)}) มันคือจุดเริ่มต้นของการเคลื่อนที่ (ที่เวลา t = 0) นั่นเอง 📍`);
+    } else if (trigger === 'tab') {
+      if (data === 'explore') {
+        updatePetTalk(`แท็บ 🔎 Explore ลองลากจุดสีน้ำเงินสองจุดบนกราฟ หรือขยับปุ่มปรับ m, b ดูสิว่าสมการเปลี่ยนยังไง!`);
+      } else if (data === 'challenge') {
+        updatePetTalk(`แท็บ 🎯 Challenge เล็งเส้นประสีส้มให้ตรง! ปรับ m และ b ให้เส้นทับกันพอดิบพอดีแล้วกด ตรวจคำตอบ เพื่อล่าเหรียญ 🪙 กัน!`);
+      } else if (data === 'physics') {
+        updatePetTalk(`แท็บ 🚗 Physics กราฟเส้นเดิมแต่ความชันกลายเป็น ความเร็ว (Speed)! ลองกดปุ่ม เล่น (Play) เพื่อดูความเร็วรถบนถนนจริงด้านล่างเลย! 🚀`);
+      } else if (data === 'game') {
+        updatePetTalk(`แท็บ ⭐ Game เก็บดาว! เล็งให้เส้นตรงพาดผ่านดาวสีฟ้าให้ครบ (อย่าโดนดาวลวง!) ผ่านเพื่ออัพเลเวลสะสมเหรียญด่านถัดไป!`);
+      } else if (data === 'assign') {
+        updatePetTalk(`แท็บ 📝 Assignment ได้เวลาส่งงาน! อย่าลืมกด ตรวจคำตอบ อัตโนมัติ ดึงคะแนน และบันทึกรูปกราฟก่อนกดพิมพ์เป็น PDF นะ 💾`);
+      }
+    } else if (trigger === 'challengeResult') {
+      const stars = data.stars;
+      if (stars === 3) {
+        updatePetTalk(`ว้าว! ยอดเยี่ยมมาก ตรงเป๊ะ 3 ดาว! ⭐⭐⭐ ได้รับ <b>🪙 30 เหรียญ</b> เอาไปแต่งตัวเส้นตรงในร้านค้าข้างล่างได้เลย!`);
+      } else if (stars === 2) {
+        updatePetTalk(`เยี่ยมเลย! ระดับ 2 ดาว ⭐⭐ อีกนิดเดียวจะทับเป๊ะ ลองปรับค่าความชัน m ทีละนิดสิ! ได้รับ <b>🪙 15 เหรียญ</b>`);
+      } else if (stars === 1) {
+        updatePetTalk(`ผ่านฉลุยระดับ 1 ดาว ⭐ ได้รับ <b>🪙 5 เหรียญ</b> อยากลองปรับให้ทับกันเป๊ะกว่านี้ดูไหมล่ะ? สู้ๆ!`);
+      } else {
+        updatePetTalk(`เอ๋? ยังไม่ใกล้เคียงเลย เส้นประสีส้มเป้าหมายมีความชัน m และจุดตัด b เท่าไรนะ? ลองสังเกตจุดตัดแกน Y ดูสิ! 🛠️`);
+      }
+    } else if (trigger === 'starCollected') {
+      updatePetTalk(`ปิ๊ง! ✨ เก็บดาวสีทองได้แล้ว! ลากเส้นพาดผ่านดาวดวงอื่นต่อเลย!`);
+    } else if (trigger === 'levelUp') {
+      updatePetTalk(`สุดยอด! ผ่านด่าน ${data.level} แล้ว ได้รับรางวัล <b>🪙 50 เหรียญ</b>! ลุยด่านต่อไปกันเล้ย! 🎉`);
+    } else if (trigger === 'purchase') {
+      updatePetTalk(`เย้! ซื้อของชิ้นใหม่สำเร็จแล้ว! ลองเปิดใช้งานแล้วไปลากเส้นดูสิ กราฟนายจะดูเก๋ขึ้น 300% 🤩`);
+    }
+  }
+
+  // ---- Shop Logic ----
+  function updateShopUI() {
+    g('coinCount').textContent = S.coins;
+    localStorage.setItem('math_coins', S.coins);
+    localStorage.setItem('math_unlocked', JSON.stringify(S.unlocked));
+    localStorage.setItem('math_active_skin', S.activeSkin);
+    localStorage.setItem('math_active_trail', S.activeTrail);
+
+    document.querySelectorAll('.shop-item').forEach(item => {
+      const id = item.dataset.id;
+      const btn = item.querySelector('.buy-btn');
+      
+      item.classList.remove('owned', 'active');
+      btn.className = 'buy-btn';
+
+      if (id === S.activeSkin || id === S.activeTrail) {
+        item.classList.add('owned', 'active');
+        btn.classList.add('active');
+        btn.textContent = 'ใช้งานอยู่';
+      } else if (S.unlocked.includes(id) || id === 'skin_default' || id === 'trail_none') {
+        item.classList.add('owned');
+        btn.classList.add('use');
+        btn.textContent = 'เลือกใช้';
+      } else {
+        btn.classList.add('buy');
+        const cost = btn.dataset.cost;
+        btn.innerHTML = `🪙 ${cost}`;
+      }
+    });
+  }
+
+  function handleShopClick(e) {
+    const item = e.currentTarget;
+    const id = item.dataset.id;
+    const isSkin = id.startsWith('skin_');
+    const isTrail = id.startsWith('trail_');
+
+    if (S.unlocked.includes(id) || id === 'skin_default' || id === 'trail_none') {
+      playSynth('click');
+      if (isSkin) S.activeSkin = id;
+      if (isTrail) S.activeTrail = id;
+      updateShopUI();
+      draw();
+    } else {
+      const cost = parseInt(item.querySelector('.buy-btn').dataset.cost);
+      if (S.coins >= cost) {
+        S.coins -= cost;
+        S.unlocked.push(id);
+        if (isSkin) S.activeSkin = id;
+        if (isTrail) S.activeTrail = id;
+        playSynth('buy');
+        triggerConfetti();
+        handlePetReact('purchase');
+        updateShopUI();
+        draw();
+      } else {
+        playSynth('fail');
+        updatePetTalk(`เหรียญไม่พอจ้า! เล่นเกมจับคู่ 🎯 หรือเก็บดาว ⭐ เพื่อสะสมเหรียญให้ได้ครบ 🪙 ${cost} เหรียญก่อนนะ!`);
+      }
+    }
+  }
+
+  // ---- Quest Map UI ----
+  function updateQuestMapUI() {
+    const steps = document.querySelectorAll('.quest-step');
+    steps.forEach(step => {
+      const lvl = parseInt(step.dataset.lvl);
+      step.className = 'quest-step';
+      if (lvl === S.level) {
+        step.classList.add('active');
+        if (lvl === 5) step.classList.add('boss');
+        step.innerHTML = lvl === 5 ? '👑' : lvl;
+      } else if (lvl < S.level) {
+        step.classList.add('done');
+        step.innerHTML = '✓';
+      } else {
+        if (lvl === 5) {
+          step.classList.add('boss');
+          step.innerHTML = '👑';
+        } else {
+          step.innerHTML = lvl;
+          step.style.color = '#cbd5e1';
+          step.style.borderColor = '#cbd5e1';
+        }
+      }
+    });
+  }
+
+  document.querySelectorAll('.quest-step').forEach(step => {
+    step.addEventListener('click', () => {
+      const lvl = parseInt(step.dataset.lvl);
+      if (lvl <= S.level || lvl === S.level + 1 || S.level >= 5) {
+        playSynth('click');
+        S.level = lvl;
+        newLevel();
+      }
+    });
+  });
+
+  // ---- Companion Pet Selector ----
+  const petOrder = ['cat', 'dog', 'gator'];
+  g('petSelectBtn').addEventListener('click', () => {
+    playSynth('click');
+    let idx = petOrder.indexOf(S.activePet);
+    idx = (idx + 1) % petOrder.length;
+    S.activePet = petOrder[idx];
+    localStorage.setItem('math_active_pet', S.activePet);
+    updatePetTalk(`สวัสดี! ฉันสลับเวรมาร่วมเดินทางคณิตศาสตร์แล้วนะ พร้อมลุย! 🚀`);
+  });
+
+  // ---- Sound Toggle UI ----
+  const soundBtn = g('soundToggle');
+  soundBtn.textContent = S.soundEnabled ? '🔊' : '🔇';
+  soundBtn.addEventListener('click', () => {
+    S.soundEnabled = !S.soundEnabled;
+    localStorage.setItem('math_sound_enabled', S.soundEnabled);
+    soundBtn.textContent = S.soundEnabled ? '🔊' : '🔇';
+    if (S.soundEnabled) {
+      playSynth('click');
+    }
+  });
+
+  // ---- Canvas Geometry ----
+  function computeGeom(){const plotW=cssW-2*pad,plotH=cssH-2*pad;scale=Math.min(plotW,plotH)/(2*R);ox=pad+plotW/2;oy=pad+plotH/2;}
+  const toPx=(x,y)=>({px:ox+x*scale,py:oy-y*scale});
+  const toW=(px,py)=>({x:(px-ox)/scale,y:(oy-py)/scale});
+  function resize(){const r=canvas.getBoundingClientRect();cssW=r.width;cssH=r.height;dpr=window.devicePixelRatio||1;canvas.width=Math.round(cssW*dpr);canvas.height=Math.round(cssH*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);computeGeom();draw();resizeConfetti();}
+
+  function draw(){
+    ctx.clearRect(0,0,cssW,cssH);ctx.save();ctx.beginPath();ctx.rect(pad,pad,cssW-2*pad,cssH-2*pad);ctx.clip();
+    if(S.grid)drawGrid();drawAxes();
+    if(S.mode==='challenge'&&S.target)drawLine(S.target.m,S.target.b,'#f59e0b',3,true);
+    if(S.mode==='game')drawStars();
+    
+    // Draw particle trails
+    drawParticles();
+
+    // Draw main line with Skins
+    if (S.activeSkin === 'skin_neon') {
+      ctx.save();
+      ctx.shadowColor = '#a855f7';
+      ctx.shadowBlur = 14;
+      drawLine(S.m, S.b, '#c084fc', 4, false);
+      ctx.restore();
+    } else if (S.activeSkin === 'skin_rainbow') {
+      const hue = (Date.now() / 15) % 360;
+      drawLine(S.m, S.b, `hsl(${hue}, 95%, 60%)`, 4, false);
+    } else {
+      drawLine(S.m,S.b,'#4f46e5',3,false);
+    }
+
+    if((S.mode==='explore'||S.mode==='assign')&&S.tri)drawTriangle();
+    if(S.mode!=='physics')drawPoints();
+    if(S.mode==='physics')drawBall();
+    if(S.mode==='explore'&&S.animOn)drawTeach();
+    ctx.restore();
+  }
+
+  function drawGrid(){ctx.lineWidth=1;ctx.strokeStyle='#e8ebf2';for(let i=-R;i<=R;i++){const v=toPx(i,0).px,h=toPx(0,i).py;ctx.beginPath();ctx.moveTo(v,pad);ctx.lineTo(v,cssH-pad);ctx.stroke();ctx.beginPath();ctx.moveTo(pad,h);ctx.lineTo(cssW-pad,h);ctx.stroke();}}
+  function drawAxes(){ctx.lineWidth=2;ctx.strokeStyle='#9aa3b2';const o=toPx(0,0);ctx.beginPath();ctx.moveTo(pad,o.py);ctx.lineTo(cssW-pad,o.py);ctx.stroke();ctx.beginPath();ctx.moveTo(o.px,pad);ctx.lineTo(o.px,cssH-pad);ctx.stroke();ctx.fillStyle='#6b7280';ctx.font='11px system-ui';ctx.textAlign='center';ctx.textBaseline='top';for(let i=-R;i<=R;i+=2){if(i===0)continue;ctx.fillText(i,toPx(i,0).px,o.py+3);}ctx.textAlign='right';ctx.textBaseline='middle';for(let i=-R;i<=R;i+=2){if(i===0)continue;ctx.fillText(i,o.px-4,toPx(0,i).py);}ctx.fillStyle='#475569';ctx.font='600 12px system-ui';if(S.mode==='physics'){ctx.textAlign='right';ctx.textBaseline='bottom';ctx.fillText('เวลา t (s)',cssW-pad-4,o.py-4);ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText('ระยะทาง d (m)',o.px+6,pad+2);}else{ctx.textAlign='right';ctx.textBaseline='bottom';ctx.fillText('x',cssW-pad-4,o.py-4);ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText('y',o.px+6,pad+2);}}
+  function drawLine(m,b,color,w,dashed){const xL=(pad-ox)/scale,xR=(cssW-pad-ox)/scale;const a=toPx(xL,m*xL+b),c=toPx(xR,m*xR+b);ctx.save();ctx.lineWidth=w;ctx.strokeStyle=color;if(dashed)ctx.setLineDash([10,7]);ctx.beginPath();ctx.moveTo(a.px,a.py);ctx.lineTo(c.px,c.py);ctx.stroke();ctx.restore();}
+  function drawTriangle(){const x1=S.pts[0].x,x2=S.pts[1].x,y1=yAt(x1),y2=yAt(x2);const A=toPx(x1,y1),B=toPx(x2,y2),C=toPx(x2,y1);ctx.save();ctx.setLineDash([5,4]);ctx.lineWidth=2;ctx.strokeStyle='#f59e0b';ctx.beginPath();ctx.moveTo(A.px,A.py);ctx.lineTo(C.px,C.py);ctx.lineTo(B.px,B.py);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#b45309';ctx.font='600 12px system-ui';ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText('run = '+(x2-x1).toFixed(1),(A.px+C.px)/2,C.py+4);ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText('rise = '+(y2-y1).toFixed(1),C.px+6,(C.py+B.py)/2);ctx.restore();}
+  function drawPoints(){
+    const ptColor = S.activeSkin === 'skin_neon' ? '#c084fc' : (S.activeSkin === 'skin_rainbow' ? `hsl(${(Date.now() / 15) % 360}, 95%, 60%)` : '#4f46e5');
+    S.pts.forEach((p,i)=>{
+      const q=toPx(p.x,yAt(p.x));
+      ctx.beginPath();ctx.arc(q.px,q.py,9,0,7);ctx.fillStyle='#fff';ctx.fill();
+      ctx.lineWidth=3;
+      ctx.strokeStyle=S.drag===i?'#312e81':ptColor;
+      ctx.stroke();
+      ctx.beginPath();ctx.arc(q.px,q.py,3.5,0,7);
+      ctx.fillStyle=ptColor;
+      ctx.fill();
+    });
+  }
+  function drawBall(){const t=S.t,d=yAt(t),p=toPx(t,d),o=toPx(0,0);ctx.save();ctx.setLineDash([4,4]);ctx.strokeStyle='#cbd5e1';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(p.px,p.py);ctx.lineTo(p.px,o.py);ctx.stroke();ctx.beginPath();ctx.moveTo(p.px,p.py);ctx.lineTo(o.px,p.py);ctx.stroke();ctx.restore();ctx.beginPath();ctx.arc(p.px,p.py,10,0,7);ctx.fillStyle='#ef4444';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#fff';ctx.stroke();}
+
+  // ---- Control UI Tying ----
+  const mSlider=g('mSlider'),bSlider=g('bSlider'),mChip=g('mChip'),bChip=g('bChip'),eq=g('eq');
+  function refreshUI(){
+    mSlider.value=S.m;bSlider.value=S.b;mChip.textContent=S.m.toFixed(2);bChip.textContent=S.b.toFixed(1);
+    const bSign=S.b>=0?'+ '+S.b.toFixed(1):'− '+Math.abs(S.b).toFixed(1);
+    eq.innerHTML='y = <span class="m">'+S.m.toFixed(2)+'</span>·x <span class="b">'+bSign+'</span>';
+    const x1=S.pts[0].x,x2=S.pts[1].x;
+    g('slopeFrac').textContent=(yAt(x2)-yAt(x1)).toFixed(1)+' ÷ '+(x2-x1).toFixed(1)+' = '+S.m.toFixed(2);
+    g('bPoint').textContent='(0, '+S.b.toFixed(1)+')';
+    g('speedVal').textContent=S.m.toFixed(2);
+    g('distEq').textContent='d = '+S.m.toFixed(2)+'·t '+(S.b>=0?'+ '+S.b.toFixed(1):'− '+Math.abs(S.b).toFixed(1));
+    g('tVal').textContent=S.t.toFixed(1)+' s';
+
+    // Update highway car starting position (t=0, d=b)
+    const carD = S.mode === 'physics' ? S.m*S.t + S.b : S.b;
+    let carPct = 50 + (carD / 20) * 100;
+    carPct = Math.max(0, Math.min(100, carPct));
+    g('highwayCar').style.left = carPct + '%';
+    g('distVal').textContent = carD.toFixed(1);
+  }
+
+  let lastM = S.m, lastB = S.b;
+  function setFromSliders(){
+    S.m=parseFloat(mSlider.value);S.b=parseFloat(bSlider.value);
+    refreshUI();draw();
+    if (Math.abs(S.m - lastM) > 0.1) {
+      handlePetReact('mChange', S.m);
+      lastM = S.m;
+    }
+    if (Math.abs(S.b - lastB) > 0.1) {
+      handlePetReact('bChange', S.b);
+      lastB = S.b;
+    }
+  }
+  mSlider.addEventListener('input',setFromSliders);bSlider.addEventListener('input',setFromSliders);
+
+  function pointerPos(e){const r=canvas.getBoundingClientRect();return{px:e.clientX-r.left,py:e.clientY-r.top};}
+  canvas.addEventListener('pointerdown',e=>{
+    if(S.mode==='physics')return;
+    initAudio();
+    const{px,py}=pointerPos(e);
+    for(let i=0;i<2;i++){
+      const q=toPx(S.pts[i].x,yAt(S.pts[i].x));
+      if(Math.hypot(px-q.px,py-q.py)<=14){
+        S.drag=i;
+        canvas.setPointerCapture(e.pointerId);
+        draw();
+        return;
+      }
+    }
+  });
+  canvas.addEventListener('pointermove',e=>{
+    if(S.drag<0)return;
+    const{px,py}=pointerPos(e);
+    const w=toW(px,py);
+    const i=S.drag,j=1-i;
+    let nx=clamp(snap(w.x),-9.5,9.5),ny=clamp(snap(w.y),-R,R);
+    const xj=S.pts[j].x,yj=yAt(xj);
+    if(nx===xj)nx+=(xj>=0?-0.5:0.5);
+    let m=(ny-yj)/(nx-xj);
+    m=clamp(m,-10,10);
+    let b=ny-m*nx;
+    if(b<-R||b>R)b=clamp(b,-R,R);
+    S.m=m;S.b=b;S.pts[i].x=nx;
+
+    if (S.activeTrail !== 'trail_none') {
+      addParticles(nx, yAt(nx), 2);
+    }
+
+    refreshUI();
+    draw();
+
+    if (Math.abs(S.m - lastM) > 0.15) {
+      handlePetReact('mChange', S.m);
+      lastM = S.m;
+    }
+    if (Math.abs(S.b - lastB) > 0.15) {
+      handlePetReact('bChange', S.b);
+      lastB = S.b;
+    }
+  });
+  function endDrag(){if(S.drag>=0){S.drag=-1;draw();}}
+  canvas.addEventListener('pointerup',endDrag);canvas.addEventListener('pointercancel',endDrag);
+
+  g('tGrid').addEventListener('change',e=>{S.grid=e.target.checked;draw();});
+  g('tTri').addEventListener('change',e=>{S.tri=e.target.checked;draw();});
+  g('tSnap').addEventListener('change',e=>{S.snap=e.target.checked;});
+  g('resetBtn').addEventListener('click',()=>{
+    playSynth('click');
+    S.m=1;S.b=0;S.pts=[{x:-3},{x:3}];S.t=0;
+    stopPlay();refreshUI();draw();
+  });
+
+  // ---- Tabs ----
+  document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+    playSynth('click');
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');
+    S.mode=t.dataset.mode;stopPlay();stopTeach();
+    g('panel-explore').classList.toggle('hidden',S.mode!=='explore');
+    g('panel-challenge').classList.toggle('hidden',S.mode!=='challenge');
+    g('panel-physics').classList.toggle('hidden',S.mode!=='physics');
+    g('panel-game').classList.toggle('hidden',S.mode!=='game');
+    g('panel-exercises').classList.toggle('hidden',S.mode!=='exercises');
+    g('panel-assign').classList.toggle('hidden',S.mode!=='assign');
+
+    handlePetReact('tab', S.mode);
+
+    if(S.mode==='challenge'&&!S.target)newTarget();
+    if(S.mode==='game') {
+      if(S.gstars.length===0) newLevel();
+      else updateQuestMapUI();
+    }
+    if(S.mode==='exercises'&&S.ex.probs.length===0)buildExercises();
+    if(S.mode==='assign')syncAssign();
+    draw();
+  }));
+
+  // ---- Challenge Mode ----
+  const fb=g('cFeedback');
+  function newTarget(){
+    const ms=[-3,-2,-1.5,-1,-0.5,0.5,1,1.5,2,3];
+    let tm,tb;
+    do {
+      tm=ms[Math.floor(Math.random()*ms.length)];
+      tb=Math.floor(Math.random()*13)-6;
+    } while(S.target&&tm===S.target.m&&tb===S.target.b);
+    S.target={m:tm,b:tb};
+    fb.className='feedback';
+    draw();
+  }
+
+  function checkAnswer(){
+    if(!S.target)return;
+    const dm=Math.abs(S.m-S.target.m),db=Math.abs(S.b-S.target.b);
+    let stars=0,pts=0,msg,cls,cEarned=0;
+    
+    if(dm<0.13&&db<0.26){
+      stars=3;pts=100;cEarned=30;msg='ยอดเยี่ยม! ตรงเป๊ะ ⭐⭐⭐ (+🪙30)';cls='f-great';
+      playSynth('perfect');
+      triggerConfetti();
+    }
+    else if(dm<0.5&&db<1){
+      stars=2;pts=60;cEarned=15;msg='เกือบแล้ว! ⭐⭐ ปรับอีกนิดเดียว (+🪙15)';cls='f-ok';
+      playSynth('match');
+    }
+    else if(dm<1&&db<2){
+      stars=1;pts=30;cEarned=5;msg='พอใช้ได้ ⭐ ลองดู m และ b อีกที (+🪙5)';cls='f-ok';
+      playSynth('match');
+    }
+    else{
+      stars=0;pts=0;msg='ยังไม่ตรง — เป้าหมาย m='+S.target.m+', b='+S.target.b+' ลองใหม่!';cls='f-bad';
+      playSynth('fail');
+    }
+    
+    S.score+=pts;S.round++;S.stars+=stars;S.coins+=cEarned;
+    g('cScore').textContent=S.score;
+    g('cRound').textContent=S.round;
+    g('cStars').textContent='⭐ '+S.stars;
+    fb.textContent=msg;
+    fb.className='feedback show '+cls;
+    
+    updateShopUI();
+    handlePetReact('challengeResult', {stars: stars});
+
+    if(stars===3)setTimeout(newTarget,1500);
+  }
+  g('checkBtn').addEventListener('click',checkAnswer);g('newTargetBtn').addEventListener('click',newTarget);
+
+  // ---- Physics Mode ----
+  const playBtn=g('playBtn');
+  function stopPlay(){S.playing=false;playBtn.textContent='▶ เล่น (play)';}
+  function tick(ts){
+    if(!S.playing)return;
+    if(!S.lastTs)S.lastTs=ts;
+    const dt=(ts-S.lastTs)/1000;
+    S.lastTs=ts;
+    S.t+=dt*2;
+    if(S.t>9.5)S.t=0;
+    g('tVal').textContent=S.t.toFixed(1)+' s';
+    
+    // Animate physical car on the road track
+    const carD = S.m*S.t + S.b;
+    let carPct = 50 + (carD / 20) * 100;
+    carPct = Math.max(0, Math.min(100, carPct));
+    g('highwayCar').style.left = carPct + '%';
+    g('distVal').textContent = carD.toFixed(1);
+
+    draw();
+    requestAnimationFrame(tick);
+  }
+  playBtn.addEventListener('click',()=>{
+    playSynth('click');
+    if(S.playing)stopPlay();
+    else{
+      S.playing=true;S.lastTs=0;
+      playBtn.textContent='⏸ หยุด (pause)';
+      requestAnimationFrame(tick);
+    }
+  });
+  g('rewindBtn').addEventListener('click',()=>{
+    playSynth('click');
+    S.t=0;refreshUI();draw();
+  });
+
+  // ---- Assignment ----
+  function syncAssign(){g('aScore').textContent=S.score;g('aRound').textContent=S.round;g('aStars').textContent=S.stars;}
+  function checkTask(tm,tb,fbId){
+    playSynth('click');
+    const ok=Math.abs(S.m-tm)<0.13&&Math.abs(S.b-tb)<0.26;
+    const el=g(fbId);
+    el.textContent=ok?'✓ ถูกต้อง! บันทึกแล้ว':'✗ ยังไม่ตรง — ตอนนี้ m='+S.m.toFixed(2)+', b='+S.b.toFixed(1)+' (เป้าหมาย m='+tm+', b='+tb+')';
+    el.className='task-fb '+(ok?'tf-ok':'tf-bad');
+  }
+  g('ckB1').addEventListener('click',()=>checkTask(2,-3,'fbB1'));
+  g('ckB2').addEventListener('click',()=>checkTask(-0.5,5,'fbB2'));
+  function capture(imgId,phId){
+    playSynth('click');
+    const url=canvas.toDataURL('image/png');
+    const img=g(imgId);img.src=url;img.style.display='block';
+    const ph=g(phId);if(ph)ph.style.display='none';
+  }
+  g('capC1').addEventListener('click',()=>capture('imgC1','phC1'));
+  g('capC2').addEventListener('click',()=>capture('imgC2','phC2'));
+  g('pullScore').addEventListener('click',()=>{playSynth('click'); syncAssign();});
+  g('printBtn').addEventListener('click',()=>{
+    playSynth('click');
+    syncAssign();
+    const nm=g('stuName').value.trim();
+    const oldTitle=document.title;
+    if(nm)document.title='ใบงานสัปดาห์1_'+nm;
+    window.print();
+    setTimeout(()=>{document.title=oldTitle;},500);
+  });
+
+  // ---- Star Catcher Game Mode ----
+  const stories=['ค่าแท็กซี่: ขึ้นรถ b บาท แล้วเพิ่มกิโลละ m บาท','ถังน้ำ: เริ่มมี b ลิตร เติมนาทีละ m ลิตร','เดินทาง: เริ่มที่ b กม. ไปชั่วโมงละ m กม.','ค่าโทรศัพท์: ค่าแรกเข้า b บาท เพิ่มนาทีละ m บาท','ออมเงิน: มีอยู่ b บาท เก็บเพิ่มสัปดาห์ละ m บาท'];
+  function drawStar(cx,cy,r,fill,stroke,glow){ctx.save();if(glow){ctx.shadowColor='rgba(245,158,11,.95)';ctx.shadowBlur=14;}ctx.beginPath();for(let i=0;i<10;i++){const a=Math.PI/5*i-Math.PI/2;const rr=(i%2)?r*0.45:r;const x=cx+rr*Math.cos(a),y=cy+rr*Math.sin(a);if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y);}ctx.closePath();if(fill){ctx.fillStyle=fill;ctx.fill();}if(stroke){ctx.lineWidth=2;ctx.strokeStyle=stroke;ctx.stroke();}ctx.restore();}
+  
+  function drawStars(){
+    let got=0,tot=0;
+    S.gstars.forEach(s=>{
+      const hit=Math.abs(S.m*s.x+S.b-s.y)<0.25;
+      if(s.on) {
+        tot++;
+        if(hit) {
+          got++;
+          if (!s.wasHit) {
+            s.wasHit = true;
+            playSynth('star');
+            handlePetReact('starCollected');
+            addParticles(s.x, s.y, 8);
+          }
+        } else {
+          s.wasHit = false;
+        }
+      }
+      const q=toPx(s.x,s.y);
+      if(hit) {
+        drawStar(q.px,q.py,11,'#f59e0b','#b45309',true);
+      } else {
+        drawStar(q.px,q.py,10,s.on?'#dbeafe':'#f1f5f9',s.on?'#3b82f6':'#94a3b8',false);
+      }
+    });
+    updateGame(got,tot);
+  }
+
+  function updateGame(got,tot){
+    g('gCount').textContent=got+' / '+tot;
+    if(!S.levelWon&&tot>0&&got===tot){
+      S.levelWon=true;
+      S.gameScore+=tot*10+50;
+      S.coins += 50;
+      updateShopUI();
+      playSynth('levelup');
+      triggerConfetti();
+      handlePetReact('levelUp', {level: S.level});
+
+      if(S.gameScore>S.best)S.best=S.gameScore;
+      g('gScore').textContent=S.gameScore;
+      g('gBest').textContent=S.best;
+      const fb=g('gFeedback');
+      fb.textContent='🎉 เก็บครบ '+tot+' ดวง! ได้รับโบนัส 🪙 50 เหรียญ!';
+      fb.className='feedback show f-great';
+      
+      setTimeout(()=>{
+        S.level++;
+        if (S.level > 5) S.level = 1; // loop back after boss
+        newLevel();
+      },1800);
+    }
+  }
+
+  function newLevel(){
+    updateQuestMapUI();
+    let ms, bs, nStars, nDecoys;
+    if (S.level === 5) {
+      // Boss level: Decimal fractional slope and high intercept
+      ms = Math.random() > 0.5 ? -1.5 : 1.5;
+      bs = Math.random() > 0.5 ? 4 : -4;
+      nStars = 4;
+      nDecoys = 4;
+      g('gStory').textContent = '👾 ด่านบอส! ปราบมังกรเศษส่วน ด้วยการปรับ m = ' + ms.toFixed(2) + ' และ b = ' + bs;
+    } else {
+      const slopes=[-2,-1,1,2,-0.5,0.5];
+      ms=slopes[Math.floor(Math.random()*slopes.length)];
+      bs=Math.floor(Math.random()*9)-4;
+      nStars = 3 + Math.floor(Math.random()*2);
+      nDecoys = 2;
+      g('gStory').textContent='🧩 ดาวเรียงเป็นเส้นตรง เหมือน — '+stories[Math.floor(Math.random()*stories.length)];
+    }
+
+    const onLine=[];
+    for(let x=-8;x<=8;x++){
+      const y=ms*x+bs;
+      if(Math.abs(y)<=9 && (S.level===5 ? (y*2)%1===0 : Number.isInteger(y))){
+        onLine.push({x:x,y:y,on:true});
+      }
+    }
+    onLine.sort(()=>Math.random()-0.5);
+    const pick=[];
+    const n=Math.min(onLine.length, nStars);
+    for(let i=0;i<n;i++)pick.push(onLine[i]);
+
+    let decoys=0,tries=0;
+    while(decoys<nDecoys&&tries<100){
+      tries++;
+      const dx=Math.floor(Math.random()*17)-8,dy=Math.floor(Math.random()*17)-8;
+      if(Math.abs(ms*dx+bs-dy)>=0.8&&!pick.some(p=>p.x===dx&&p.y===dy)){
+        pick.push({x:dx,y:dy,on:false});
+        decoys++;
+      }
+    }
+    S.gstars=pick;
+    S.levelWon=false;
+    g('gLevel').textContent= S.level === 5 ? 'บอส 👑' : S.level;
+    g('gScore').textContent=S.gameScore;
+    g('gBest').textContent=S.best;
+    g('gFeedback').className='feedback';
+    draw();
+  }
+
+  function gameHint(){
+    playSynth('click');
+    const fb=g('gFeedback');
+    fb.textContent='💡 เล็งดาว 2 ดวงที่อยู่แนวเดียวกัน ลากเส้นทับดู เมื่อดาวจับคู่จะเรืองแสงสีทอง ✨';
+    fb.className='feedback show f-ok';
+  }
+  g('gNewBtn').addEventListener('click',()=>{playSynth('click'); newLevel();});
+  g('gHintBtn').addEventListener('click',gameHint);
+
+  // ---- Explore: animated teaching ----
+  const TA=2.6,TSTEP=1.5,NSTEP=3,CYCLE=TA+TSTEP*NSTEP;
+  function easeOut(p){return 1-(1-p)*(1-p);}
+  function drawTeach(){
+    const m=S.m,b=S.b;let t=S.animT%CYCLE;
+    if(t<TA){
+      const p=Math.min(t/0.9,1),by=10+(b-10)*easeOut(p),bp=toPx(0,by);
+      ctx.save();ctx.setLineDash([4,4]);ctx.strokeStyle='#a5b4fc';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(bp.px,toPx(0,10).py);ctx.lineTo(bp.px,bp.py);ctx.stroke();ctx.restore();
+      ctx.beginPath();ctx.arc(bp.px,bp.py,9,0,7);ctx.fillStyle='#16a34a';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#fff';ctx.stroke();
+      if(p>=1){const pr=14+4*Math.abs(Math.sin(t*4));ctx.beginPath();ctx.arc(bp.px,bp.py,pr,0,7);ctx.strokeStyle='rgba(22,163,74,.55)';ctx.lineWidth=2;ctx.stroke();}
+      ctx.fillStyle='#15803d';ctx.font='700 13px system-ui';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText('(0, '+b.toFixed(1)+')',bp.px+13,bp.py);
+      g('teachCap').textContent='① จุดตัดแกน Y: b = '+b.toFixed(1)+' — เส้นเริ่มต้นที่จุด (0, '+b.toFixed(1)+') เมื่อ x = 0';
+    }else{
+      const tb=t-TA,sf=tb/TSTEP,si=Math.min(Math.floor(sf),NSTEP-1),frac=sf-si;
+      const riseLbl=(m>=0?'+':'−')+Math.abs(m).toFixed(1);
+      ctx.save();ctx.lineWidth=2.5;
+      for(let i=0;i<=si;i++){
+        const x0=i,y0=b+i*m,full=(i<si)?1:frac;
+        const rx=x0+Math.min(full*2,1),a=toPx(x0,y0),c=toPx(rx,y0);
+        ctx.strokeStyle='#2563eb';ctx.beginPath();ctx.moveTo(a.px,a.py);ctx.lineTo(c.px,c.py);ctx.stroke();
+        if(full>0.5){const ry=y0+((full-0.5)*2)*m,d=toPx(x0+1,y0),e=toPx(x0+1,ry);ctx.strokeStyle='#f59e0b';ctx.beginPath();ctx.moveTo(d.px,d.py);ctx.lineTo(e.px,e.py);ctx.stroke();}
+        if(i<si||full>=1){const ml=toPx(x0+0.5,y0);ctx.fillStyle='#1d4ed8';ctx.font='600 11px system-ui';ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText('+1',ml.px,ml.py+3);const rl=toPx(x0+1,y0+m/2);ctx.fillStyle='#b45309';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(riseLbl,rl.px+5,rl.py);}
+      }
+      ctx.restore();
+      let wx,wy;if(frac<0.5){wx=si+frac*2;wy=b+si*m;}else{wx=si+1;wy=b+si*m+(frac-0.5)*2*m;}
+      const wp=toPx(wx,wy);ctx.beginPath();ctx.arc(wp.px,wp.py,9,0,7);ctx.fillStyle='#ef4444';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#fff';ctx.stroke();
+      const sp=toPx(0,b);ctx.beginPath();ctx.arc(sp.px,sp.py,5,0,7);ctx.fillStyle='#16a34a';ctx.fill();
+      g('teachCap').textContent=frac<0.5?'② ไปทางขวา 1 ช่อง (run = 1)':'② แล้ว'+(m>=0?'ขึ้น ':'ลง ')+Math.abs(m).toFixed(1)+' ช่อง (rise = '+m.toFixed(1)+') → ความชัน = rise ÷ run = '+m.toFixed(2);
+    }
+  }
+  function teachTick(ts){if(!S.animOn)return;if(!S.animLast)S.animLast=ts;S.animT+=(ts-S.animLast)/1000;S.animLast=ts;draw();requestAnimationFrame(teachTick);}
+  function stopTeach(){if(!S.animOn)return;S.animOn=false;g('teachBtn').textContent='▶ สอนแบบเคลื่อนไหว: ความชัน & จุดตัดแกน Y';g('teachCap').style.display='none';}
+  g('teachBtn').addEventListener('click',function(){
+    playSynth('click');
+    if(S.animOn){stopTeach();draw();}
+    else{
+      S.animOn=true;S.animT=0;S.animLast=0;
+      g('teachBtn').textContent='⏸ หยุดภาพเคลื่อนไหว';g('teachCap').style.display='block';
+      requestAnimationFrame(teachTick);
+    }
+  });
+
+  // ---- General Anim Loop (Rainbow color-shifts, Particle updates) ----
+  function animLoop() {
+    let redrawNeeded = false;
+    if (S.particles.length > 0) {
+      updateParticles();
+      redrawNeeded = true;
+    }
+    if (S.activeSkin === 'skin_rainbow') {
+      redrawNeeded = true;
+    }
+    if (redrawNeeded) {
+      draw();
+    }
+    requestAnimationFrame(animLoop);
+  }
+  requestAnimationFrame(animLoop);
+
+  // ---- Setup Shop UI ----
+  document.querySelectorAll('.shop-item').forEach(item => {
+    item.addEventListener('click', handleShopClick);
+  });
+
+  // ---- EXERCISES: per-student (seeded) with answer checking ----
+  function hashStr(s){let h=2166136261>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+  function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
+  function ri(r,lo,hi){return lo+Math.floor(r()*(hi-lo+1));}
+  function pk(r,a){return a[Math.floor(r()*a.length)];}
+  function fmtM(m){return m===1?'':m===-1?'−':(''+m);}
+  function fmtB(b){return b>=0?'+ '+b:'− '+(-b);}
+  function genProblems(seed){
+    const r=mulberry32(seed),P=[];
+    const m1=pk(r,[-3,-2,2,3,4,1.5,-1.5]),b1=ri(r,-6,6);
+    P.push({q:'จากสมการ y = '+fmtM(m1)+'x '+fmtB(b1)+' — ความชัน (slope) เท่ากับเท่าไร?',a:m1});
+    const m2=pk(r,[-2,-1,1,2,3]),b2=ri(r,-8,8);
+    P.push({q:'จากสมการ y = '+fmtM(m2)+'x '+fmtB(b2)+' — กราฟตัดแกน Y ที่ค่าใด? (ค่า b)',a:b2});
+    const x1=ri(r,-5,0),x2=ri(r,1,6),ms=pk(r,[-2,-1,1,2,3]),y1=ri(r,-4,4),y2=y1+ms*(x2-x1);
+    P.push({q:'เส้นตรงผ่านจุด ('+x1+', '+y1+') และ ('+x2+', '+y2+') — ความชันเท่ากับเท่าไร?',a:ms});
+    const m4=pk(r,[-2,-1,1,2,3]),b4=ri(r,-5,5),x0=ri(r,-4,5);
+    P.push({q:'สมการ y = '+fmtM(m4)+'x '+fmtB(b4)+' — เมื่อ x = '+x0+' แล้ว y มีค่าเท่าไร?',a:m4*x0+b4});
+    const bt=pk(r,[20,25,30,35,40]),mt=pk(r,[5,6,7,8,10]),k=ri(r,3,9);
+    P.push({q:'🚕 ค่าแท็กซี่: ขึ้นรถ '+bt+' บาท เพิ่มกิโลละ '+mt+' บาท — นั่งไป '+k+' กม. จ่ายทั้งหมดกี่บาท?',a:mt*k+bt});
+    return P;
+  }
+  function buildExercises(){
+    const name=g('exName').value.trim();
+    const seed=name?hashStr(name):(Math.random()*4294967296)>>>0;
+    S.ex.probs=genProblems(seed);S.ex.correct=new Array(S.ex.probs.length).fill(false);
+    const wrap=g('exList');wrap.innerHTML='';
+    S.ex.probs.forEach((p,i)=>{
+      const q=document.createElement('div');q.className='exq';
+      q.innerHTML='<div class="exqt">'+(i+1)+'. '+p.q+'</div><div class="exrow"><input type="number" step="any" placeholder="คำตอบ"><button class="act b-ok" style="flex:0 0 auto;padding:8px 14px">ตรวจ</button><span class="exfb"></span></div>';
+      const inp=q.querySelector('input'),btn=q.querySelector('button'),fb=q.querySelector('.exfb');
+      btn.addEventListener('click',()=>checkEx(i,inp,fb));
+      inp.addEventListener('keydown',e=>{if(e.key==='Enter')checkEx(i,inp,fb);});
+      wrap.appendChild(q);
+    });
+    updateExScore();
+  }
+  function checkEx(i,inp,fb){
+    const v=parseFloat(inp.value);
+    if(isNaN(v)){fb.textContent='ใส่ตัวเลขก่อน';fb.className='exfb no';return;}
+    if(Math.abs(v-S.ex.probs[i].a)<0.01){fb.textContent='✓ ถูกต้อง';fb.className='exfb ok';S.ex.correct[i]=true;}
+    else{fb.textContent='✗ ยังไม่ถูก (เฉลย: '+S.ex.probs[i].a+')';fb.className='exfb no';S.ex.correct[i]=false;}
+    updateExScore();
+  }
+  function updateExScore(){g('exScore').textContent=S.ex.correct.filter(Boolean).length+' / '+S.ex.probs.length;}
+  g('exGenBtn').addEventListener('click',buildExercises);
+  g('exName').addEventListener('keydown',function(e){if(e.key==='Enter')buildExercises();});
+
+  window.addEventListener('resize',resize);
+  updateShopUI();
+  updateQuestMapUI();
+  updatePetTalk(`สวัสดีเพื่อนยาก! ข้าคือ MathCat 🐱 มาปรับความชัน m และจุดตัด b เพื่อแต่งเส้นตรงกันเถอะ!`);
+  refreshUI();
+  resize();
+})();
+</script>
+<script>
+(function(){var b=document.getElementById('fsBtn');if(!b)return;
+  function openBigTab(){
+    var u=location.href;
+    if(/^https?:\/\//i.test(u) && u.indexOf('googleusercontent.')<0){ window.open(u,'_blank'); }
+    else { alert('กล่องฝังแบบนี้ขยายเต็มจอไม่ได้\n\nวิธีแก้: อัปไฟล์ขึ้นเว็บ (เช่น GitHub Pages) แล้วฝังแบบ "ลิงก์ (By URL)" → ปุ่มเต็มจอจะเปิดหน้าเต็มให้ได้'); }
+  }
+  b.addEventListener('click',function(){
+    if(document.fullscreenElement){(document.exitFullscreen||document.webkitExitFullscreen||function(){}).call(document);return;}
+    var el=document.documentElement, req=el.requestFullscreen||el.webkitRequestFullscreen;
+    if(document.fullscreenEnabled && req){ try{req.call(el);}catch(e){openBigTab();} }
+    else { openBigTab(); }
+  });
+  document.addEventListener('fullscreenchange',function(){b.textContent=document.fullscreenElement?'⛶ ออกเต็มจอ':'⛶ เต็มจอ';});
+})();
+</script>
+</body>
+</html>
