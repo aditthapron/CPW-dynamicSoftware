@@ -63,6 +63,15 @@
   .exrow input{width:120px;padding:8px;border:2px solid #e0e4f3;border-radius:8px;font-size:15px;font-family:inherit}
   .exfb{font-size:13px;font-weight:700}
   .exfb.ok{color:#16a34a} .exfb.no{color:#dc2626}
+  .learn-eq{font-size:30px;font-weight:800;text-align:center;padding:8px 0;font-family:'Cambria Math','Times New Roman',serif}
+  .learn-eq .lp{cursor:pointer;border-radius:6px;padding:0 4px}
+  .learn-eq .lp[data-part="slope"]{color:var(--line)}
+  .learn-eq .lp[data-part="intercept"]{color:var(--ok)}
+  .learn-eq .lp.sel{background:#fef3c7;outline:2px solid #f59e0b}
+  .learn-chips{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .lchip,.rchip{border:1px solid #d7dbe6;background:#fff;border-radius:999px;padding:7px 14px;font-size:13px;font-weight:700;color:#475569;cursor:pointer;font-family:inherit}
+  .lchip.active,.rchip.active{background:var(--line);color:#fff;border-color:var(--line)}
+  .learn-def{margin-top:6px;padding:12px 14px;border-radius:10px;background:#eef2ff;color:#3730a3;font-weight:500;font-size:14px;line-height:1.6}
   .stat{display:flex;justify-content:space-between;gap:8px;margin:6px 0;font-size:14px}
   .stat b{font-variant-numeric:tabular-nums}
   .feedback{margin-top:10px;padding:10px 12px;border-radius:10px;font-weight:600;font-size:14px;display:none}
@@ -196,9 +205,11 @@
 
 <div class="wrap">
   <div class="tabs">
-    <button class="tab active" data-mode="explore">🔎 Explore</button>
+    <button class="tab active" data-mode="learn">📖 เรียนรู้</button>
+    <button class="tab" data-mode="explore">🔎 Explore</button>
     <button class="tab" data-mode="challenge">🎯 Challenge</button>
     <button class="tab" data-mode="physics">🚗 Physics</button>
+    <button class="tab" data-mode="realworld">🌍 ตัวอย่างจริง</button>
     <button class="tab" data-mode="game">⭐ Game</button>
     <button class="tab" data-mode="exercises">✏️ Exercises</button>
     <button class="tab assign" data-mode="assign">📝 Assignment</button>
@@ -270,8 +281,21 @@
         </div>
       </div>
 
+      <!-- LEARN: interactive intro to the parts of a line -->
+      <div class="panel" id="panel-learn">
+        <div class="big">📖 รู้จักสมการเส้นตรง</div>
+        <div class="learn-eq">y = <span class="lp sel" data-part="slope">m</span>·x <span class="lp" data-part="intercept">+ b</span></div>
+        <div class="learn-chips">
+          <button class="lchip" data-part="all">ภาพรวม</button>
+          <button class="lchip active" data-part="slope">ความชัน (m)</button>
+          <button class="lchip" data-part="intercept">จุดตัดแกน Y (b)</button>
+        </div>
+        <div class="learn-def" id="learnDef"></div>
+        <div class="hint">💡 แตะที่ปุ่ม (หรือคลิก m / b ในสมการ) เพื่อดูความหมาย แล้วเลื่อนแถบ m, b ด้านบนเพื่อดูว่ากราฟเปลี่ยนยังไง · พร้อมแล้วไปแท็บ "Explore"</div>
+      </div>
+
       <!-- Explore -->
-      <div class="panel" id="panel-explore">
+      <div class="panel hidden" id="panel-explore">
         <div class="stat"><span>ความชัน = (rise ÷ run)</span><b id="slopeFrac">2 ÷ 2 = 1.00</b></div>
         <div class="stat"><span>เส้นตัดแกน Y ที่จุด</span><b id="bPoint">(0, 0)</b></div>
         <div class="hint">💡 ลองลากจุดสีน้ำเงินสองจุดบนกราฟ แล้วดูว่า m กับ b เปลี่ยนอย่างไร · m บวก = เส้นขึ้น, m ลบ = เส้นลง, |m| มาก = ชันมาก</div>
@@ -313,6 +337,21 @@
 
         <div class="btns"><button class="act b-primary" id="playBtn">▶ เล่น (play)</button><button class="act b-ghost" id="rewindBtn">⏮ เริ่มใหม่</button></div>
         <div class="hint">💡 เส้นเดียวกับที่เรียนตอนต้น! ตอนนี้แกนนอน = เวลา, แกนตั้ง = ระยะทาง · เส้นยิ่งชัน = วิ่งยิ่งเร็ว · b = จุดเริ่มต้น</div>
+      </div>
+
+      <!-- REAL-WORLD: non-physics examples -->
+      <div class="panel hidden" id="panel-realworld">
+        <div class="big">🌍 เส้นตรงในชีวิตจริง (ไม่ใช่แค่ฟิสิกส์)</div>
+        <div class="learn-chips">
+          <button class="rchip active" data-sc="taxi">🚕 ค่าแท็กซี่</button>
+          <button class="rchip" data-sc="save">💰 เงินออม</button>
+        </div>
+        <div class="big" id="rwTitle" style="font-size:16px"></div>
+        <div class="stat"><span id="rwMlabel">m</span><b id="rwM">1.00</b></div>
+        <div class="stat"><span id="rwBlabel">b</span><b id="rwB">0.0</b></div>
+        <div class="row"><label id="rwXlabel" style="flex:0 0 120px">x</label><input type="range" id="rwXslider" min="0" max="9" step="1" value="5"><div class="chip" id="rwXval">5</div></div>
+        <div class="learn-def" id="rwReadout"></div>
+        <div class="hint">💡 ปรับ <b>m</b> และ <b>b</b> ด้านบน = เปลี่ยนเงื่อนไขของสถานการณ์ (เช่น ค่าแรกขึ้น/อัตราต่อหน่วย) · เลื่อนแถบด้านล่างเพื่อดูค่าที่ x ต่าง ๆ — เป็นเส้นตรงเดียวกัน แค่เปลี่ยนความหมายของแกน</div>
       </div>
 
       <!-- GAME: Star Catcher -->
@@ -429,11 +468,12 @@
   let savedSound = localStorage.getItem('math_sound_enabled') !== 'false';
   let savedPet = localStorage.getItem('math_active_pet') || 'cat';
 
-  const S={m:1,b:0,pts:[{x:-3},{x:3}],mode:'explore',grid:true,tri:true,snap:true,drag:-1,
+  const S={m:1,b:0,pts:[{x:-3},{x:3}],mode:'learn',grid:true,tri:true,snap:true,drag:-1,
     target:null,score:0,round:0,stars:0,playing:false,t:0,lastTs:0,
     gstars:[],level:1,gameScore:0,best:0,levelWon:false,animOn:false,animT:0,animLast:0,
     coins:savedCoins,unlocked:savedUnlocked,activeSkin:savedSkin,activeTrail:savedTrail,
-    soundEnabled:savedSound,activePet:savedPet,particles:[],ex:{probs:[],correct:[]}};
+    soundEnabled:savedSound,activePet:savedPet,particles:[],ex:{probs:[],correct:[]},
+    learnSel:'all',scenario:'taxi',rwX:5};
 
   function snap(v){return S.snap?Math.round(v*2)/2:v;}
   function clamp(v,a,b){return Math.min(b,Math.max(a,v));}
@@ -881,14 +921,16 @@
     }
 
     if((S.mode==='explore'||S.mode==='assign')&&S.tri)drawTriangle();
-    if(S.mode!=='physics')drawPoints();
+    if(S.mode!=='physics'&&S.mode!=='realworld')drawPoints();
     if(S.mode==='physics')drawBall();
     if(S.mode==='explore'&&S.animOn)drawTeach();
+    if(S.mode==='learn')drawLearn();
+    if(S.mode==='realworld')drawRealworld();
     ctx.restore();
   }
 
   function drawGrid(){ctx.lineWidth=1;ctx.strokeStyle='#e8ebf2';for(let i=-R;i<=R;i++){const v=toPx(i,0).px,h=toPx(0,i).py;ctx.beginPath();ctx.moveTo(v,pad);ctx.lineTo(v,cssH-pad);ctx.stroke();ctx.beginPath();ctx.moveTo(pad,h);ctx.lineTo(cssW-pad,h);ctx.stroke();}}
-  function drawAxes(){ctx.lineWidth=2;ctx.strokeStyle='#9aa3b2';const o=toPx(0,0);ctx.beginPath();ctx.moveTo(pad,o.py);ctx.lineTo(cssW-pad,o.py);ctx.stroke();ctx.beginPath();ctx.moveTo(o.px,pad);ctx.lineTo(o.px,cssH-pad);ctx.stroke();ctx.fillStyle='#6b7280';ctx.font='11px system-ui';ctx.textAlign='center';ctx.textBaseline='top';for(let i=-R;i<=R;i+=2){if(i===0)continue;ctx.fillText(i,toPx(i,0).px,o.py+3);}ctx.textAlign='right';ctx.textBaseline='middle';for(let i=-R;i<=R;i+=2){if(i===0)continue;ctx.fillText(i,o.px-4,toPx(0,i).py);}ctx.fillStyle='#475569';ctx.font='600 12px system-ui';if(S.mode==='physics'){ctx.textAlign='right';ctx.textBaseline='bottom';ctx.fillText('เวลา t (s)',cssW-pad-4,o.py-4);ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText('ระยะทาง d (m)',o.px+6,pad+2);}else{ctx.textAlign='right';ctx.textBaseline='bottom';ctx.fillText('x',cssW-pad-4,o.py-4);ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText('y',o.px+6,pad+2);}}
+  function drawAxes(){ctx.lineWidth=2;ctx.strokeStyle='#9aa3b2';const o=toPx(0,0);ctx.beginPath();ctx.moveTo(pad,o.py);ctx.lineTo(cssW-pad,o.py);ctx.stroke();ctx.beginPath();ctx.moveTo(o.px,pad);ctx.lineTo(o.px,cssH-pad);ctx.stroke();ctx.fillStyle='#6b7280';ctx.font='11px system-ui';ctx.textAlign='center';ctx.textBaseline='top';for(let i=-R;i<=R;i+=2){if(i===0)continue;ctx.fillText(i,toPx(i,0).px,o.py+3);}ctx.textAlign='right';ctx.textBaseline='middle';for(let i=-R;i<=R;i+=2){if(i===0)continue;ctx.fillText(i,o.px-4,toPx(0,i).py);}ctx.fillStyle='#475569';ctx.font='600 12px system-ui';var xlab='x',ylab='y';if(S.mode==='physics'){xlab='เวลา t (s)';ylab='ระยะทาง d (m)';}else if(S.mode==='realworld'){if(S.scenario==='taxi'){xlab='ระยะทาง (กม.)';ylab='ค่าโดยสาร (บาท)';}else{xlab='สัปดาห์';ylab='เงินสะสม (บาท)';}}ctx.textAlign='right';ctx.textBaseline='bottom';ctx.fillText(xlab,cssW-pad-4,o.py-4);ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText(ylab,o.px+6,pad+2);}
   function drawLine(m,b,color,w,dashed){const xL=(pad-ox)/scale,xR=(cssW-pad-ox)/scale;const a=toPx(xL,m*xL+b),c=toPx(xR,m*xR+b);ctx.save();ctx.lineWidth=w;ctx.strokeStyle=color;if(dashed)ctx.setLineDash([10,7]);ctx.beginPath();ctx.moveTo(a.px,a.py);ctx.lineTo(c.px,c.py);ctx.stroke();ctx.restore();}
   function drawTriangle(){const x1=S.pts[0].x,x2=S.pts[1].x,y1=yAt(x1),y2=yAt(x2);const A=toPx(x1,y1),B=toPx(x2,y2),C=toPx(x2,y1);ctx.save();ctx.setLineDash([5,4]);ctx.lineWidth=2;ctx.strokeStyle='#f59e0b';ctx.beginPath();ctx.moveTo(A.px,A.py);ctx.lineTo(C.px,C.py);ctx.lineTo(B.px,B.py);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#b45309';ctx.font='600 12px system-ui';ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText('run = '+(x2-x1).toFixed(1),(A.px+C.px)/2,C.py+4);ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText('rise = '+(y2-y1).toFixed(1),C.px+6,(C.py+B.py)/2);ctx.restore();}
   function drawPoints(){
@@ -908,6 +950,29 @@
 
   // ---- Control UI Tying ----
   const mSlider=g('mSlider'),bSlider=g('bSlider'),mChip=g('mChip'),bChip=g('bChip'),eq=g('eq');
+  function drawLearn(){
+    const sel=S.learnSel, m=S.m, b=S.b;
+    if(sel==='intercept'||sel==='all'){
+      const q=toPx(0,b);ctx.save();
+      ctx.beginPath();ctx.arc(q.px,q.py,9+3*Math.abs(Math.sin(Date.now()*0.005)),0,7);ctx.strokeStyle='rgba(22,163,74,.5)';ctx.lineWidth=2;ctx.stroke();
+      ctx.beginPath();ctx.arc(q.px,q.py,7,0,7);ctx.fillStyle='#16a34a';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#fff';ctx.stroke();
+      ctx.fillStyle='#15803d';ctx.font='700 13px system-ui';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText('(0, '+b.toFixed(1)+') จุดตัดแกน Y',q.px+12,q.py);ctx.restore();
+    }
+    if(sel==='slope'||sel==='all'){
+      const A=toPx(0,b),C=toPx(1,b),B=toPx(1,b+m);ctx.save();ctx.setLineDash([5,4]);ctx.lineWidth=2.5;
+      ctx.strokeStyle='#2563eb';ctx.beginPath();ctx.moveTo(A.px,A.py);ctx.lineTo(C.px,C.py);ctx.stroke();
+      ctx.strokeStyle='#f59e0b';ctx.beginPath();ctx.moveTo(C.px,C.py);ctx.lineTo(B.px,B.py);ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle='#1d4ed8';ctx.font='600 12px system-ui';ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText('run = 1',(A.px+C.px)/2,C.py+4);
+      ctx.fillStyle='#b45309';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText('rise = '+m.toFixed(1),C.px+6,(C.py+B.py)/2);ctx.restore();
+    }
+  }
+  function drawRealworld(){
+    const x=S.rwX, y=yAt(x), p=toPx(x,y), o=toPx(0,0);
+    ctx.save();ctx.setLineDash([4,4]);ctx.strokeStyle='#cbd5e1';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(p.px,p.py);ctx.lineTo(p.px,o.py);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(p.px,p.py);ctx.lineTo(o.px,p.py);ctx.stroke();ctx.restore();
+    ctx.beginPath();ctx.arc(p.px,p.py,9,0,7);ctx.fillStyle='#0d9488';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#fff';ctx.stroke();
+  }
   function refreshUI(){
     mSlider.value=S.m;bSlider.value=S.b;mChip.textContent=S.m.toFixed(2);bChip.textContent=S.b.toFixed(1);
     const bSign=S.b>=0?'+ '+S.b.toFixed(1):'− '+Math.abs(S.b).toFixed(1);
@@ -925,6 +990,8 @@
     carPct = Math.max(0, Math.min(100, carPct));
     g('highwayCar').style.left = carPct + '%';
     g('distVal').textContent = carD.toFixed(1);
+    if(S.mode==='learn')updateLearn();
+    if(S.mode==='realworld')updateRealworld();
   }
 
   let lastM = S.m, lastB = S.b;
@@ -1004,9 +1071,11 @@
     playSynth('click');
     document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');
     S.mode=t.dataset.mode;stopPlay();stopTeach();
+    g('panel-learn').classList.toggle('hidden',S.mode!=='learn');
     g('panel-explore').classList.toggle('hidden',S.mode!=='explore');
     g('panel-challenge').classList.toggle('hidden',S.mode!=='challenge');
     g('panel-physics').classList.toggle('hidden',S.mode!=='physics');
+    g('panel-realworld').classList.toggle('hidden',S.mode!=='realworld');
     g('panel-game').classList.toggle('hidden',S.mode!=='game');
     g('panel-exercises').classList.toggle('hidden',S.mode!=='exercises');
     g('panel-assign').classList.toggle('hidden',S.mode!=='assign');
@@ -1020,8 +1089,47 @@
     }
     if(S.mode==='exercises'&&S.ex.probs.length===0)buildExercises();
     if(S.mode==='assign')syncAssign();
+    if(S.mode==='learn')updateLearn();
+    if(S.mode==='realworld')updateRealworld();
     draw();
   }));
+
+  // ---- Learn & Real-world modes ----
+  function updateLearn(){
+    const sel=S.learnSel, m=S.m.toFixed(2), b=S.b.toFixed(1);
+    document.querySelectorAll('#panel-learn .lchip').forEach(c=>c.classList.toggle('active',c.dataset.part===sel));
+    document.querySelectorAll('.learn-eq .lp').forEach(p=>p.classList.toggle('sel',p.dataset.part===sel));
+    let d;
+    if(sel==='slope'){
+      d='🔺 <b>ความชัน (slope) = m</b> · บอก "ความเอียง" ของเส้น — ทุกครั้งที่ x เพิ่มขึ้น 1 ค่า y จะเปลี่ยนไป m · m บวก = เส้นขึ้น, m ลบ = เส้นลง, m = 0 = เส้นแนวนอน<br>สูตร: ความชัน = rise ÷ run = (y ที่เปลี่ยน) ÷ (x ที่เปลี่ยน)<br>ตอนนี้ <b>m = '+m+'</b> → ไปขวา 1 ช่อง เส้น'+(S.m>=0?'ขึ้น ':'ลง ')+Math.abs(S.m).toFixed(2)+' ช่อง';
+    } else if(sel==='intercept'){
+      d='📍 <b>จุดตัดแกน Y (y-intercept) = b</b> · คือจุดที่เส้นตัด "แกน Y" ตอนที่ x = 0 — เป็น "จุดเริ่มต้น" ของเส้น · พิกัด (0, b)<br>ตอนนี้ <b>b = '+b+'</b> → เส้นตัดแกน Y ที่จุด (0, '+b+')';
+    } else {
+      d='สมการเส้นตรง <b>y = m·x + b</b> มี 2 ส่วนสำคัญ:<br>• <b style="color:var(--line)">m = ความชัน</b> (ความเอียง) — ตอนนี้ '+m+'<br>• <b style="color:var(--ok)">b = จุดตัดแกน Y</b> (จุดเริ่ม) — ตอนนี้ '+b+'<br><b>x</b> = ค่าที่ใส่เข้าไป, <b>y</b> = ค่าที่ได้ออกมา';
+    }
+    g('learnDef').innerHTML=d;
+  }
+  function updateRealworld(){
+    const sc=S.scenario, m=Math.round(S.m*100)/100, b=Math.round(S.b*10)/10, x=S.rwX, y=m*x+b;
+    document.querySelectorAll('#panel-realworld .rchip').forEach(c=>c.classList.toggle('active',c.dataset.sc===sc));
+    if(sc==='taxi'){
+      g('rwTitle').textContent='🚕 ค่าแท็กซี่:  y = ค่าโดยสาร,  x = ระยะทาง';
+      g('rwMlabel').textContent='m = ค่าต่อกิโลเมตร (บาท)';
+      g('rwBlabel').textContent='b = ค่าแรกขึ้น (บาท)';
+      g('rwXlabel').textContent='ระยะทาง (กม.)';
+      g('rwReadout').innerHTML='นั่งไป <b>'+x+' กม.</b> → ค่าโดยสาร = '+m.toFixed(2)+' × '+x+' + '+b.toFixed(1)+' = <b>'+y.toFixed(1)+' บาท</b>';
+    } else {
+      g('rwTitle').textContent='💰 เงินออม:  y = เงินสะสม,  x = สัปดาห์';
+      g('rwMlabel').textContent='m = เก็บต่อสัปดาห์ (บาท)';
+      g('rwBlabel').textContent='b = เงินเริ่มต้น (บาท)';
+      g('rwXlabel').textContent='สัปดาห์ที่';
+      g('rwReadout').innerHTML='ออมไป <b>'+x+' สัปดาห์</b> → เงินสะสม = '+m.toFixed(2)+' × '+x+' + '+b.toFixed(1)+' = <b>'+y.toFixed(1)+' บาท</b>';
+    }
+    g('rwM').textContent=m.toFixed(2); g('rwB').textContent=b.toFixed(1); g('rwXval').textContent=x;
+  }
+  document.querySelectorAll('#panel-learn .lchip, .learn-eq .lp').forEach(el=>el.addEventListener('click',()=>{S.learnSel=el.dataset.part;updateLearn();draw();}));
+  document.querySelectorAll('#panel-realworld .rchip').forEach(c=>c.addEventListener('click',()=>{S.scenario=c.dataset.sc;updateRealworld();draw();}));
+  g('rwXslider').addEventListener('input',e=>{S.rwX=parseInt(e.target.value)||0;updateRealworld();draw();});
 
   // ---- Challenge Mode ----
   const fb=g('cFeedback');
