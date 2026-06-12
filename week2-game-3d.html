@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>🎮 Parabola Quest 3D — เดินเก็บฐานกำลังสอง (สัปดาห์ 2)</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;font-family:'Noto Sans Thai','Sarabun',system-ui,sans-serif;background:#091e1b}
+  #app{position:fixed;inset:0}
+  canvas{display:block;touch-action:none}
+  #hud{position:fixed;inset:0;pointer-events:none;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.5)}
+  #qbar{position:absolute;top:14px;left:50%;transform:translateX(-50%);max-width:92%;
+    background:rgba(13,148,136,.92);padding:12px 22px;border-radius:14px;font-size:18px;font-weight:800;
+    text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.35);border:2px solid rgba(255,255,255,.25)}
+  #stats{position:absolute;top:78px;left:50%;transform:translateX(-50%);display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+  .chip{background:rgba(15,23,42,.72);border:1px solid rgba(255,255,255,.15);border-radius:999px;padding:6px 14px;font-size:13px;font-weight:700}
+  .chip b{color:#fde047}
+  #feedback{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:32px;font-weight:900;
+    opacity:0;transition:opacity .2s;text-align:center;pointer-events:none}
+  #feedback.show{opacity:1}
+  #controls{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
+    background:rgba(15,23,42,.72);border-radius:12px;padding:9px 18px;font-size:13.5px;font-weight:600;text-align:center;border:1px solid rgba(255,255,255,.12)}
+  #controls .k{display:inline-block;background:#334155;border-radius:6px;padding:1px 8px;margin:0 2px;font-weight:800}
+  #skipBtn,#backBtn{position:absolute;pointer-events:auto;border:none;border-radius:10px;padding:9px 16px;font-weight:800;cursor:pointer;font-family:inherit;font-size:14px}
+  #skipBtn{bottom:16px;right:16px;background:#f59e0b;color:#3b2500}
+  #backBtn{top:16px;left:16px;background:rgba(15,23,42,.8);color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.2)}
+  #monBtn{position:absolute;pointer-events:auto;border:none;border-radius:10px;padding:9px 16px;font-weight:800;cursor:pointer;font-family:inherit;font-size:14px;bottom:16px;left:16px;background:#6d28d9;color:#fff}
+  #fsBtn{position:absolute;pointer-events:auto;top:16px;right:16px;border-radius:10px;padding:9px 14px;font-weight:800;cursor:pointer;font-family:inherit;font-size:14px;background:rgba(15,23,42,.82);color:#fff;border:1px solid rgba(255,255,255,.25)}
+  #joyBase{position:fixed;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.45);display:none;pointer-events:none;transform:translate(-50%,-50%);z-index:40}
+  #joyThumb{position:fixed;width:58px;height:58px;border-radius:50%;background:rgba(13,148,136,.85);border:2px solid #fff;display:none;pointer-events:none;transform:translate(-50%,-50%);z-index:41}
+  #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:#091e1b;color:#cbd5e1;z-index:50;text-align:center;padding:20px}
+  #loading .spin{width:46px;height:46px;border:5px solid #115e59;border-top-color:#14b8a6;border-radius:50%;animation:sp 1s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  #err{display:none;max-width:520px;line-height:1.6}
+  #err a{color:#14b8a6}
+  #win{position:fixed;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;background:rgba(9,30,27,.94);color:#fff;z-index:60;text-align:center;padding:20px;pointer-events:auto;overflow:auto}
+  #winName{padding:9px 12px;border-radius:8px;border:1px solid #cbd5e1;font-family:inherit;font-size:15px;width:min(340px,82%);text-align:center}
+  #reportImg{max-width:min(560px,94%);width:100%;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.45);background:#fff}
+  #winBtns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  #saveImgBtn,#replayBtn{border:none;border-radius:12px;padding:12px 22px;font-weight:800;font-size:16px;cursor:pointer;font-family:inherit;color:#fff}
+  #saveImgBtn{background:#16a34a} #replayBtn{background:#0d9488}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<div id="hud">
+  <button id="fsBtn">⛶ เต็มจอ</button>
+  <a id="backBtn" href="week2-parabola-playground.html">⬅ ย้อนกลับ</a>
+  <div id="qbar">กำลังโหลดเกมพาราโบลา 3D…</div>
+  <div id="stats">
+    <span class="chip">🏆 คะแนน <b id="score">0</b></span>
+    <span class="chip">🪙 เหรียญ <b id="coins">0</b></span>
+    <span class="chip">🎯 ด่าน <b id="level">1</b></span>
+    <span class="chip">📍 พิกัดคุณ <b id="pos">(0, 0)</b></span>
+    <span class="chip">👾 โดนจับ <b id="caught">0</b></span>
+    <span class="chip">เก็บแล้ว <b id="prog">0 / 0</b></span>
+  </div>
+  <div id="feedback"></div>
+  <div id="controls"><span class="k">W A S D</span> / <span class="k">↑↓←→</span> = เดิน · <span class="k">Space</span> = กระโดด · ยืนบนฐานคำตอบที่ถูกต้อง!</div>
+  <button id="skipBtn">ข้ามด่าน ⏭</button>
+  <button id="monBtn">👾 มอนสเตอร์: เปิด</button>
+  <div id="joyBase"></div><div id="joyThumb"></div>
+</div>
+
+<div id="win">
+  <div style="font-size:24px;font-weight:900">🏆 ยินดีด้วย! พิชิตพาราโบลา 3D สำเร็จ 🎉</div>
+  <input id="winName" placeholder="พิมพ์ชื่อ-สกุล สำหรับใบประกาศ" />
+  <img id="reportImg" alt="ใบรายงานผลการเรียนรู้" />
+  <div id="winBtns">
+    <button id="saveImgBtn">💾 บันทึกรูปรายงาน</button>
+    <button id="replayBtn">▶ เล่นใหม่อีกครั้ง</button>
+  </div>
+  <div style="font-size:12px;color:#94a3b8;margin-top:4px">สำหรับแท็บเล็ต: กดค้างที่รูปภาพเพื่อบันทึกรูป</div>
+</div>
+
+<div id="loading">
+  <div class="spin" id="spin"></div>
+  <div id="loadtxt">กำลังเริ่มต้น Three.js Engine…</div>
+  <div id="err">
+    ⚠️ ไม่สามารถโหลดไลบรารี Three.js กรุณาเชื่อมต่ออินเทอร์เน็ตแล้วลองใหม่อีกครั้ง
+  </div>
+</div>
+
+<script src="https://unpkg.com/three@0.128.0/build/three.min.js"
+  integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu"
+  crossorigin="anonymous"></script>
+<script>
+(function(){
+  "use strict";
+  if(typeof THREE==='undefined'){
+    document.getElementById('spin').style.display='none';
+    document.getElementById('loadtxt').style.display='none';
+    document.getElementById('err').style.display='block';
+    return;
+  }
+  const $ = id => document.getElementById(id);
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0e2e28);
+  scene.fog = new THREE.Fog(0x0e2e28, 28, 48);
+
+  const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 200);
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  $('app').appendChild(renderer.domElement);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.65);
+  sun.position.set(6, 18, 5); scene.add(sun);
+
+  const RANGE = 10;
+  const floorGeo = new THREE.PlaneGeometry(2 * RANGE, 2 * RANGE);
+  const floorMat = new THREE.MeshLambertMaterial({ color: 0x113d35 });
+  const floor = new THREE.Mesh(floorGeo, floorMat);
+  floor.rotation.x = -Math.PI / 2; floor.position.y = -0.02; scene.add(floor);
+
+  const grid = new THREE.GridHelper(2 * RANGE, 2 * RANGE, 0x14b8a6, 0x115e59);
+  grid.position.y = 0.01; scene.add(grid);
+
+  // Red and Blue axes lines
+  const xAxis = new THREE.Mesh(new THREE.BoxGeometry(2 * RANGE, 0.06, 0.12), new THREE.MeshBasicMaterial({ color: 0xdc2626 }));
+  xAxis.position.y = 0.03; scene.add(xAxis);
+  const zAxis = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.06, 2 * RANGE), new THREE.MeshBasicMaterial({ color: 0x2563eb }));
+  zAxis.position.y = 0.03; scene.add(zAxis);
+
+  // Grid labels helper
+  function makeLabel(text, bg, fg){
+    const c = document.createElement('canvas'); c.width = 256; c.height = 120;
+    const x = c.getContext('2d');
+    x.fillStyle = bg || 'rgba(15,23,42,.9)';
+    const r = 18, w = 248, h = 104, ox = 4, oy = 8;
+    x.beginPath(); x.moveTo(ox + r, oy);
+    x.arcTo(ox + w, oy, ox + w, oy + h, r); x.arcTo(ox + w, oy + h, ox, oy + h, r);
+    x.arcTo(ox, oy + h, ox, oy, r); x.arcTo(ox, oy, ox + w, oy, r);
+    x.closePath(); x.fill();
+    x.fillStyle = fg || '#fff'; x.font = 'bold 44px sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.fillText(text, 128, 62);
+    const tex = new THREE.CanvasTexture(c); tex.minFilter = THREE.LinearFilter;
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true }));
+    s.scale.set(2.4, 1.13, 1); return s;
+  }
+
+  const lx = makeLabel('+x','rgba(220,38,38,.9)'); lx.position.set(RANGE - 0.4, 1.2, 0); scene.add(lx);
+  const lz = makeLabel('+y','rgba(37,99,235,.9)'); lz.position.set(0, 1.2, -RANGE + 0.4); scene.add(lz);
+
+  // Math coordinates to 3D mapping: 2D (x, y) -> 3D (x, 0, -y)
+  const mw = (mx, my) => new THREE.Vector3(mx, 0, -my);
+
+  // Parabola Curve 3D mesh generator
+  let curveMesh = null;
+  function updateParabolaMesh(a, b, c) {
+    if (curveMesh) scene.remove(curveMesh);
+    const points = [];
+    for (let x = -RANGE; x <= RANGE; x += 0.25) {
+      const y = a * x * x + b * x + c;
+      if (Math.abs(y) <= RANGE) {
+        points.push(mw(x, y).setY(0.08));
+      }
+    }
+    if (points.length < 2) return;
+    const curve = new THREE.CatmullRomCurve3(points);
+    const tubeGeo = new THREE.TubeGeometry(curve, 64, 0.12, 8, false);
+    const tubeMat = new THREE.MeshBasicMaterial({ color: 0x14b8a6, transparent: true, opacity: 0.75 });
+    curveMesh = new THREE.Mesh(tubeGeo, tubeMat);
+    scene.add(curveMesh);
+  }
+
+  // 3D Player Avatar (Green Boy)
+  const avatar = new THREE.Group();
+  const matBody = new THREE.MeshLambertMaterial({ color: 0x0d9488 });
+  const matHead = new THREE.MeshLambertMaterial({ color: 0x2dd4bf });
+  const matLeg = new THREE.MeshLambertMaterial({ color: 0x115e59 });
+  const legL = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.6, 0.3), matLeg); legL.position.set(-0.18, 0.3, 0); avatar.add(legL);
+  const legR = legL.clone(); legR.position.x = 0.18; avatar.add(legR);
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.7, 0.45), matBody); body.position.y = 0.95; avatar.add(body);
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), matHead); head.position.y = 1.55; avatar.add(head);
+  const armL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.6, 0.2), matBody); armL.position.set(-0.46, 0.95, 0); avatar.add(armL);
+  const armR = armL.clone(); armR.position.x = 0.46; avatar.add(armR);
+  scene.add(avatar);
+
+  const shadow = new THREE.Mesh(new THREE.CircleGeometry(0.5, 20), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.22 }));
+  shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.02; scene.add(shadow);
+
+  // Purple Monster Chaser
+  const monster = new THREE.Group();
+  const mbody = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.9, 0.6), new THREE.MeshLambertMaterial({ color: 0x7c3aed })); mbody.position.y = 0.85; monster.add(mbody);
+  const mhead = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.6, 0.6), new THREE.MeshLambertMaterial({ color: 0x5b21b6 })); mhead.position.y = 1.55; monster.add(mhead);
+  const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff3b3b });
+  const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 0.06), eyeMat); eyeL.position.set(-0.16, 1.6, 0.31); monster.add(eyeL);
+  const eyeR = eyeL.clone(); eyeR.position.x = 0.16; monster.add(eyeR);
+  const mlegL = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.5, 0.26), new THREE.MeshLambertMaterial({ color: 0x4c1d95 })); mlegL.position.set(-0.2, 0.25, 0); monster.add(mlegL);
+  const mlegR = mlegL.clone(); mlegR.position.x = 0.2; monster.add(mlegR);
+  const mlab = makeLabel('👾','rgba(124,58,237,.92)'); mlab.position.y = 2.25; mlab.scale.set(1.4, 0.66, 1); monster.add(mlab);
+  scene.add(monster);
+
+  const mShadow = new THREE.Mesh(new THREE.CircleGeometry(0.55, 20), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.22 }));
+  mShadow.rotation.x = -Math.PI / 2; mShadow.position.y = 0.02; scene.add(mShadow);
+
+  const mon = { x: 8, z: -8, on: true, caught: 0 };
+  const CORNERS = [[8,-8], [-8,-8], [8,8], [-8,8]];
+  const farCorner = () => {
+    const c = CORNERS[Math.floor(Math.random() * CORNERS.length)];
+    mon.x = c[0]; mon.z = c[1];
+  };
+
+  // State Management
+  const av = { x: 0, z: 0, y: 0, vy: 0, grounded: true, face: 0 };
+  const SPEED = 6.4, COL_R = 0.85;
+  let level = 1, score = 0, pads = [], targetsLeft = 0, levelLock = false;
+  let coins = parseInt(localStorage.getItem('math_coins') || '0');
+  $('coins').textContent = coins;
+  const effects = [];
+
+  const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+
+  // Game level configs (Parabola concepts)
+  const TOTAL = 7;
+  const MON_FROM = 3;
+  
+  function genLevel(n){
+    let targets = [], q = '';
+    let a, b, c, h, k;
+    if (n === 1) {
+      // Vertex of simple parabola: y = x^2 - 4 -> (0, -4)
+      targets = [[0, -4]];
+      updateParabolaMesh(1, 0, -4);
+      q = 'ด่าน 1: เดินไปเก็บฐานที่เป็น "จุดยอด" (vertex) ของพาราโบลา y = x² - 4';
+    } else if (n === 2) {
+      // y-intercept of y = x^2 - 4x + 3 -> (0, 3)
+      targets = [[0, 3]];
+      updateParabolaMesh(1, -4, 3);
+      q = 'ด่าน 2: เดินไปเก็บฐานที่เป็น "จุดตัดแกน Y" (เมื่อ x=0) ของสมการ y = x² - 4x + 3';
+    } else if (n === 3) {
+      // Roots of y = (x-2)(x-4) -> x = 2, 4. Collect the larger root -> (4, 0)
+      targets = [[4, 0]];
+      updateParabolaMesh(1, -6, 8);
+      q = 'ด่าน 3: สำหรับ y = (x-2)(x-4) เดินไปเก็บฐานที่เป็น "รากที่มีค่ามากกว่า" (จุดตัดแกน X)';
+    } else if (n === 4) {
+      // Roots of y = x^2 - 1 -> x = -1, 1. Collect smaller -> (-1, 0)
+      targets = [[-1, 0]];
+      updateParabolaMesh(1, 0, -1);
+      q = 'ด่าน 4: สำหรับ y = x² - 1 เดินไปเก็บฐานที่เป็น "รากที่มีค่าน้อยกว่า" (จุดตัดแกน X)';
+    } else if (n === 5) {
+      // Point evaluation: y = -0.5x^2 + 2. Find y at x = 2 -> (2, 0)
+      targets = [[2, 0]];
+      updateParabolaMesh(-0.5, 0, 2);
+      q = 'ด่าน 5: บนพาราโบลาคว่ำ y = -0.5x² + 2 เมื่อกำหนด x = 2 ฐานคำตอบอยู่ที่พิกัดใด?';
+    } else if (n === 6) {
+      // Axis of symmetry of y = x^2 - 6x + 8 -> h = 3. Stand on x-axis at (3, 0)
+      targets = [[3, 0]];
+      updateParabolaMesh(1, -6, 8);
+      q = 'ด่าน 6: หาจุดตัดแกน X ของแกนสมมาตรพาราโบลา y = x² - 6x + 8 (แกนสมมาตรสูตร x = -b/2a)';
+    } else {
+      // Boss level: basketball projectile max height vertex (2, 5)
+      targets = [[2, 5]];
+      updateParabolaMesh(-1, 4, 1);
+      q = '👑 ด่านบอส: วิถีลูกบาสเกตบอล y = -(x-2)² + 5 จุดยอด (จุดสูงสุด) อยู่ที่พิกัดใด?';
+    }
+
+    const used = new Set(targets.map(p => p[0] + ',' + p[1]));
+    const list = targets.map(p => ({ mx: p[0], my: p[1], target: true }));
+    let guard = 0;
+    while(list.length < targets.length + 5 && guard++ < 300){
+      const rx = ri(-7, 7), ry = ri(-7, 7), key = rx + ',' + ry;
+      if (!used.has(key)) {
+        used.add(key); list.push({ mx: rx, my: ry, target: false });
+      }
+    }
+    list.sort(() => Math.random() - 0.5);
+    return { q, targets, pads: list };
+  }
+
+  function clearPads(){
+    pads.forEach(p => scene.remove(p.group)); pads = [];
+  }
+  
+  function loadLevel(n){
+    clearPads(); levelLock = false;
+    const L = genLevel(n);
+    targetsLeft = L.targets.length;
+    L.pads.forEach(pd => {
+      const grp = new THREE.Group();
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(0.74, 0.8, 0.28, 28), new THREE.MeshLambertMaterial({ color: 0xe2e8f0 }));
+      base.position.y = 0.14; grp.add(base);
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.06, 10, 28), new THREE.MeshBasicMaterial({ color: 0x14b8a6 })); ring.rotation.x = Math.PI / 2; ring.position.y = 0.3; grp.add(ring);
+      const lab = makeLabel(`(${pd.mx}, ${pd.my})`); lab.position.y = 1.35; grp.add(lab);
+      grp.position.copy(mw(pd.mx, pd.my));
+      scene.add(grp);
+      pads.push({ mx: pd.mx, my: pd.my, target: pd.target, group: grp, base: base, ring: ring, got: false, cool: 0 });
+    });
+    av.x = 0; av.z = 0; av.y = 0; av.vy = 0; farCorner();
+    $('qbar').textContent = L.q; $('level').textContent = n + ' / ' + TOTAL; $('prog').textContent = '0 / ' + targetsLeft;
+    if (n === MON_FROM && mon.on) feedback('👾 ระวัง! ปีศาจพาราโบลาเริ่มไล่จับคุณแล้ว!', '#fca5a5');
+  }
+
+  let fbTimer = 0;
+  function feedback(text, color){
+    const f = $('feedback'); f.textContent = text; f.style.color = color || '#fff';
+    f.classList.add('show'); fbTimer = 1.2;
+  }
+  function spawnCoinFx(pos){
+    const coin = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.07, 18), new THREE.MeshLambertMaterial({ color: 0xfacc15 }));
+    coin.rotation.x = Math.PI/2; coin.position.copy(pos); coin.position.y = 0.6; scene.add(coin);
+    effects.push({ mesh: coin, t: 0, kind: 'coin' });
+  }
+
+  const keys = {};
+  addEventListener('keydown', e => {
+    const k = e.key.toLowerCase();
+    if (['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k) || ['w','a','s','d'].includes(k)) e.preventDefault();
+    keys[k] = true;
+    if (k === ' ' && av.grounded) { av.vy = 7.0; av.grounded = false; }
+  });
+  addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+  $('skipBtn').onclick = () => {
+    if(level >= TOTAL) { showVictory(); return; }
+    level++; loadLevel(level); feedback('ข้ามด่าน ⏭', '#fde047');
+  };
+  $('monBtn').onclick = () => {
+    mon.on = !mon.on; $('monBtn').textContent = '👾 มอนสเตอร์: ' + (mon.on ? 'เปิด' : 'ปิด'); if (mon.on) farCorner();
+  };
+
+  // Certificate reporting generator
+  function makeReport(){
+    const c = document.createElement('canvas'); c.width = 900; c.height = 560; const x = c.getContext('2d');
+    const g = x.createLinearGradient(0,0,0,560); g.addColorStop(0, '#e6f4f1'); g.addColorStop(1, '#d4ebe6'); x.fillStyle = g; x.fillRect(0,0,900,560);
+    x.strokeStyle = '#0d9488'; x.lineWidth = 10; x.strokeRect(14, 14, 872, 532);
+    x.fillStyle = '#0d9488'; x.fillRect(14, 14, 872, 88);
+    x.fillStyle = '#fff'; x.textAlign = 'center'; x.font = "bold 32px 'Noto Sans Thai',sans-serif"; x.fillText('🏆 ใบรับรองการเรียนรู้ — Parabola Quest 3D', 450, 68);
+    
+    const name = ($('winName').value || '').trim();
+    x.fillStyle = '#115e59'; x.font = "bold 28px 'Noto Sans Thai',sans-serif"; x.fillText(name ? `ชื่อผู้เรียน: ${name}` : 'ผู้เรียนแสนขยัน (ไม่ได้ระบุชื่อ)', 450, 150);
+    x.fillStyle = '#16a34a'; x.font = "bold 20px 'Noto Sans Thai',sans-serif"; x.fillText('✅ ผ่านหลักสูตรกิจกรรม 3D: พาราโบลา (จุดยอด จุดตัด แกนสมมาตร)', 450, 196);
+    
+    const rows = [
+      ['คะแนนรวมที่สะสมได้', score + ' คะแนน'],
+      ['จำนวนเหรียญคณิตศาสตร์', coins + ' 🪙'],
+      ['จำนวนด่านผ่านทั้งหมด', '7 / 7 ด่าน'],
+      ['โดนปีศาจขัดขวาง', mon.caught + ' ครั้ง']
+    ];
+    let yy = 250;
+    rows.forEach(rw => {
+      x.textAlign = 'left'; x.fillStyle = '#475569'; x.font = "20px 'Noto Sans Thai',sans-serif"; x.fillText(rw[0], 150, yy);
+      x.textAlign = 'right'; x.fillStyle = '#1e293b'; x.font = "bold 22px 'Noto Sans Thai',sans-serif"; x.fillText(rw[1], 750, yy);
+      yy += 54;
+    });
+    const d = new Date(), ds = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    x.textAlign = 'center'; x.fillStyle = '#6b7280'; x.font = "17px sans-serif"; x.fillText(`วันที่สอบผ่าน: ${ds} · Math in Motion สัปดาห์ที่ 2`, 450, 516);
+    return c.toDataURL('image/png');
+  }
+
+  function showVictory(){
+    levelLock = true; $('reportImg').src = makeReport(); $('win').style.display = 'flex';
+  }
+  $('winName').addEventListener('input', () => {
+    if($('win').style.display === 'flex') $('reportImg').src = makeReport();
+  });
+  $('saveImgBtn').addEventListener('click', () => {
+    const nm = ($('winName').value || 'report').trim().replace(/[^\w฀-๿-]+/g, '_') || 'report';
+    const a = document.createElement('a'); a.href = makeReport(); a.download = `ParabolaQuest3D_${nm}.png`;
+    document.body.appendChild(a); a.click(); a.remove();
+  });
+  $('replayBtn').onclick = () => {
+    $('win').style.display = 'none'; level = 1; score = 0; $('score').textContent = '0'; loadLevel(1);
+  };
+
+  // Fullscreen controller
+  const fsBtn = $('fsBtn');
+  function goBig(){
+    if(document.fullscreenElement) { document.exitFullscreen(); return; }
+    document.documentElement.requestFullscreen().catch(e => {
+       alert('ไม่สามารถขยายเต็มจอได้');
+    });
+  }
+  fsBtn.addEventListener('click', goBig);
+  document.addEventListener('fullscreenchange', () => {
+    fsBtn.textContent = document.fullscreenElement ? '⛶ ออกเต็มจอ' : '⛶ เต็มจอ';
+  });
+
+  // Touch joystick mechanics
+  const touch = { active: false, id: null, sx: 0, sy: 0, x: 0, z: 0, moved: false };
+  const MAXR = 70, jb = $('joyBase'), jt = $('joyThumb'), cv = renderer.domElement;
+  function jShow(x, y){ jb.style.left = x+'px'; jb.style.top = y+'px'; jt.style.left = x+'px'; jt.style.top = y+'px'; jb.style.display = 'block'; jt.style.display = 'block'; }
+  function jThumb(dx, dy){ const len = Math.hypot(dx, dy) || 1, c = Math.min(Math.hypot(dx, dy), MAXR); jt.style.left = (touch.sx + dx/len*c)+'px'; jt.style.top = (touch.sy + dy/len*c)+'px'; }
+  function jHide(){ jb.style.display = 'none'; jt.style.display = 'none'; }
+  cv.addEventListener('touchstart', e => {
+    if (e.target !== cv) return; const t = e.changedTouches[0];
+    touch.active = true; touch.id = t.identifier; touch.sx = t.clientX; touch.sy = t.clientY; touch.x = 0; touch.z = 0; touch.moved = false;
+    jShow(t.clientX, t.clientY); e.preventDefault();
+  }, { passive: false });
+  cv.addEventListener('touchmove', e => {
+    if(!touch.active) return; let t = null; for(const c of e.changedTouches){ if (c.identifier === touch.id) { t = c; break; } } if (!t) return;
+    const dx = t.clientX - touch.sx, dy = t.clientY - touch.sy, len = Math.hypot(dx, dy), mag = Math.min(len, MAXR)/MAXR;
+    if(len > 5) touch.moved = true;
+    if(len > 0) { touch.x = dx / len * mag; touch.z = dy / len * mag; }
+    jThumb(dx, dy); e.preventDefault();
+  }, { passive: false });
+  function endTouch(){
+    if(!touch.active) return; const wasTap = !touch.moved; touch.active = false; touch.x = 0; touch.z = 0; jHide();
+    if(wasTap && av.grounded) { av.vy = 7.0; av.grounded = false; }
+  }
+  cv.addEventListener('touchend', endTouch); cv.addEventListener('touchcancel', endTouch);
+
+  const clock = new THREE.Clock();
+  function tick(){
+    const dt = Math.min(clock.getDelta(), 0.05);
+    let dx = 0, dz = 0;
+    if (keys['arrowup'] || keys['w']) dz -= 1;
+    if (keys['arrowdown'] || keys['s']) dz += 1;
+    if (keys['arrowleft'] || keys['a']) dx -= 1;
+    if (keys['arrowright'] || keys['d']) dx += 1;
+    if (dx || dz) { const len = Math.hypot(dx, dz); dx /= len; dz /= len; }
+    if (touch.active) { dx = touch.x; dz = touch.z; }
+    
+    if (dx || dz) {
+      av.x += dx * SPEED * dt; av.z += dz * SPEED * dt;
+      av.x = Math.max(-9.5, Math.min(9.5, av.x)); av.z = Math.max(-9.5, Math.min(9.5, av.z));
+      av.face = Math.atan2(dx, dz);
+    }
+    
+    av.vy -= 20 * dt; av.y += av.vy * dt;
+    if(av.y <= 0) { av.y = 0; av.vy = 0; av.grounded = true; }
+    
+    avatar.position.set(av.x, av.y, av.z); avatar.rotation.y = av.face;
+    shadow.position.set(av.x, 0.02, av.z);
+    const sc = 1 - av.y * 0.12; shadow.scale.set(Math.max(0.4, sc), Math.max(0.4, sc), 1);
+    
+    camera.position.lerp(new THREE.Vector3(av.x, 11.5, av.z + 13), 0.12);
+    camera.lookAt(av.x, 1.0, av.z);
+
+    // Monster tracking AI
+    const monActive = mon.on && level >= MON_FROM;
+    monster.visible = monActive; mShadow.visible = monActive;
+    if (monActive) {
+      let dxm = av.x - mon.x, dzm = av.z - mon.z, dm = Math.hypot(dxm, dzm);
+      const sp = Math.min(3.7 + level * 0.08, 5.8);
+      if (dm > 0.001) { mon.x += dxm/dm*sp*dt; mon.z += dzm/dm*sp*dt; monster.rotation.y = Math.atan2(dxm, dzm); }
+      monster.position.set(mon.x, Math.abs(Math.sin(performance.now() * 0.006)) * 0.16, mon.z);
+      mShadow.position.set(mon.x, 0.02, mon.z);
+      
+      if (!levelLock && dm < 1.0) {
+        score = Math.max(0, score - 5); $('score').textContent = score;
+        mon.caught++; $('caught').textContent = mon.caught;
+        feedback('👾 โดนปีศาจขวาง! กลับจุดเริ่ม', '#fca5a5');
+        av.x = 0; av.z = 0; av.y = 0; av.vy = 0; farCorner();
+      }
+    }
+
+    $('pos').textContent = `(${Math.round(av.x)}, ${Math.round(-av.z)})`;
+    
+    pads.forEach(p => {
+      p.ring.rotation.z += dt * 2;
+      if (p.cool > 0) p.cool -= dt;
+      if (p.got || levelLock) return;
+      const d = Math.hypot(av.x - p.group.position.x, av.z - p.group.position.z);
+      if (d < COL_R) {
+        if (p.target) {
+          p.got = true; p.base.material.color.set(0xfacc15); p.ring.material.color.set(0xf59e0b);
+          score += 15; coins += 5; localStorage.setItem('math_coins', coins);
+          $('score').textContent = score; $('coins').textContent = coins;
+          targetsLeft--; const tot = pads.filter(x => x.target).length;
+          $('prog').textContent = (tot - targetsLeft) + ' / ' + tot;
+          spawnCoinFx(p.group.position); feedback('✓ ถูกต้อง! พิกัดสอดรับสมการ +5 🪙', '#86efac');
+          if (targetsLeft <= 0) {
+            levelLock = true;
+            if (level >= TOTAL) {
+              feedback('🏆 ชนะเกมสำเร็จ!', '#fde047'); setTimeout(showVictory, 1200);
+            } else {
+              feedback(`🎉 ผ่านด่านที่ ${level}!`, '#fde047');
+              setTimeout(() => { level++; loadLevel(level); }, 1500);
+            }
+          }
+        } else if (p.cool <= 0) {
+          p.cool = 1.0; p.base.material.color.set(0xfca5a5);
+          setTimeout(() => { if(!p.got) p.base.material.color.set(0xe2e8f0); }, 400);
+          feedback('✗ พิกัดไม่ตรงกับข้อกำหนดของพาราโบลาด่านนี้', '#fca5a5');
+        }
+      }
+    });
+
+    // Particle coin effects
+    for(let i=effects.length-1; i>=0; i--){
+      const e = effects[i]; e.t += dt;
+      if (e.kind === 'coin') {
+        e.mesh.position.y = 0.6 + e.t * 2.4; e.mesh.rotation.z += dt * 8;
+        e.mesh.material.transparent = true; e.mesh.material.opacity = Math.max(0, 1 - e.t/0.9);
+        if (e.t > 0.9) { scene.remove(e.mesh); effects.splice(i, 1); }
+      }
+    }
+
+    if (fbTimer > 0) {
+      fbTimer -= dt; if (fbTimer <= 0) $('feedback').classList.remove('show');
+    }
+    
+    renderer.render(scene, camera);
+    requestAnimationFrame(tick);
+  }
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  $('loading').style.display = 'none';
+  loadLevel(level);
+  tick();
+})();
+</script>
+</body>
+</html>

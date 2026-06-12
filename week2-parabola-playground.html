@@ -1,0 +1,2031 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Parabola Playground — สนามพาราโบลา (สัปดาห์ที่ 2)</title>
+<style>
+  :root{
+    --bg:#f0fdfa; --card:#ffffff; --ink:#1f2937; --muted:#6b7280;
+    --line:#0d9488; --line-soft:#ccfbf1;
+    --target:#f59e0b; --target-soft:#fef3c7;
+    --ok:#16a34a; --grid:#e6efeb; --axis:#9aa3b2; --ball:#ef4444;
+    --shadow:0 6px 22px rgba(31,41,55,.08);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font-family:'Noto Sans Thai','Sarabun',system-ui,-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--ink);line-height:1.45;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+  header{padding:14px 20px;background:linear-gradient(120deg,#0d9488,#14b8a6);color:#fff;box-shadow:var(--shadow);flex:0 0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+  #fsBtn{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:8px;padding:7px 12px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;white-space:nowrap}
+  header h1{margin:0;font-size:20px;font-weight:700;letter-spacing:.2px}
+  header p{margin:2px 0 0;font-size:13px;opacity:.9}
+  .controls { display: flex; align-items: center; gap: 12px; }
+  #soundToggle { background: rgba(255,255,255,0.18); border: none; font-size: 16px; width: 38px; height: 38px; border-radius: 50%; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.15s; }
+  #soundToggle:hover { background: rgba(255,255,255,0.3); transform: scale(1.05); }
+  .coin-bag { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; border: 2px solid #fff; border-radius: 999px; padding: 6px 14px; font-weight: 800; font-size: 15px; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(217,119,6,0.35); animation: coinFloat 2s ease-in-out infinite alternate; }
+  @keyframes coinFloat { 0% { transform: translateY(0); } 100% { transform: translateY(-2px); } }
+
+  .wrap{max-width:1180px;width:100%;margin:0 auto;padding:14px 20px 16px;flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+  .tabs{display:flex;gap:8px;margin:0 0 12px;flex-wrap:wrap;flex:0 0 auto}
+  .tab{flex:0 0 auto;padding:9px 16px;border:1px solid #d2e4df;background:#fff;border-radius:999px;cursor:pointer;font-size:14px;font-weight:600;color:#475569;transition:.15s}
+  .tab:hover{border-color:#5eead4}
+  .tab.active{background:var(--line);color:#fff;border-color:var(--line)}
+  .tab.assign{border-color:#16a34a;color:#15803d}
+  .tab.assign.active{background:#16a34a;color:#fff;border-color:#16a34a}
+  
+  .layout{display:flex;gap:18px;align-items:stretch;flex:1 1 auto;min-height:0}
+  .plot-card{flex:1 1 auto;background:var(--card);border-radius:16px;padding:10px;box-shadow:var(--shadow);min-width:0;min-height:0;display:flex;position:relative}
+  #plot{flex:1 1 auto;min-width:0;min-height:0;display:block;border-radius:10px;touch-action:none;cursor:crosshair;background:#fff}
+  #confetti-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100; border-radius: 10px; }
+  
+  .side{flex:0 0 360px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;min-height:0;padding-right:6px}
+  @media (max-width:880px){
+    html,body{height:auto;overflow:auto}
+    body{display:block}
+    .wrap{display:block;padding:16px 20px 40px}
+    .layout{flex-direction:column;min-height:0}
+    .plot-card{height:60vh}
+    .side{flex:1 1 auto;width:100%;overflow:visible}
+  }
+  
+  .panel{background:var(--card);border-radius:16px;padding:16px;box-shadow:var(--shadow)}
+  .eq{font-size:23px;font-weight:800;text-align:center;padding:6px 0 10px;font-family:'Cambria Math','Times New Roman',serif;letter-spacing:.3px}
+  .eq .a{color:var(--line)} .eq .b{color:#7c3aed} .eq .c{color:var(--ok)}
+  .row{display:flex;align-items:center;gap:10px;margin:12px 0}
+  .row label{flex:1;font-size:14px;font-weight:600}
+  .row label small{display:block;font-weight:400;color:var(--muted);font-size:11px}
+  input[type=range]{flex:0 0 160px;accent-color:var(--line)}
+  .chip{flex:0 0 58px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums;background:#f1f3f9;border-radius:8px;padding:4px 0;font-size:15px}
+  .chip::-webkit-outer-spin-button, .chip::-webkit-inner-spin-button {-webkit-appearance:none;margin:0}
+  .chip[type=number]{-moz-appearance:textfield;border:1.5px solid transparent;transition:border-color .15s,background-color .15s}
+  .chip[type=number]:focus{border-color:#0d9488;background:#fff;outline:none}
+  .toggles{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:6px}
+  .toggles label{display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;color:#475569}
+  .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  button.act{flex:1;padding:10px 12px;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-size:14px;font-family:inherit;transition:.15s}
+  .b-primary{background:var(--line);color:#fff} .b-primary:hover{background:#0f766e}
+  .b-ghost{background:#e6f4f1;color:#0f766e} .b-ghost:hover{background:#d4ebe6}
+  .b-ok{background:var(--ok);color:#fff} .b-ok:hover{background:#15803d}
+  .hint{font-size:13px;color:var(--muted);margin-top:8px}
+  .teach-cap{margin-top:10px;padding:10px 12px;border-radius:10px;background:#f0fdfa;color:#115e59;font-weight:600;font-size:14px;min-height:20px;display:none;line-height:1.4}
+  
+  .exname{flex:1;padding:9px;border:2px solid #d4ebe6;border-radius:8px;font-size:15px;font-family:inherit}
+  .exq{padding:11px 0;border-top:1px solid #eef1f8}
+  .exq:first-child{border-top:none}
+  .exqt{font-size:14px;font-weight:600;margin-bottom:6px;line-height:1.45}
+  .exrow{display:flex;gap:8px;align-items:center}
+  .exrow input{width:120px;padding:8px;border:2px solid #d4ebe6;border-radius:8px;font-size:15px;font-family:inherit}
+  .exfb{font-size:13px;font-weight:700}
+  .exfb.ok{color:#16a34a} .exfb.no{color:#dc2626}
+  
+  .learn-eq{font-size:28px;font-weight:800;text-align:center;padding:8px 0;font-family:'Cambria Math','Times New Roman',serif}
+  .learn-eq .lp{cursor:pointer;border-radius:6px;padding:0 4px}
+  .learn-eq .lp[data-part="a"]{color:var(--line)}
+  .learn-eq .lp[data-part="b"]{color:#7c3aed}
+  .learn-eq .lp[data-part="c"]{color:var(--ok)}
+  .learn-eq .lp.sel{background:#fef3c7;outline:2px solid #f59e0b}
+  .learn-chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+  .lchip,.rchip{border:1px solid #cbd5e1;background:#fff;border-radius:999px;padding:7px 12px;font-size:12.5px;font-weight:700;color:#475569;cursor:pointer;font-family:inherit}
+  .lchip.active,.rchip.active{background:var(--line);color:#fff;border-color:var(--line)}
+  .learn-def{margin-top:6px;padding:12px 14px;border-radius:10px;background:#eefdfb;color:#115e59;font-weight:500;font-size:13.5px;line-height:1.6}
+  
+  .stat{display:flex;justify-content:space-between;gap:8px;margin:6px 0;font-size:14px}
+  .stat b{font-variant-numeric:tabular-nums}
+  .feedback{margin-top:10px;padding:10px 12px;border-radius:10px;font-weight:600;font-size:14px;display:none}
+  .feedback.show{display:block}
+  .f-ok{background:var(--target-soft);color:#92400e}
+  .f-great{background:#dcfce7;color:#166534}
+  .f-bad{background:#fee2e2;color:#991b1b}
+  .big{font-size:19px;font-weight:800;text-align:center;margin:6px 0}
+  .big .v{color:var(--line)}
+  details{margin-top:14px;font-size:13px;color:#475569}
+  summary{cursor:pointer;font-weight:600;color:var(--line)}
+  details ul{margin:8px 0 0;padding-left:20px}
+  .nav{font-size:13px;margin-top:10px} .nav a{color:var(--line);text-decoration:none;font-weight:600}
+  .hidden{display:none !important}
+
+  /* Mascot companion pet */
+  .pet-panel { display: flex; gap: 12px; align-items: center; background: linear-gradient(135deg, #f0fdfa, #ccfbf1); border: 1.5px solid #99f6e4; border-radius: 16px; padding: 12px; margin-bottom: 12px; position: relative; }
+  .pet-avatar-container { flex: 0 0 54px; text-align: center; }
+  .pet-avatar { font-size: 38px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); animation: petWiggle 2.5s ease-in-out infinite; }
+  @keyframes petWiggle { 0%, 100% { transform: rotate(0) translateY(0); } 50% { transform: rotate(6deg) translateY(-3px); } }
+  .pet-bubble { flex: 1; background: #fff; border: 1px solid #99f6e4; border-radius: 12px; padding: 8px 12px; font-size: 12.5px; position: relative; color: #115e59; line-height: 1.4; box-shadow: 0 2px 6px rgba(13,148,136,0.04); min-height: 48px; }
+  .pet-bubble::after { content: ''; position: absolute; left: -8px; top: 18px; width: 0; height: 0; border-top: 6px solid transparent; border-bottom: 6px solid transparent; border-right: 8px solid #fff; }
+  .pet-bubble::before { content: ''; position: absolute; left: -9px; top: 18px; width: 0; height: 0; border-top: 6px solid transparent; border-bottom: 6px solid transparent; border-right: 8px solid #99f6e4; }
+  .pet-select-btn { font-size: 11px; padding: 2px 6px; border: 1px solid #99f6e4; background: #fff; border-radius: 6px; cursor: pointer; color: #0d9488; font-weight: 600; margin-top: 4px; display: inline-block; }
+  .pet-select-btn:hover { background: #f0fdfa; }
+
+  /* Customization shop drawer */
+  .shop-panel { background: #fafafa; border: 2px dashed #cbd5e1; margin-top: 14px; border-radius: 16px; padding: 16px; box-shadow: var(--shadow); }
+  .shop-title { font-size: 15px; font-weight: 800; color: #1e293b; margin: 0 0 10px; display: flex; align-items: center; gap: 6px; }
+  .shop-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px; }
+  .shop-item { background: #fff; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 10px; text-align: center; cursor: pointer; transition: 0.15s; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; min-height: 105px; }
+  .shop-item:hover { border-color: #cbd5e1; transform: translateY(-1px); }
+  .shop-item.owned { border-color: #cbd5e1; background: #f8fafc; }
+  .shop-item.active { border-color: #0d9488; background: #f0fdfa; box-shadow: 0 0 0 2px #99f6e4; }
+  .shop-item .item-title { font-size: 12.5px; font-weight: 700; color: #334155; margin-bottom: 4px; }
+  .shop-item .item-desc { font-size: 10.5px; color: #64748b; line-height: 1.25; margin-bottom: 8px; flex-grow: 1; }
+  .shop-item .buy-btn { font-size: 11px; font-weight: 700; padding: 5px 8px; border: none; border-radius: 6px; cursor: pointer; width: 100%; transition: 0.1s; }
+  .shop-item .buy-btn.buy { background: #f59e0b; color: #fff; }
+  .shop-item .buy-btn.buy:hover { background: #d97706; }
+  .shop-item .buy-btn.use { background: #e2e8f0; color: #475569; }
+  .shop-item .buy-btn.use:hover { background: #cbd5e1; }
+  .shop-item .buy-btn.active { background: #0d9488; color: #fff; cursor: default; }
+
+  /* Quest Map */
+  .quest-container { margin-bottom: 12px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 10px 14px; }
+  .quest-title { font-size: 13px; font-weight: 700; color: #475569; margin: 0 0 8px; display: flex; justify-content: space-between; }
+  .quest-map { display: flex; justify-content: space-between; align-items: center; position: relative; padding: 4px 10px; margin-top: 6px; }
+  .quest-map::before { content: ''; position: absolute; left: 16px; right: 16px; top: 14px; height: 3px; background: #cbd5e1; z-index: 1; }
+  .quest-step { width: 28px; height: 28px; border-radius: 50%; background: #fff; border: 2.5px solid #cbd5e1; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: #64748b; z-index: 2; cursor: pointer; transition: 0.15s; }
+  .quest-step.active { border-color: #f59e0b; background: #fef3c7; color: #b45309; box-shadow: 0 0 0 3px rgba(245,158,11,0.2); transform: scale(1.15); }
+  .quest-step.done { border-color: #10b981; background: #dcfce7; color: #15803d; }
+  .quest-step.boss { border-color: #ef4444; color: #b91c1c; font-size: 13px; }
+  .quest-step.boss.active { background: #fee2e2; box-shadow: 0 0 0 3px rgba(239,68,68,0.25); }
+
+  /* Real-world sub-examples selection */
+  .rw-desc { font-size: 13px; color: #475569; margin-bottom: 10px; line-height: 1.5; }
+
+  /* ---- Assignment / worksheet ---- */
+  #panel-assign{border:2px solid #bbf7d0}
+  .ws-title{font-size:18px;font-weight:800;color:#15803d;margin:0 0 2px}
+  .ws-sub{font-size:12.5px;color:var(--muted);margin:0 0 12px}
+  .names{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+  .names label{flex:1 1 100%;font-size:12px;font-weight:600;color:#374151}
+  .names input{width:100%;padding:8px 10px;border:1.5px solid #d1d5db;border-radius:8px;font-size:14px;font-family:inherit;margin-top:3px}
+  .names .half{flex:1 1 45%}
+  .sect{margin:16px 0;padding-top:12px;border-top:1px dashed #d1d5db}
+  .sect h4{margin:0 0 8px;font-size:14.5px;color:#1f2937}
+  .sect h4 .badge{background:#dcfce7;color:#166534;border-radius:6px;padding:1px 8px;font-size:11px;margin-left:6px;font-weight:700}
+  .task{font-size:13.5px;margin:10px 0;color:#374151}
+  .task .qn{font-weight:700;color:#15803d}
+  .ti{width:100%;padding:7px 9px;border:1.5px solid #d1d5db;border-radius:7px;font-size:14px;font-family:inherit;margin-top:5px}
+  textarea.ti{min-height:54px;resize:vertical}
+  .inline-i{display:inline-block;width:78px;padding:3px 6px;border:1.5px solid #d1d5db;border-radius:6px;font-size:14px;font-family:inherit;text-align:center}
+  .check-mini{padding:6px 12px;border:none;border-radius:8px;background:#e2f0ec;color:#0d9488;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;margin-top:6px}
+  .task-fb{font-size:13px;font-weight:700;margin-top:5px;min-height:16px}
+  .tf-ok{color:#15803d} .tf-bad{color:#b91c1c}
+  .cap-wrap{margin-top:8px;border:1.5px solid #d1d5db;border-radius:8px;padding:6px;background:#fafafa}
+  .cap-ph{font-size:12.5px;color:#9ca3af;text-align:center;padding:18px 0}
+  .cap-img{display:none;width:100%;border-radius:5px}
+  .auto-stat{background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:8px;padding:10px 12px;font-size:14px}
+  .auto-stat b{color:#15803d}
+  .submit-box{margin-top:16px;padding:14px;background:#f0fdf4;border-radius:12px;text-align:center}
+  .submit-box .note{font-size:12.5px;color:#15803d;margin-top:8px;line-height:1.5}
+  .print-only{display:none}
+
+  @media print{
+    @page{margin:14mm}
+    body{background:#fff}
+    body *{visibility:hidden}
+    #panel-assign, #panel-assign *{visibility:visible}
+    #panel-assign{position:absolute;left:0;top:0;width:100%;border:none;box-shadow:none;padding:0}
+    .no-print{display:none !important}
+    .print-only{display:block}
+    .ti,.inline-i,.names input{border:none;border-bottom:1.2px solid #555;border-radius:0}
+    .cap-wrap{break-inside:avoid}
+    .sect{break-inside:avoid}
+  }
+
+  /* Glowing Active Panels based on state */
+  #panel-learn:not(.hidden) { border: 2.5px solid #7c3aed; box-shadow: 0 0 15px rgba(124, 58, 237, 0.25); }
+  #panel-explore:not(.hidden) { border: 2.5px solid #0d9488; box-shadow: 0 0 15px rgba(13, 148, 136, 0.25); }
+  #panel-challenge:not(.hidden) { border: 2.5px solid #f59e0b; box-shadow: 0 0 15px rgba(245, 158, 11, 0.25); }
+  #panel-physics:not(.hidden) { border: 2.5px solid #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.25); }
+  #panel-realworld:not(.hidden) { border: 2.5px solid #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.25); }
+  #panel-game:not(.hidden) { border: 2.5px solid #10b981; box-shadow: 0 0 15px rgba(16, 185, 129, 0.25); }
+  #panel-exercises:not(.hidden) { border: 2.5px solid #8b5cf6; box-shadow: 0 0 15px rgba(139, 92, 246, 0.25); }
+  #panel-assign:not(.hidden) { border: 2.5px solid #16a34a; box-shadow: 0 0 15px rgba(22, 163, 74, 0.25); }
+  
+  .learn-step-box { background: #fafafa; border: 1.5px solid #cbd5e1; border-radius: 12px; padding: 10px 14px; margin: 8px 0; transition: 0.2s; }
+  .learn-step-box.completed { border-color: #16a34a; background: #f0fdf4; }
+  .learn-step-box h4 { margin: 0 0 4px; display: flex; align-items: center; justify-content: space-between; }
+  .quiz-opt { width: 100%; text-align: left !important; margin: 2px 0; border: 1px solid #cbd5e1; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Parabola Playground</h1>
+    <p>สัปดาห์ที่ 2 · พหุนามกำลังสอง (quadratic polynomial) y = a·x² + b·x + c · ปรับรูปร่างหรือลากจุดยอด</p>
+  </div>
+  <div class="controls no-print">
+    <button id="fsBtn">⛶ เต็มจอ</button>
+    <button id="soundToggle" style="display: none;" title="เปิด/ปิดเสียง">🔊</button>
+    <div class="coin-bag">🪙 <span id="coinCount">0</span></div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="tabs">
+    <button class="tab active" data-mode="learn">เรียนรู้</button>
+    <button class="tab" data-mode="explore">สำรวจ (Explore)</button>
+    <button class="tab" data-mode="challenge">ท้าทาย (Challenge)</button>
+    <button class="tab" data-mode="physics">ฟิสิกส์ (Physics)</button>
+    <button class="tab" data-mode="realworld">ตัวอย่างจริง</button>
+    <button class="tab" data-mode="game">Game</button>
+    <button class="tab" data-mode="exercises">แบบฝึกหัด</button>
+    <button class="tab assign" data-mode="assign">Assignment</button>
+  </div>
+
+  <div class="layout">
+    <div class="plot-card">
+      <canvas id="plot"></canvas>
+      <canvas id="confetti-canvas"></canvas>
+    </div>
+
+    <div class="side">
+      <!-- Companion Pet (Mascot) -->
+      <div class="pet-panel no-print" id="petPanel">
+        <div class="pet-avatar-container">
+          <div class="pet-avatar" id="petAvatar">🐱</div>
+          <button class="pet-select-btn" id="petSelectBtn">สลับคู่หู</button>
+        </div>
+        <div class="pet-bubble">
+          <div id="petBubbleText">สวัสดี! ข้าคือ MathCat 🐱 พร้อมจะเรียนรู้เรื่องพาราโบลาหรือยัง? ลองจิ้มตามจุดหรือขยับสไลเดอร์ดูเลย!</div>
+        </div>
+      </div>
+
+      <!-- LEARN -->
+      <div class="panel" id="panel-learn">
+        <div class="big">ทำความเข้าใจพาราโบลา</div>
+        <div class="learn-eq">y = <span class="lp sel" data-part="a">a</span>·x² <span class="lp" data-part="b">+ b</span>·x <span class="lp" data-part="c">+ c</span></div>
+        
+        <!-- Guided Steps Container -->
+        <div id="learnStepsContainer" style="margin-top: 10px;">
+          <!-- Step 1 -->
+          <div class="learn-step-box" id="lStep1">
+            <h4 style="margin:0 0 4px;color:var(--line)">ขั้นที่ 1: ค้นพบสัมประสิทธิ์ a (คว่ำ vs หงาย) <span id="chkA" style="font-size:16px">⏳</span></h4>
+            <p style="font-size:12px;margin:4px 0;color:var(--muted)">สัมประสิทธิ์ a คุมรูปทรงของกราฟ ลองปรับสไลเดอร์ <b>a ให้มีค่าติดลบ (&lt; 0)</b> เพื่อทำให้พาราโบลาคว่ำลงเป็นรูปโดม</p>
+            
+            <!-- Embedded Slider a -->
+            <div class="row" style="margin: 8px 0 4px; gap: 8px;">
+              <label style="font-size: 12px; font-weight: bold;">ปรับค่า a:</label>
+              <input type="range" class="learn-slider-a" min="-5" max="5" step="0.25" value="1" style="flex: 1;">
+              <input type="number" class="chip learn-chip-a" min="-5" max="5" step="0.01" value="1.00" style="font-size:12px; padding:2px 6px; flex: 0 0 45px;">
+            </div>
+            
+            <div id="lStep1Progress" class="task-fb" style="font-size:11.5px;font-weight:700"></div>
+          </div>
+          
+          <!-- Step 2 -->
+          <div class="learn-step-box" id="lStep2" style="opacity:0.5; pointer-events:none">
+            <h4 style="margin:0 0 4px;color:#7c3aed">ขั้นที่ 2: ค้นหาจุดตัดแกน Y ด้วยค่า c <span id="chkC" style="font-size:16px">🔒</span></h4>
+            <p style="font-size:12px;margin:4px 0;color:var(--muted)">ค่าคงที่ c บอกจุดที่ตัดแกนตั้ง Y (เมื่อ x = 0) ลองขยับสไลเดอร์ <b>c ไปที่ 3.0</b></p>
+            
+            <!-- Embedded Slider c -->
+            <div class="row" style="margin: 8px 0 4px; gap: 8px;">
+              <label style="font-size: 12px; font-weight: bold;">ปรับค่า c:</label>
+              <input type="range" class="learn-slider-c" min="-10" max="10" step="0.5" value="-3" style="flex: 1;">
+              <input type="number" class="chip learn-chip-c" min="-10" max="10" step="0.1" value="-3.0" style="font-size:12px; padding:2px 6px; flex: 0 0 45px;">
+            </div>
+            
+            <div id="lStep2Progress" class="task-fb" style="font-size:11.5px;font-weight:700"></div>
+            
+            <!-- Interactive Substitution Box -->
+            <div class="interactive-calc" style="margin:8px 0;background:#f8fafc;padding:8px;border-radius:8px;border:1.5px solid #cbd5e1">
+              <p style="font-size:11px;margin:0 0 4px;font-weight:700;color:#475569">🧮 ลองแทนค่า x เพื่อหาพิกัด (x, y) บนกราฟ:</p>
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+                <span style="font-size:11px">กำหนดให้ x = </span>
+                <input type="number" id="subX" value="0" step="1" style="width:50px;padding:2px;border-radius:4px;border:1px solid #cbd5e1;text-align:center;font-size:11px">
+              </div>
+              <div style="font-family:'Cambria Math','Times New Roman',serif;font-size:12px;text-align:center;margin:4px 0;">
+                y = <span class="a" id="calc-a">1.00</span>·(<span class="subX-val">0</span>)² + <span class="b" id="calc-b">0.0</span>·(<span class="subX-val">0</span>) + <span class="c" id="calc-c">-3.0</span>
+              </div>
+              <div style="font-size:11px;font-weight:700;text-align:center;color:#475569;" id="calc-step-line">
+                y = 0.00 + 0.00 + (-3.0) = -3.00
+              </div>
+              <div style="font-size:11px;font-weight:700;text-align:center;color:#0d9488;margin-top:2px;" id="calc-coord-line">
+                จะได้พิกัดบนกราฟคือ: (0, -3.0)
+              </div>
+            </div>
+            
+            <div id="lStep2Quiz" class="hidden" style="margin-top:8px;background:#fcfcff;padding:8px;border-radius:8px;border:1.5px solid #dcd6f7">
+              <p style="font-size:12.5px;margin:0 0 6px;font-weight:700">❓ คำถาม: ถ้าสมการคือ y = x² - 2x - 5 กราฟจะตัดแกน Y ที่จุดใด?</p>
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <button class="act b-ghost quiz-opt" data-correct="false" style="padding:6px;font-size:12px">A. (-5, 0)</button>
+                <button class="act b-ghost quiz-opt" data-correct="true" style="padding:6px;font-size:12px">B. (0, -5)</button>
+                <button class="act b-ghost quiz-opt" data-correct="false" style="padding:6px;font-size:12px">C. (0, 0)</button>
+              </div>
+              <div id="quizFeedback" style="font-size:12px;font-weight:700;margin-top:4px"></div>
+            </div>
+          </div>
+          
+          <!-- Step 3 -->
+          <div class="learn-step-box" id="lStep3" style="opacity:0.5; pointer-events:none">
+            <h4 style="margin:0 0 4px;color:#2563eb">ขั้นที่ 3: ค้นหาจุดยอดด้วย b <span id="chkB" style="font-size:16px">🔒</span></h4>
+            <p style="font-size:12px;margin:4px 0;color:var(--muted)">สัมประสิทธิ์ b ย้ายตำแหน่งแกนสมมาตร ลองตั้งค่า <b>a = 1.00</b>, <b>c = 0.0</b> แล้วปรับ <b>b = -4.0</b> เพื่อค้นหาจุดยอด</p>
+            
+            <!-- Embedded Sliders a, b, c -->
+            <div style="display: flex; flex-direction: column; gap: 4px; margin: 8px 0 4px; background: #fff; padding: 6px; border-radius: 8px; border: 1px solid #e2e8f0;">
+              <div class="row" style="margin: 0; gap: 8px; align-items: center;">
+                <label style="font-size: 11px; font-weight: bold; flex: 0 0 45px;">ค่า a:</label>
+                <input type="range" class="learn-slider-a3" min="-5" max="5" step="0.25" value="1" style="flex: 1;">
+                <input type="number" class="chip learn-chip-a3" min="-5" max="5" step="0.01" value="1.00" style="font-size:11px; padding:1px 4px; flex: 0 0 40px; background:#f1f5f9;">
+              </div>
+              <div class="row" style="margin: 0; gap: 8px; align-items: center;">
+                <label style="font-size: 11px; font-weight: bold; flex: 0 0 45px;">ค่า b:</label>
+                <input type="range" class="learn-slider-b3" min="-10" max="10" step="0.5" value="0" style="flex: 1;">
+                <input type="number" class="chip learn-chip-b3" min="-10" max="10" step="0.1" value="0.0" style="font-size:11px; padding:1px 4px; flex: 0 0 40px; background:#f1f5f9;">
+              </div>
+              <div class="row" style="margin: 0; gap: 8px; align-items: center;">
+                <label style="font-size: 11px; font-weight: bold; flex: 0 0 45px;">ค่า c:</label>
+                <input type="range" class="learn-slider-c3" min="-10" max="10" step="0.5" value="-3" style="flex: 1;">
+                <input type="number" class="chip learn-chip-c3" min="-10" max="10" step="0.1" value="-3.0" style="font-size:11px; padding:1px 4px; flex: 0 0 40px; background:#f1f5f9;">
+              </div>
+            </div>
+            
+            <div id="lStep3Progress" class="task-fb" style="font-size:11.5px;font-weight:700"></div>
+          </div>
+          
+          <!-- Step 4 (Success / Summary) -->
+          <div class="learn-step-box hidden" id="lStep4" style="background:#f0fdf4;border:1.5px solid #bbf7d0;padding:10px;border-radius:10px;margin-top:8px">
+            <h4 style="margin:0 0 4px;color:#16a34a">🎉 สำเร็จบทเรียนทำความเข้าใจ!</h4>
+            <p style="font-size:12px;margin:4px 0;line-height:1.5;color:#15803d">คุณได้เรียนรู้แล้วว่า:<br>
+            • <b>a</b> คุมคว่ำหงาย และแคบกว้าง<br>
+            • <b>c</b> คือระดับจุดตัดแกน Y บนกราฟ<br>
+            • <b>b</b> เลื่อนพาราโบลาเฉียงออกด้านข้างตามสมมาตร</p>
+          </div>
+        </div>
+        
+        <div class="learn-chips" style="margin-top:12px">
+          <button class="lchip" data-part="all">คำอธิบายภาพรวม</button>
+          <button class="lchip active" data-part="a">รายละเอียดสัมประสิทธิ์ a</button>
+          <button class="lchip" data-part="b">รายละเอียดสัมประสิทธิ์ b</button>
+          <button class="lchip" data-part="c">รายละเอียดค่าคงที่ c</button>
+        </div>
+        <div class="learn-def" id="learnDef"></div>
+      </div>
+
+      <!-- Explore -->
+      <div class="panel hidden" id="panel-explore">
+        <div class="stat"><span>จุดยอด (vertex)</span><b id="vx">(0, -3)</b></div>
+        <div class="stat"><span>แกนสมมาตร</span><b id="axisV">x = 0</b></div>
+        <div class="stat"><span>ราก (จุดตัดแกน X)</span><b id="roots">x = ±1.73</b></div>
+        <div class="hint">💡 ลองจิ้มลากจุดยอดสีเขียวหรือจุดความกว้าง เพื่อปรับพาราโบลาโดยตรงบนกราฟ!</div>
+        <div class="btns"><button class="act b-primary" id="teachBtn">▶ สอนแบบเคลื่อนไหว: a, b, c</button></div>
+        <div class="teach-cap" id="teachCap"></div>
+      </div>
+
+      <!-- Challenge -->
+      <div class="panel hidden" id="panel-challenge">
+        <div class="big">จับคู่<span style="color:var(--target)">พาราโบลาสีส้ม</span>ให้ตรง!</div>
+        <div class="stat"><span>คะแนน (score)</span><b id="cScore">0</b></div>
+        <div class="stat"><span>รอบที่ (round)</span><b id="cRound">0</b></div>
+        <div class="stat"><span>ดาวที่ได้ (stars)</span><b id="cStars">⭐ 0</b></div>
+        <div class="feedback" id="cFeedback"></div>
+        <div class="btns"><button class="act b-ok" id="checkBtn">✓ ตรวจคำตอบ</button><button class="act b-primary" id="newTargetBtn">🎲 เป้าหมายใหม่</button></div>
+        <div class="hint">ปรับค่า a, b, c หรือลากเส้นให้ทับเส้นสีส้มพอดีแล้วตรวจ</div>
+      </div>
+
+      <!-- Physics -->
+      <div class="panel hidden" id="panel-physics">
+        <div class="big">วิถีกราฟพาราโบลาและแรงโน้มถ่วง</div>
+        <div class="stat"><span>ความสูงสูงสุด (จุดยอด Y)</span><b id="maxH">-</b></div>
+        <div class="stat"><span>สถานะโดม</span><b id="shape">โดมคว่ำ (a ต้องติดลบ)</b></div>
+        <div class="btns"><button class="act b-primary" id="playBtn">▶ โยนลูกบาสเกตบอล</button><button class="act b-ghost" id="rewindBtn">⏮ รีเซ็ตลูกบอล</button></div>
+        <div class="hint">💡 ลูกบอลที่ถูกโยนขึ้นฟ้าจะโค้งเป็นพาราโบลาคว่ำเสมอเนื่องจากแรงดึงดูดของโลกดึงมันลงด้านล่าง!</div>
+      </div>
+
+      <!-- Real World Examples -->
+      <div class="panel hidden" id="panel-realworld">
+        <div class="big">พาราโบลาในโลกจริง</div>
+        <div class="learn-chips">
+          <button class="rchip active" data-sc="angry">นกโกรธพุ่งชนหมู</button>
+          <button class="rchip" data-sc="satellite">จานรับสัญญาณดาวเทียม</button>
+          <button class="rchip" data-sc="bridge">ประตูสะพานโค้ง</button>
+        </div>
+        <div class="rw-desc" id="rwDesc"></div>
+        <div class="stat"><span id="rwLabel1">แกน x</span><b id="rwVal1">0</b></div>
+        <div class="stat"><span id="rwLabel2">แกน y</span><b id="rwVal2">0</b></div>
+        <div class="btns no-print" style="margin-top: 12px;">
+          <button class="act b-primary" id="rwPlayBtn">▶ เล่นแอนิเมชัน</button>
+          <button class="act b-ghost" id="rwRewindBtn">↺ เริ่มใหม่</button>
+        </div>
+        <div class="hint" id="rwHint"></div>
+      </div>
+
+      <!-- Game Tab (Star Catcher) -->
+      <div class="panel hidden" id="panel-game">
+        <div class="big">เก็บดาวกำลังสอง</div>
+        <div class="quest-container">
+          <div class="quest-title">แผนที่ด่าน (Quest Map)</div>
+          <div class="quest-map" id="questMap">
+            <div class="quest-step active" data-lvl="1">1</div>
+            <div class="quest-step" data-lvl="2">2</div>
+            <div class="quest-step" data-lvl="3">3</div>
+            <div class="quest-step" data-lvl="4">4</div>
+            <div class="quest-step boss" data-lvl="5" title="บอสด่านสุดท้าย">👑</div>
+          </div>
+        </div>
+        <div class="hint" id="gStory" style="font-weight:600;color:#115e59">ด่าน 1: ปรับกราฟพาราโบลาให้ผ่านกลุ่มดวงดาวสีฟ้า!</div>
+        <div class="stat"><span>ด่านปัจจุบัน (level)</span><b id="gLevel">1</b></div>
+        <div class="stat"><span>ดาวที่จับได้</span><b id="gCount">0 / 0</b></div>
+        <div class="stat"><span>คะแนนเกม</span><b id="gScore">0</b></div>
+        <div class="feedback" id="gFeedback"></div>
+        <div class="btns"><button class="act b-primary" id="gNewBtn">🎲 รีเซ็ตด่าน</button><button class="act b-ghost" id="gHintBtn">💡 ตัวช่วยใบ้</button></div>
+      </div>
+
+      <!-- Exercises -->
+      <div class="panel hidden" id="panel-exercises">
+        <div class="big">แบบฝึกหัดสุ่มตามชื่อ</div>
+        <div class="row"><label style="flex:0 0 auto">ชื่อผู้เรียน</label><input id="exName" class="exname" type="text" placeholder="พิมพ์ชื่อเพื่อรับโจทย์ส่วนตัว"></div>
+        <div class="btns"><button class="act b-primary" id="exGenBtn">สร้างโจทย์</button></div>
+        <div class="stat" style="margin-top:10px"><span>คะแนนรวม</span><b id="exScore">0 / 0</b></div>
+        <div id="exList"></div>
+      </div>
+
+      <!-- Assignment -->
+      <div class="panel hidden" id="panel-assign">
+        <p class="ws-title">ใบงานสัปดาห์ที่ 2 — ฟังก์ชันกำลังสองและพาราโบลา</p>
+        <p class="ws-sub">ทำโจทย์ให้ครบถ้วน จากนั้นคลิกปุ่มบันทึกเป็น PDF เพื่อส่งงาน</p>
+        <div class="names">
+          <label>ชื่อ–สกุล<input class="ti" id="stuName" placeholder="พิมพ์ชื่อ-สกุล"></label>
+          <label class="half">ห้อง/เลขที่<input class="ti" id="stuClass" placeholder="เช่น 2/1 เลขที่ 5"></label>
+          <label class="half">วันที่<input class="ti" id="stuDate" placeholder="วว/ดด/ปป"></label>
+        </div>
+
+        <div class="sect">
+          <h4>ส่วน A · ตอบคำถามการสำรวจ <span class="badge">เปิดแท็บ "สำรวจ"</span></h4>
+          <div class="task"><span class="qn">A1.</span> ปรับค่า <b>a</b> ให้เป็นค่าบวก กราฟมีลักษณะอย่างไร? <input class="inline-i" id="a1" placeholder="หงาย/คว่ำ"> และถ้า <b>a</b> ติดลบ กราฟเป็นอย่างไร? <input class="inline-i" id="a1b" placeholder="หงาย/คว่ำ"></div>
+          <div class="task"><span class="qn">A2.</span> ค่า <b>c</b> ในสมการบอกอะไรเราเกี่ยวกับแกน Y? <input class="ti" id="a2" placeholder="อธิบายสั้น ๆ"></div>
+          <div class="task"><span class="qn">A3.</span> เมื่อกราฟสมมาตร แกนสมมาตรจะลากผ่านจุดใดของพาราโบลาเสมอ? <input class="ti" id="a3" placeholder="เช่น จุดยอด"></div>
+        </div>
+
+        <div class="sect">
+          <h4>ส่วน B · ปรับสมการพาราโบลาตามโจทย์ (ตรวจอัตโนมัติ)</h4>
+          <div class="task"><span class="qn">B1.</span> ปรับกราฟให้ได้ <b>y = -x² + 4x - 2</b> แล้วตรวจสอบ
+            <button class="check-mini no-print" id="ckB1">✓ ตรวจ B1</button>
+            <div class="task-fb" id="fbB1"></div></div>
+          <div class="task"><span class="qn">B2.</span> ปรับกราฟให้มีจุดยอดที่ <b>(3, -4)</b> และ <b>a = 1.00</b> (สมการ: y = x² - 6x + 5)
+            <button class="check-mini no-print" id="ckB2">✓ ตรวจ B2</button>
+            <div class="task-fb" id="fbB2"></div></div>
+        </div>
+
+        <div class="sect">
+          <h4>ส่วน C · ถ่ายภาพบันทึกพาราโบลา <span class="badge">แนบภาพ</span></h4>
+          <div class="task"><span class="qn">C1.</span> สร้างกราฟพาราโบลาหงายที่จุดยอดอยู่ที่ <b>(0, -5)</b> แล้วบันทึกภาพ
+            <button class="check-mini no-print" id="capC1">บันทึกภาพ C1</button>
+            <div class="cap-wrap"><div class="cap-ph" id="phC1">(ยังไม่ได้แนบภาพ)</div><img class="cap-img" id="imgC1" alt="กราฟ C1"></div></div>
+          <div class="task"><span class="qn">C2.</span> สร้างกราฟพาราโบลาคว่ำที่เป็นวิถีลูกบอลที่จุดยอดอยู่ที่ <b>(2, 4)</b> (เช่น y = -x² + 4x)
+            <button class="check-mini no-print" id="capC2">บันทึกภาพ C2</button>
+            <div class="cap-wrap"><div class="cap-ph" id="phC2">(ยังไม่ได้แนบภาพ)</div><img class="cap-img" id="imgC2" alt="กราฟ C2"></div></div>
+        </div>
+
+        <div class="sect">
+          <h4>ส่วน D · ผลการท้าทาย & เล่นเกม (บันทึกอัตโนมัติ)</h4>
+          <div class="task">เล่นด่านเก็บดาวและการท้าทาย จากนั้นกดดึงผลคะแนน
+            <button class="check-mini no-print" id="pullScore">↻ ดึงคะแนนล่าสุด</button></div>
+          <div class="auto-stat">ท้าทายสำเร็จ: เล่นไป <b id="aRound">0</b> รอบ · ดาวเกมเก็บดาวเลเวลล่าสุด: ด่าน <b id="aLevel">0</b> · คะแนนเกมเก็บดาว: <b id="aScore">0</b></div>
+        </div>
+
+        <div class="sect">
+          <h4>ส่วน E · สรุปเรื่องแรงโน้มถ่วง (Exit Ticket)</h4>
+          <div class="task"><span class="qn">E1.</span> ในทางฟิสิกส์ ทำไมวัตถุที่โยนขึ้นฟ้าถึงโค้งเป็นรูปพาราโบลาคว่ำ?
+            <textarea class="ti" id="e1" placeholder="ตอบตามความเข้าใจเกี่ยวกับแรงโน้มถ่วง"></textarea></div>
+          <div class="task"><span class="qn">E2.</span> วันนี้เรื่องใดที่คุณรู้สึกว่าเรียนเข้าใจได้ชัดเจนที่สุด?
+            <textarea class="ti" id="e2" placeholder="ตอบที่นี่..."></textarea></div>
+        </div>
+
+        <div class="submit-box">
+          <button class="act b-ok no-print" id="printBtn" style="font-size:15px">บันทึกใบงานเป็น PDF</button>
+          <div class="note no-print">เลือก Destination เป็น "Save as PDF" เพื่อบันทึกไฟล์ส่งครู</div>
+          <div class="print-only" style="font-size:11px;color:#888;margin-top:8px">สร้างจาก Parabola Playground · Math in Motion</div>
+        </div>
+      </div>
+
+      <!-- Controls shared -->
+      <div class="panel" id="panel-controls">
+        <div class="eq" id="eq">y = 1.00·x² + 0.0·x - 3.0</div>
+        <div class="row">
+          <label>a <small>ความกว้าง คว่ำ/หงาย</small></label>
+          <input type="range" id="aS" min="-5" max="5" step="0.25" value="1">
+          <input type="number" class="chip" id="aC" min="-5" max="5" step="0.01" value="1.00">
+        </div>
+        <div class="row">
+          <label>b <small>เลื่อนกราฟเฉียง</small></label>
+          <input type="range" id="bS" min="-10" max="10" step="0.5" value="0">
+          <input type="number" class="chip" id="bC" min="-10" max="10" step="0.1" value="0.0">
+        </div>
+        <div class="row">
+          <label>c <small>จุดตัดแกน Y</small></label>
+          <input type="range" id="cS" min="-10" max="10" step="0.5" value="-3">
+          <input type="number" class="chip" id="cC" min="-10" max="10" step="0.1" value="-3.0">
+        </div>
+        <div class="toggles">
+          <label><input type="checkbox" id="tGrid" checked> เส้นตาราง</label>
+          <label><input type="checkbox" id="tVx" checked> จุดยอด (vertex)</label>
+          <label><input type="checkbox" id="tRoot" checked> รากแกน X</label>
+          <label><input type="checkbox" id="tSnap" checked> ดูดเข้ากริด</label>
+        </div>
+        <div class="btns"><button class="act b-ghost" id="resetBtn">↺ รีเซ็ต</button></div>
+      </div>
+
+      <!-- Shop Drawer -->
+      <div class="panel shop-panel no-print hidden" id="panel-shop">
+        <div class="shop-title">ร้านค้ากราฟพาราโบลา <span style="font-size:11px;font-weight:normal;color:var(--muted);margin-left:auto">ใช้เหรียญ ซื้อ</span></div>
+        <div class="shop-grid">
+          <div class="shop-item active" data-id="skin_default">
+            <div class="item-title">เส้นมาตรฐาน</div>
+            <div class="item-desc">เส้นกราฟสีเขียวมินิมอลแบบดั้งเดิม</div>
+            <button class="buy-btn active">ใช้งานอยู่</button>
+          </div>
+          <div class="shop-item" data-id="skin_neon">
+            <div class="item-title">พาราโบลาเลเซอร์</div>
+            <div class="item-desc">เส้นเลเซอร์ชมพูนีออน เรืองแสงกะพริบ</div>
+            <button class="buy-btn buy" data-cost="50">🪙 50</button>
+          </div>
+          <div class="shop-item" data-id="skin_snow">
+            <div class="item-title">พายุหิมะโปรยปราย</div>
+            <div class="item-desc">กราฟสีขาวน้ำแข็งเกาะ หิมะตกสะท้อนผิวกราฟ</div>
+            <button class="buy-btn buy" data-cost="100">🪙 100</button>
+          </div>
+          <div class="shop-item" data-id="skin_fire">
+            <div class="item-title">พายุอุกกาบาตไฟ</div>
+            <div class="item-desc">กราฟไฟลาวาเดือด มีอุกกาบาตตกกระทบกราฟระเบิด</div>
+            <button class="buy-btn buy" data-cost="180">🪙 180</button>
+          </div>
+        </div>
+      </div>
+
+
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const canvas = document.getElementById('plot'), ctx = canvas.getContext('2d');
+  const R = 10; let cssW = 0, cssH = 0, dpr = 1, scale = 1, ox = 0, oy = 0, pad = 8;
+
+  // Local storage syncing
+  let savedCoins = parseInt(localStorage.getItem('math_coins') || '0');
+  let savedUnlocked = JSON.parse(localStorage.getItem('math_unlocked') || '["skin_default"]');
+  let savedSkin = localStorage.getItem('math_active_skin') || 'skin_default';
+  let savedSound = localStorage.getItem('math_sound_enabled') !== 'false';
+  let savedPet = localStorage.getItem('math_active_pet');
+  if (!['cat', 'dog', 'fox'].includes(savedPet)) savedPet = 'cat';
+
+  const S = {
+    a: 1.0, b: 0.0, c: -3.0,
+    mode: 'learn', grid: true, vx: true, root: true, snap: true, drag: -1,
+    target: null, score: 0, round: 0, stars: 0, playing: false, t: -6.0, lastTs: 0,
+    gstars: [], level: 1, gameScore: 0, levelWon: false,
+    coins: savedCoins, unlocked: savedUnlocked, activeSkin: savedSkin,
+    soundEnabled: savedSound, activePet: savedPet, particles: [],
+    ex: {probs: [], correct: []}, learnSel: 'a', scenario: 'angry', rwX: 2,
+    learnStep: 1, skinEffects: []
+  };
+
+  const snap = v => S.snap ? Math.round(v * 2) / 2 : v;
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const yAt = x => S.a * x * x + S.b * x + S.c;
+  const vertexH = () => -S.b / (2 * S.a);
+  const vertexK = () => { const h = vertexH(); return S.a * h * h + S.b * h + S.c; };
+  function g(id) { return document.getElementById(id); }
+
+  // Sound Synth Module (Sounds disabled by user request)
+  function playSynth(type) {}
+  function initAudio() {}
+
+  // Confetti Canvas Overlay
+  const confettiCanvas = g('confetti-canvas'), cCtx = confettiCanvas.getContext('2d');
+  let confettis = [], confettiAnimActive = false;
+  function resizeConfetti() {
+    const r = canvas.getBoundingClientRect();
+    confettiCanvas.width = r.width; confettiCanvas.height = r.height;
+  }
+  function triggerConfetti() {
+    resizeConfetti(); confettis = [];
+    const colors = ['#0d9488', '#10b981', '#3b82f6', '#ef4444', '#f59e0b', '#ec4899'];
+    for (let i = 0; i < 70; i++) {
+      confettis.push({
+        x: confettiCanvas.width / 2, y: confettiCanvas.height / 2 - 20,
+        vx: (Math.random() - 0.5) * 8, vy: (Math.random() - 0.85) * 7 - 3,
+        size: 4 + Math.random() * 4, color: colors[Math.floor(Math.random() * colors.length)],
+        rotation: Math.random() * Math.PI * 2, rotationSpeed: (Math.random() - 0.5) * 0.2,
+        alpha: 1, life: 0, maxLife: 80 + Math.random() * 40
+      });
+    }
+    if (!confettiAnimActive) {
+      confettiAnimActive = true; requestAnimationFrame(confettiTick);
+    }
+  }
+  function confettiTick() {
+    cCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    let active = false;
+    for (let i = confettis.length - 1; i >= 0; i--) {
+      const p = confettis[i];
+      p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.vx *= 0.98;
+      p.rotation += p.rotationSpeed; p.life++;
+      p.alpha = 1 - p.life / p.maxLife;
+      if (p.life < p.maxLife) {
+        active = true;
+        cCtx.save(); cCtx.globalAlpha = p.alpha; cCtx.fillStyle = p.color;
+        cCtx.translate(p.x, p.y); cCtx.rotate(p.rotation);
+        cCtx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+        cCtx.restore();
+      } else {
+        confettis.splice(i, 1);
+      }
+    }
+    if (active) requestAnimationFrame(confettiTick);
+    else confettiAnimActive = false;
+  }
+
+  // Mascot Companion Messages
+  const PETS = {
+    cat: { avatar: '🐱', name: 'MathCat', greeting: 'ข้าคือ MathCat 🐱 มาโค้งกราฟกำลังสองกันเถอะ!' },
+    dog: { avatar: '🐶', name: 'MathDog', greeting: 'โฮ่ง! ฉันคือ MathDog 🐶 พร้อมคาบกราฟพาราโบลาหรือยัง?' },
+    fox: { avatar: '🦊', name: 'MathFox', greeting: 'จิ๊งจอกแสนซน MathFox 🦊 ชอบเล่นกับจุดยอดพาราโบลาที่สุด!' }
+  };
+  function petSpeak(msg) { g('petBubbleText').innerHTML = `<b>${PETS[S.activePet].name}:</b> ${msg}`; }
+  g('petSelectBtn').onclick = () => {
+    playSynth('click');
+    const list = Object.keys(PETS);
+    let nextIdx = (list.indexOf(S.activePet) + 1) % list.length;
+    S.activePet = list[nextIdx]; localStorage.setItem('math_active_pet', S.activePet);
+    g('petAvatar').textContent = PETS[S.activePet].avatar;
+    petSpeak(PETS[S.activePet].greeting);
+  };
+
+  // Particles Trail
+  function addParticles(x, y, count) {
+    if (S.activeSkin === 'skin_default') return;
+    const px = toPx(x, y);
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2, speed = 0.5 + Math.random() * 1.5;
+      let color = '#0d9488';
+      if (S.activeSkin === 'skin_neon') color = `hsl(${Math.random() * 360}, 90%, 65%)`;
+      else if (S.activeSkin === 'skin_snow') color = '#e0f2fe';
+      else if (S.activeSkin === 'skin_fire') color = Math.random() < 0.5 ? '#f97316' : '#ef4444';
+      S.particles.push({
+        x: px.px, y: px.py, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 0.3,
+        size: 3 + Math.random() * 5, alpha: 1,
+        color: color,
+        life: 0, maxLife: 20 + Math.random() * 20
+      });
+    }
+  }
+  function updateParticles() {
+    for (let i = S.particles.length - 1; i >= 0; i--) {
+      const p = S.particles[i];
+      p.x += p.vx; p.y += p.vy; p.life++; p.alpha = 1 - p.life / p.maxLife;
+      if (p.life >= p.maxLife) S.particles.splice(i, 1);
+    }
+  }
+  function drawParticles() {
+    ctx.save();
+    S.particles.forEach(p => {
+      ctx.globalAlpha = p.alpha; ctx.fillStyle = p.color;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2); ctx.fill();
+    });
+    ctx.restore();
+  }
+
+  // Shop drawer interactions
+  document.querySelectorAll('.shop-item').forEach(item => {
+    const id = item.dataset.id;
+    const btn = item.querySelector('.buy-btn');
+    if (S.unlocked.includes(id)) {
+      item.classList.add('owned');
+      if (S.activeSkin === id) {
+        item.classList.add('active');
+        btn.textContent = 'ใช้งานอยู่'; btn.className = 'buy-btn active';
+      } else {
+        btn.textContent = 'ใช้งาน'; btn.className = 'buy-btn use';
+      }
+    }
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      playSynth('click');
+      if (S.unlocked.includes(id)) {
+        S.activeSkin = id; localStorage.setItem('math_active_skin', id);
+        updateShopUI(); draw();
+        petSpeak('เปลี่ยนสไตล์กราฟเรียบร้อย! สวยมากเลย ✨');
+      } else {
+        const cost = parseInt(btn.dataset.cost || '0');
+        if (S.coins >= cost) {
+          S.coins -= cost; S.unlocked.push(id);
+          S.activeSkin = id;
+          localStorage.setItem('math_coins', S.coins);
+          localStorage.setItem('math_unlocked', JSON.stringify(S.unlocked));
+          localStorage.setItem('math_active_skin', id);
+          playSynth('buy'); updateShopUI(); draw();
+          petSpeak(`ขอบคุณที่อุดหนุน! ปลดล็อก ${item.querySelector('.item-title').textContent} แล้ว! 🪙`);
+        } else {
+          playSynth('fail');
+          petSpeak('🪙 คุณมีเหรียญไม่เพียงพอ! ทำความท้าทายหรือเล่นเกมเพื่อเก็บเหรียญก่อนนะ');
+        }
+      }
+    };
+  });
+  function updateShopUI() {
+    g('coinCount').textContent = S.coins;
+    document.querySelectorAll('.shop-item').forEach(item => {
+      const id = item.dataset.id; const btn = item.querySelector('.buy-btn');
+      item.className = 'shop-item'; btn.className = 'buy-btn';
+      if (S.unlocked.includes(id)) {
+        item.classList.add('owned');
+        if (S.activeSkin === id) {
+          item.classList.add('active'); btn.textContent = 'ใช้งานอยู่'; btn.className = 'buy-btn active';
+        } else {
+          btn.textContent = 'ใช้งาน'; btn.className = 'buy-btn use';
+        }
+      } else {
+        btn.textContent = `🪙 ${btn.dataset.cost}`; btn.className = 'buy-btn buy';
+      }
+    });
+  }
+
+  // Geometry computation
+  function computeGeom(){
+    const pW = cssW - 2 * pad, pH = cssH - 2 * pad;
+    scale = Math.min(pW, pH) / (2 * R); ox = pad + pW / 2; oy = pad + pH / 2;
+  }
+  const toPx = (x, y) => ({ px: ox + x * scale, py: oy - y * scale });
+  const toW = (px, py) => ({ x: (px - ox) / scale, y: (oy - py) / scale });
+  function resize(){
+    const r = canvas.getBoundingClientRect();
+    cssW = r.width; cssH = r.height; dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(cssW * dpr); canvas.height = Math.round(cssH * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); computeGeom(); draw();
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,cssW,cssH); ctx.save(); ctx.beginPath();
+    ctx.rect(pad, pad, cssW - 2 * pad, cssH - 2 * pad); ctx.clip();
+    if(S.grid) drawGrid(); drawAxes();
+    
+    // Draw target in Challenge
+    if(S.mode === 'challenge' && S.target) {
+      drawCurve(S.target, '#f59e0b', 3, true);
+    }
+    
+    // Draw Stars in Game mode
+    if(S.mode === 'game') {
+      drawGameStars();
+    }
+    
+    // Draw real-world decorations
+    if(S.mode === 'realworld') {
+      drawRealWorldBackground();
+    }
+
+    // Draw active parabola
+    let strokeCol = '#0d9488';
+    let lineW = 3;
+    if (S.activeSkin === 'skin_neon') {
+      ctx.save();
+      ctx.shadowColor = '#ec4899';
+      ctx.shadowBlur = 10;
+      drawCurve(S, '#ec4899', 4.5, false);
+      ctx.restore();
+    } else if (S.activeSkin === 'skin_snow') {
+      ctx.save();
+      ctx.shadowColor = '#bae6fd';
+      ctx.shadowBlur = 8;
+      drawCurve(S, '#ffffff', 4, false);
+      ctx.restore();
+    } else if (S.activeSkin === 'skin_fire') {
+      ctx.save();
+      ctx.shadowColor = '#f97316';
+      ctx.shadowBlur = 12;
+      drawCurve(S, '#ea580c', 4, false);
+      ctx.restore();
+    } else {
+      drawCurve(S, strokeCol, lineW, false);
+    }
+
+    if (S.mode === 'explore' || S.mode === 'learn') drawMarks();
+    if (S.mode === 'realworld' && S.scenario === 'satellite') drawSatelliteFocalPoint();
+    if (S.mode !== 'physics' && S.mode !== 'realworld' && S.mode !== 'game') {
+      drawVertexHandle();
+    }
+    if (S.mode === 'physics') drawPhysicsBall();
+    if (S.mode === 'realworld') drawRealWorldProjectile();
+
+    drawSkinEffects();
+    drawParticles();
+    ctx.restore();
+  }
+
+  function drawGrid(){
+    ctx.lineWidth = 1; ctx.strokeStyle = '#e6efeb';
+    for(let i=-R; i<=R; i++){
+      const v = toPx(i,0).px, h = toPx(0,i).py;
+      ctx.beginPath(); ctx.moveTo(v, pad); ctx.lineTo(v, cssH - pad); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(pad, h); ctx.lineTo(cssW - pad, h); ctx.stroke();
+    }
+  }
+  function drawAxes(){
+    ctx.lineWidth = 2; ctx.strokeStyle = '#9aa3b2';
+    const o = toPx(0,0);
+    ctx.beginPath(); ctx.moveTo(pad, o.py); ctx.lineTo(cssW - pad, o.py); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(o.px, pad); ctx.lineTo(o.px, cssH - pad); ctx.stroke();
+    ctx.fillStyle = '#6b7280'; ctx.font = '11px system-ui';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    for(let i=-R; i<=R; i+=2){
+      if(i === 0) continue;
+      ctx.fillText(i, toPx(i,0).px, o.py + 3);
+    }
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    for(let i=-R; i<=R; i+=2){
+      if(i === 0) continue;
+      ctx.fillText(i, o.px - 4, toPx(0,i).py);
+    }
+    ctx.fillStyle = '#374151'; ctx.font = '600 12px system-ui';
+    ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+    ctx.fillText('x', cssW - pad - 4, o.py - 4);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillText('y', o.px + 6, pad + 2);
+  }
+  
+  function drawCurve(p, color, w, dashed){
+    ctx.save(); ctx.lineWidth = w; ctx.strokeStyle = color;
+    if(dashed) ctx.setLineDash([10, 7]);
+    ctx.beginPath();
+    let first = true;
+    for(let px=pad; px<=cssW-pad; px+=2){
+      const x = (px - ox) / scale;
+      const y = p.a * x * x + p.b * x + p.c;
+      const py = oy - y * scale;
+      if (py >= pad && py <= cssH - pad) {
+        if(first){ ctx.moveTo(px, py); first = false; }
+        else ctx.lineTo(px, py);
+      }
+    }
+    ctx.stroke(); ctx.restore();
+  }
+
+  function drawMarks(){
+    const h = vertexH(), k = vertexK();
+    if(isFinite(h)){
+      // axis of symmetry
+      const a = toPx(h, 0);
+      ctx.save(); ctx.setLineDash([5, 5]); ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(a.px, pad); ctx.lineTo(a.px, cssH - pad); ctx.stroke();
+      ctx.restore();
+    }
+    
+    // y-intercept
+    const yInt = toPx(0, S.c);
+    dot(yInt, '#16a34a');
+    
+    // Draw Y-intercept text label on canvas
+    ctx.save();
+    ctx.fillStyle = '#15803d'; ctx.font = 'bold 11px system-ui';
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    ctx.fillText(`จุดตัดแกน Y (0, ${S.c.toFixed(1)})  `, yInt.px, yInt.py + 10);
+    ctx.restore();
+    
+    // roots
+    if(S.root){
+      const d = S.b * S.b - 4 * S.a * S.c;
+      if(d >= 0 && S.a !== 0){
+        const r1 = (-S.b + Math.sqrt(d)) / (2 * S.a), r2 = (-S.b - Math.sqrt(d)) / (2 * S.a);
+        const pt1 = toPx(r1, 0), pt2 = toPx(r2, 0);
+        dot(pt1, '#ef4444'); dot(pt2, '#ef4444');
+        
+        ctx.save();
+        ctx.fillStyle = '#b91c1c'; ctx.font = 'bold 10px system-ui';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        ctx.fillText(`จุดตัดแกน X (${r1.toFixed(1)}, 0)`, pt1.px, pt1.py - 6);
+        if (Math.abs(r1 - r2) > 0.5) {
+          ctx.fillText(`จุดตัดแกน X (${r2.toFixed(1)}, 0)`, pt2.px, pt2.py - 6);
+        }
+        ctx.restore();
+      }
+    }
+  }
+  function dot(q, color){
+    ctx.beginPath(); ctx.arc(q.px, q.py, 5.5, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill();
+    ctx.lineWidth = 1.5; ctx.strokeStyle = '#fff'; ctx.stroke();
+  }
+
+  function drawVertexHandle(){
+    const h = vertexH(), k = vertexK();
+    if(!isFinite(h) || !isFinite(k)) return;
+    const q = toPx(h, k);
+    // Green Vertex center point
+    ctx.beginPath(); ctx.arc(q.px, q.py, 9, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill();
+    ctx.lineWidth = 3.5; ctx.strokeStyle = S.drag === 0 ? '#115e59' : '#0d9488'; ctx.stroke();
+    ctx.beginPath(); ctx.arc(q.px, q.py, 4, 0, Math.PI * 2); ctx.fillStyle = '#0d9488'; ctx.fill();
+
+    // Draw Vertex text label on canvas
+    ctx.save();
+    ctx.fillStyle = '#0f766e'; ctx.font = 'bold 11px system-ui';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+    ctx.fillText(` จุดยอด (${h.toFixed(1)}, ${k.toFixed(1)})`, q.px + 8, q.py - 6);
+    ctx.restore();
+
+    // Width handles at (h+1, k+a)
+    const w = toPx(h + 1, k + S.a);
+    ctx.beginPath(); ctx.arc(w.px, w.py, 7.5, 0, Math.PI * 2); ctx.fillStyle = S.drag === 1 ? '#0d9488' : '#fff'; ctx.fill();
+    ctx.lineWidth = 2.5; ctx.strokeStyle = '#0d9488'; ctx.stroke();
+  }
+
+  // Physics animation (launching basketball)
+  function drawPhysicsBall(){
+    const x = S.t, y = yAt(x), p = toPx(x, y), o = toPx(0, 0);
+    ctx.save();
+    // Path marker
+    ctx.setLineDash([4, 4]); ctx.strokeStyle = '#99f6e4'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(p.px, p.py); ctx.lineTo(p.px, o.py); ctx.stroke();
+    
+    // Draw ground target representing hoop or ground
+    ctx.fillStyle = '#7c2d12'; ctx.fillRect(toPx(3, 0).px - 15, toPx(3, 0).py - 4, 30, 8);
+    
+    // Basketball
+    ctx.beginPath(); ctx.arc(p.px, p.py, 10.5, 0, Math.PI * 2); ctx.fillStyle = '#f97316'; ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke();
+    // Lines on ball
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 1.2; ctx.beginPath();
+    ctx.arc(p.px, p.py, 6, 0, Math.PI, true); ctx.stroke();
+    ctx.restore();
+  }
+
+  // Real world representations
+  function drawRealWorldBackground(){
+    ctx.save();
+    if(S.scenario === 'angry') {
+      // Draw Pig target at (6, 2)
+      const pig = toPx(6, 2);
+      ctx.beginPath(); ctx.arc(pig.px, pig.py, 13, 0, Math.PI * 2); ctx.fillStyle = '#22c55e'; ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke();
+      // Pig face details
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(pig.px-4, pig.py-2, 3, 0, 7); ctx.arc(pig.px+4, pig.py-2, 3, 0, 7); ctx.fill();
+      ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(pig.px-4, pig.py-2, 1, 0, 7); ctx.arc(pig.px+4, pig.py-2, 1, 0, 7); ctx.fill();
+      ctx.fillStyle = '#15803d'; ctx.beginPath(); ctx.arc(pig.px, pig.py+3, 5, 0, Math.PI); ctx.fill();
+      
+      // Draw Slingshot at (-6, 0)
+      const sling = toPx(-6, 0);
+      ctx.strokeStyle = '#78350f'; ctx.lineWidth = 6;
+      ctx.beginPath(); ctx.moveTo(sling.px, sling.py); ctx.lineTo(sling.px, sling.py - 35); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(sling.px - 10, sling.py - 48); ctx.lineTo(sling.px, sling.py - 35); ctx.lineTo(sling.px + 10, sling.py - 48); ctx.stroke();
+    } else if (S.scenario === 'satellite') {
+      // Draw Satellite Dish frame
+      ctx.strokeStyle = '#64748b'; ctx.lineWidth = 4;
+      ctx.beginPath();
+      // Draw parabola shell from x=-4 to x=4
+      let first = true;
+      for(let x=-4; x<=4; x+=0.2){
+        const y = S.a * x * x; // satellite is aligned at origin
+        const pt = toPx(x, y);
+        if(first) { ctx.moveTo(pt.px, pt.py); first = false; }
+        else ctx.lineTo(pt.px, pt.py);
+      }
+      ctx.stroke();
+      
+      // Stand to center
+      const center = toPx(0, 0);
+      ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(center.px, center.py); ctx.lineTo(center.px, center.py + 40); ctx.stroke();
+    } else if (S.scenario === 'bridge') {
+      // Draw water at y = -5
+      const water = toPx(0, -5);
+      ctx.fillStyle = '#38bdf8'; ctx.fillRect(pad, water.py, cssW - 2*pad, cssH - water.py - pad);
+      // Roadway at y = 4
+      const road = toPx(0, 4);
+      ctx.fillStyle = '#64748b'; ctx.fillRect(pad, road.py - 6, cssW - 2*pad, 10);
+
+      // Draw vertical support columns/cables connecting road (y = 4) to arch (y = yAt(x))
+      ctx.save();
+      ctx.strokeStyle = 'rgba(100, 116, 139, 0.6)';
+      ctx.lineWidth = 2.5;
+      for (let rx = -7.5; rx <= 7.5; rx += 0.75) {
+        const archY = yAt(rx);
+        const pRoad = toPx(rx, 4.0);
+        const pArch = toPx(rx, archY);
+        // Only draw columns if they hit within bounds
+        ctx.beginPath();
+        ctx.moveTo(pRoad.px, pRoad.py);
+        ctx.lineTo(pArch.px, pArch.py);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  function drawRealWorldProjectile(){
+    ctx.save();
+    if (S.scenario === 'angry') {
+      const x = S.rwX, y = yAt(x), p = toPx(x, y);
+      // Red Bird character
+      ctx.beginPath(); ctx.arc(p.px, p.py, 11, 0, Math.PI * 2); ctx.fillStyle = '#ef4444'; ctx.fill();
+      ctx.lineWidth = 1.5; ctx.strokeStyle = '#fff'; ctx.stroke();
+      // beak
+      ctx.fillStyle = '#f59e0b'; ctx.beginPath(); ctx.moveTo(p.px+6, p.py-1); ctx.lineTo(p.px+14, p.py+1); ctx.lineTo(p.px+6, p.py+4); ctx.fill();
+      // eyes
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(p.px+2, p.py-3, 3, 0, 7); ctx.fill();
+      ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(p.px+3, p.py-3, 1, 0, 7); ctx.fill();
+    } else if (S.scenario === 'bridge') {
+      // Car driving on the flat roadway at y = 4.0
+      const carPos = toPx(S.rwX, 4.0);
+      ctx.fillStyle = '#374151'; ctx.font = '16px system-ui';
+      ctx.fillText('🚗', carPos.px - 8, carPos.py - 4);
+    }
+    ctx.restore();
+  }
+
+  function drawSatelliteFocalPoint(){
+    // Focal point is (0, 1 / (4*a))
+    if (S.a === 0) return;
+    const fY = 1 / (4 * S.a);
+    const fp = toPx(0, fY);
+    ctx.save();
+    // Focus Dot
+    ctx.beginPath(); ctx.arc(fp.px, fp.py, 7, 0, Math.PI*2); ctx.fillStyle = '#a855f7'; ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke();
+    
+    // Draw incoming rays reflecting to focus
+    ctx.strokeStyle = 'rgba(168, 85, 247, 0.45)'; ctx.lineWidth = 1.5;
+    [-3.0, -1.5, 1.5, 3.0].forEach(rx => {
+      const start = toPx(rx, 8.0);
+      const hit = toPx(rx, S.a * rx * rx);
+      ctx.beginPath();
+      ctx.moveTo(start.px, start.py);
+      ctx.lineTo(hit.px, hit.py);
+      ctx.lineTo(fp.px, fp.py);
+      ctx.stroke();
+    });
+    ctx.restore();
+  }
+
+  // Game Star Catcher Generation
+  function drawGameStars(){
+    ctx.save();
+    S.gstars.forEach(s => {
+      const p = toPx(s.x, s.y);
+      ctx.font = '22px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      if (s.collected) {
+        ctx.fillStyle = '#f59e0b'; ctx.fillText('✨', p.px, p.py);
+      } else {
+        ctx.fillStyle = '#38bdf8'; ctx.fillText('⭐', p.px, p.py);
+      }
+    });
+    ctx.restore();
+  }
+
+  function checkGameMatches() {
+    let hits = 0;
+    S.gstars.forEach(s => {
+      const yLine = yAt(s.x);
+      if (Math.abs(yLine - s.y) < 0.26) {
+        if(!s.collected) {
+          s.collected = true; playSynth('star');
+        }
+        hits++;
+      } else {
+        s.collected = false;
+      }
+    });
+    g('gCount').textContent = `${hits} / ${S.gstars.length}`;
+    if (hits === S.gstars.length && !S.levelWon) {
+      S.levelWon = true; S.gameScore += 100; S.coins += 25;
+      localStorage.setItem('math_coins', S.coins); updateShopUI();
+      g('gScore').textContent = S.gameScore;
+      g('gFeedback').className = 'feedback show f-great';
+      g('gFeedback').textContent = 'สุดยอดมาก! โค้งตรงกับดวงดาวครบทุกดวง! 🎉';
+      playSynth('levelup'); triggerConfetti();
+      
+      // Advance level
+      setTimeout(() => {
+        if (S.level < 5) {
+          S.level++; loadLevel(S.level);
+        } else {
+          petSpeak('ยินดีด้วย! คุณสามารถพิชิตบอสพาราโบลาและผ่านด่านได้ครบถ้วนแล้ว! 👑');
+        }
+      }, 1600);
+    }
+  }
+
+  function loadLevel(lvl){
+    S.level = lvl; S.levelWon = false;
+    document.querySelectorAll('.quest-step').forEach(step => {
+      const stepLvl = parseInt(step.dataset.lvl);
+      step.className = 'quest-step' + (stepLvl === lvl ? ' active' : stepLvl < lvl ? ' done' : '');
+      if (stepLvl === 5) step.classList.add('boss');
+    });
+    g('gLevel').textContent = lvl;
+    g('gFeedback').className = 'feedback';
+    
+    // Generate star coordinates forming a target parabola
+    let ta, th, tk;
+    if (lvl === 1) {
+      ta = 1.0; th = 0.0; tk = -4.0;
+      g('gStory').textContent = 'ด่าน 1: จับดาวบนสมการพาราโบลาพื้นฐาน y = x² - 4';
+    } else if (lvl === 2) {
+      ta = -0.5; th = 2.0; tk = 4.0;
+      g('gStory').textContent = 'ด่าน 2: ดักจับดาวพาราโบลาคว่ำ y = -0.5(x-2)² + 4';
+    } else if (lvl === 3) {
+      ta = 2.0; th = -2.0; tk = -6.0;
+      g('gStory').textContent = 'ด่าน 3: กราฟแคบหงาย (ชันสูง) y = 2(x+2)² - 6';
+    } else if (lvl === 4) {
+      ta = -0.25; th = -1.0; tk = 5.0;
+      g('gStory').textContent = 'ด่าน 4: โค้งโดมกว้างและเลื่อนซ้าย y = -0.25(x+1)² + 5';
+    } else {
+      ta = -1.0; th = 3.0; tk = 6.0;
+      g('gStory').textContent = '👑 ด่านบอส: จับดาวสมการลึกลับ จุดยอดอยู่ที่ (3, 6) และคว่ำลง!';
+    }
+    
+    S.gstars = [];
+    const pointsX = [-3, -1.5, 0, 1.5, 3];
+    pointsX.forEach(px => {
+      // transform from vertex h,k
+      const x = px + th;
+      const y = ta * px * px + tk;
+      S.gstars.push({ x, y, collected: false });
+    });
+    checkGameMatches(); draw();
+  }
+
+  g('gNewBtn').onclick = () => { playSynth('click'); loadLevel(S.level); };
+  g('gHintBtn').onclick = () => {
+    playSynth('click');
+    let ta, th, tk;
+    if (S.level === 1) { ta = 1.0; th = 0; tk = -4; }
+    else if (S.level === 2) { ta = -0.5; th = 2; tk = 4; }
+    else if (S.level === 3) { ta = 2.0; th = -2; tk = -6; }
+    else if (S.level === 4) { ta = -0.25; th = -1; tk = 5; }
+    else { ta = -1.0; th = 3; tk = 6; }
+    petSpeak(`ใบ้ให้: ลองปรับ a = ${ta}, จุดยอดให้อยู่แถว ๆ (${th}, ${tk}) นะจ๊ะ!`);
+  };
+
+  // Real world scenarions data
+  const RW = {
+    angry: {
+      desc: '🚀 โยนเจ้านกแดงจากเครื่องยิงหนังสติ๊กที่จุด (-6, 0) ให้โค้งขึ้นและตกลงมาชนเจ้าหมูเขียวที่ซ่อนอยู่ที่ตำแหน่ง (6, 2) ปรับแต่งกราฟพาราโบลาคว่ำของคุณให้พุ่งตรงเป้าหมายพอดี!',
+      l1: 'ระยะทางนก (แกน X)', l2: 'ความสูงนก (แกน Y)', hint: 'ลองปรับค่า a เป็นลบ (เช่น -0.25) เลื่อนจุดยอดไปที่ (0, 6) แล้วขยับ x เพื่อยิงชนหมู!'
+    },
+    satellite: {
+      desc: '📡 จานดาวเทียมรวมแสงสะท้อนคลื่นวิทยุขนานที่ส่งมาจากอวกาศ ให้หักเหและสะท้อนมารวมจุดเดียวที่เรียกว่า "จุดโฟกัส" (Focal Point) ซึ่งอยู่ที่ตำแหน่ง (0, 1/4a) ของสมการ y = ax²!',
+      l1: 'ความชันจาน (a)', l2: 'ความสูงโฟกัส (y)', hint: 'ปรับ a ยิ่งมาก (จานแคบลง) จุดโฟกัสจะขยับลงต่ำ ปรับ a ยิ่งน้อย (จานแบนลง) โฟกัสจะลอยขึ้นสูง!'
+    },
+    bridge: {
+      desc: '🌉 โค้งสะพาน (Arch Bridge) ใช้รูปทรงพาราโบลาคว่ำ เพื่อกระจายน้ำหนักรถบนถนน (ทางราบเส้นสีเทาด้านบน) ผ่านเสาค้ำแนวตั้ง ลงสู่ตัวโครงโค้งพาราโบลาและฐานรากสะพานอย่างสมดุลและปลอดภัย',
+      l1: 'ตำแหน่งรถ (แกน X)', l2: 'ระดับความสูงถนน', hint: 'ลองเลื่อนจุดยอดให้อยู่ตรงกลาง (h=0) ปรับระดับ a (ความกว้างโค้ง) ให้เสาค้ำแนวตั้งเชื่อมเชื่อมระหว่างถนนและโค้งพาราโบลาได้อย่างพอดี!'
+    }
+  };
+
+  function updateRealWorldUI(){
+    const d = RW[S.scenario];
+    g('rwDesc').textContent = d.desc;
+    g('rwLabel1').textContent = d.l1; g('rwLabel2').textContent = d.l2;
+    g('rwHint').innerHTML = `💡 <b>คำแนะนำ:</b> ${d.hint}`;
+    g('rwVal1').textContent = S.rwX.toFixed(1);
+    g('rwVal2').textContent = yAt(S.rwX).toFixed(2);
+  }
+  document.querySelectorAll('.rchip').forEach(chip => {
+    chip.onclick = () => {
+      playSynth('click');
+      stopAll();
+      document.querySelectorAll('.rchip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      S.scenario = chip.dataset.sc;
+      if (S.scenario === 'angry') { S.rwX = -6; S.a = -0.25; S.b = 0; S.c = 6; }
+      else if (S.scenario === 'satellite') { S.rwX = 0; S.a = 0.25; S.b = 0; S.c = 0; }
+      else { S.rwX = -8; S.a = -0.1; S.b = 0; S.c = 4; }
+      
+      refreshUI(); updateRealWorldUI(); draw();
+    };
+  });
+
+  // Slider inputs mapping
+  const aS = g('aS'), bS = g('bS'), cS = g('cS');
+  const aC = g('aC'), bC = g('bC'), cC = g('cC');
+
+  function stopPlay(){
+    S.playing = false;
+    const btn = g('playBtn');
+    if (btn) btn.textContent = '▶ โยนลูกบาสเกตบอล';
+  }
+  
+  function stopRwPlay(){
+    S.playing = false;
+    const btn = g('rwPlayBtn');
+    if (btn) btn.textContent = '▶ เล่นแอนิเมชัน';
+  }
+
+  function stopTeaching() {
+    if (teachTimer) {
+      clearInterval(teachTimer);
+      teachTimer = null;
+    }
+    g('teachCap').style.display = 'none';
+  }
+
+  function stopAll() {
+    stopTeaching();
+    stopPlay();
+    stopRwPlay();
+  }
+
+  function refreshUI(){
+    aS.value = S.a; bS.value = S.b; cS.value = S.c;
+    if (document.activeElement !== aC) aC.value = S.a.toFixed(2);
+    if (document.activeElement !== bC) bC.value = S.b.toFixed(1);
+    if (document.activeElement !== cC) cC.value = S.c.toFixed(1);
+    
+    // Sync embedded sliders and chips in learn steps
+    document.querySelectorAll('.learn-slider-a, .learn-slider-a3').forEach(el => el.value = S.a);
+    document.querySelectorAll('.learn-slider-b3').forEach(el => el.value = S.b);
+    document.querySelectorAll('.learn-slider-c, .learn-slider-c3').forEach(el => el.value = S.c);
+
+    document.querySelectorAll('.learn-chip-a, .learn-chip-a3').forEach(el => {
+      if (document.activeElement !== el) el.value = S.a.toFixed(2);
+    });
+    document.querySelectorAll('.learn-chip-b3').forEach(el => {
+      if (document.activeElement !== el) el.value = S.b.toFixed(1);
+    });
+    document.querySelectorAll('.learn-chip-c, .learn-chip-c3').forEach(el => {
+      if (document.activeElement !== el) el.value = S.c.toFixed(1);
+    });
+    
+    // Build algebraic notation string
+    const bs = S.b >= 0 ? `+ ${S.b.toFixed(1)}` : `− ${Math.abs(S.b).toFixed(1)}`;
+    const cs = S.c >= 0 ? `+ ${S.c.toFixed(1)}` : `− ${Math.abs(S.c).toFixed(1)}`;
+    g('eq').innerHTML = `y = <span class="a">${S.a.toFixed(2)}</span>·x² <span class="b">${bs}</span>·x <span class="c">${cs}</span>`;
+    
+    const h = vertexH(), k = vertexK();
+    g('vx').textContent = `(${h.toFixed(1)}, ${k.toFixed(1)})`;
+    g('axisV').textContent = `x = ${h.toFixed(1)}`;
+    
+    const d = S.b * S.b - 4 * S.a * S.c;
+    if (S.a === 0) {
+      g('roots').textContent = 'ไม่ใช่สมการกำลังสอง (linear)';
+    } else {
+      g('roots').textContent = d >= 0 ? `x = ${((-S.b - Math.sqrt(d)) / (2 * S.a)).toFixed(2)}, ${((-S.b + Math.sqrt(d)) / (2 * S.a)).toFixed(2)}` : 'ไม่มีจุดตัดแกน X (no real roots)';
+    }
+    g('maxH').textContent = (S.a < 0 ? 'สูงสุด (จุดยอด Y) = ' : 'ต่ำสุด = ') + k.toFixed(1);
+    g('shape').textContent = S.a < 0 ? 'โดมคว่ำ (วิถีลูกบอลฟิสิกส์ ✓)' : 'หงายขึ้น (รูปถ้วย)';
+    
+    if (S.mode === 'realworld') {
+      updateRealWorldUI();
+    }
+    if (S.mode === 'learn') {
+      checkLearnSteps();
+    }
+  }
+
+  function fromSliders(e){
+    stopAll();
+    const src = e ? e.target : aS;
+    if (src.classList.contains('learn-slider-a') || src.classList.contains('learn-slider-a3')) {
+      S.a = parseFloat(src.value);
+    } else if (src.classList.contains('learn-slider-c') || src.classList.contains('learn-slider-c3')) {
+      S.c = parseFloat(src.value);
+    } else if (src.classList.contains('learn-slider-b3')) {
+      S.b = parseFloat(src.value);
+    } else {
+      S.a = parseFloat(aS.value) || 0.25;
+      S.b = parseFloat(bS.value);
+      S.c = parseFloat(cS.value);
+    }
+    if (S.a === 0) S.a = 0.25; // prevent division by zero
+    refreshUI();
+    if(S.mode === 'game') checkGameMatches();
+    draw();
+  }
+
+  function fromInputs(e) {
+    stopAll();
+    const src = e.target;
+    const val = parseFloat(src.value);
+    if (isNaN(val)) return;
+
+    if (src.classList.contains('learn-chip-a') || src.classList.contains('learn-chip-a3') || src.id === 'aC') {
+      S.a = clamp(val, -5, 5);
+      if (S.a === 0) S.a = 0.25;
+    } else if (src.classList.contains('learn-chip-b3') || src.id === 'bC') {
+      S.b = clamp(val, -10, 10);
+    } else if (src.classList.contains('learn-chip-c') || src.classList.contains('learn-chip-c3') || src.id === 'cC') {
+      S.c = clamp(val, -10, 10);
+    }
+
+    // Sync sliders
+    aS.value = S.a;
+    bS.value = S.b;
+    cS.value = S.c;
+    document.querySelectorAll('.learn-slider-a, .learn-slider-a3').forEach(el => el.value = S.a);
+    document.querySelectorAll('.learn-slider-b3').forEach(el => el.value = S.b);
+    document.querySelectorAll('.learn-slider-c, .learn-slider-c3').forEach(el => el.value = S.c);
+
+    // Sync other chip inputs
+    if (document.activeElement !== aC) aC.value = S.a.toFixed(2);
+    if (document.activeElement !== bC) bC.value = S.b.toFixed(1);
+    if (document.activeElement !== cC) cC.value = S.c.toFixed(1);
+    
+    document.querySelectorAll('.learn-chip-a, .learn-chip-a3').forEach(el => {
+      if (document.activeElement !== el) el.value = S.a.toFixed(2);
+    });
+    document.querySelectorAll('.learn-chip-b3').forEach(el => {
+      if (document.activeElement !== el) el.value = S.b.toFixed(1);
+    });
+    document.querySelectorAll('.learn-chip-c, .learn-chip-c3').forEach(el => {
+      if (document.activeElement !== el) el.value = S.c.toFixed(1);
+    });
+
+    // Build algebraic notation string
+    const bs = S.b >= 0 ? `+ ${S.b.toFixed(1)}` : `− ${Math.abs(S.b).toFixed(1)}`;
+    const cs = S.c >= 0 ? `+ ${S.c.toFixed(1)}` : `− ${Math.abs(S.c).toFixed(1)}`;
+    g('eq').innerHTML = `y = <span class="a">${S.a.toFixed(2)}</span>·x² <span class="b">${bs}</span>·x <span class="c">${cs}</span>`;
+    
+    const h = vertexH(), k = vertexK();
+    g('vx').textContent = `(${h.toFixed(1)}, ${k.toFixed(1)})`;
+    g('axisV').textContent = `x = ${h.toFixed(1)}`;
+    
+    const d = S.b * S.b - 4 * S.a * S.c;
+    if (S.a === 0) {
+      g('roots').textContent = 'ไม่ใช่สมการกำลังสอง (linear)';
+    } else {
+      g('roots').textContent = d >= 0 ? `x = ${((-S.b - Math.sqrt(d)) / (2 * S.a)).toFixed(2)}, ${((-S.b + Math.sqrt(d)) / (2 * S.a)).toFixed(2)}` : 'ไม่มีจุดตัดแกน X (no real roots)';
+    }
+    g('maxH').textContent = (S.a < 0 ? 'สูงสุด (จุดยอด Y) = ' : 'ต่ำสุด = ') + k.toFixed(1);
+    g('shape').textContent = S.a < 0 ? 'โดมคว่ำ (วิถีลูกบอลฟิสิกส์ ✓)' : 'หงายขึ้น (รูปถ้วย)';
+    
+    if (S.mode === 'realworld') {
+      updateRealWorldUI();
+    }
+    if (S.mode === 'learn') {
+      checkLearnSteps();
+    }
+    if (S.mode === 'game') checkGameMatches();
+    draw();
+  }
+
+  function formatAllInputs() {
+    aC.value = S.a.toFixed(2);
+    bC.value = S.b.toFixed(1);
+    cC.value = S.c.toFixed(1);
+    document.querySelectorAll('.learn-chip-a, .learn-chip-a3').forEach(el => el.value = S.a.toFixed(2));
+    document.querySelectorAll('.learn-chip-b3').forEach(el => el.value = S.b.toFixed(1));
+    document.querySelectorAll('.learn-chip-c, .learn-chip-c3').forEach(el => el.value = S.c.toFixed(1));
+  }
+
+  [aS, bS, cS].forEach(s => s.addEventListener('input', fromSliders));
+  
+  // Bind learn sliders
+  document.querySelectorAll('.learn-slider-a, .learn-slider-a3, .learn-slider-b3, .learn-slider-c, .learn-slider-c3').forEach(s => {
+    s.addEventListener('input', fromSliders);
+  });
+
+  // Bind typeable chips inputs
+  [aC, bC, cC].forEach(input => {
+    input.addEventListener('input', fromInputs);
+    input.addEventListener('blur', formatAllInputs);
+    input.addEventListener('change', formatAllInputs);
+  });
+  document.querySelectorAll('.learn-chip-a, .learn-chip-a3, .learn-chip-b3, .learn-chip-c, .learn-chip-c3').forEach(input => {
+    input.addEventListener('input', fromInputs);
+    input.addEventListener('blur', formatAllInputs);
+    input.addEventListener('change', formatAllInputs);
+  });
+
+  // Canvas interaction (drag handles)
+  function ppos(e){
+    const r = canvas.getBoundingClientRect();
+    return { px: e.clientX - r.left, py: e.clientY - r.top };
+  }
+  canvas.addEventListener('pointerdown', e => {
+    if (S.mode === 'physics') return;
+    stopAll();
+    const { px, py } = ppos(e);
+    const h = vertexH(), k = vertexK();
+    const vq = toPx(h, k), wq = toPx(h + 1, k + S.a);
+    
+    if (Math.hypot(px - wq.px, py - wq.py) <= 14) {
+      S.drag = 1; canvas.setPointerCapture(e.pointerId); playSynth('click'); return;
+    }
+    if (Math.hypot(px - vq.px, py - vq.py) <= 15) {
+      S.drag = 0; canvas.setPointerCapture(e.pointerId); playSynth('click'); return;
+    }
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (S.drag < 0) return;
+    const { px, py } = ppos(e), w = toW(px, py);
+    const h = vertexH(), k = vertexK();
+    if (S.drag === 0) {
+      const nh = clamp(snap(w.x), -8, 8), nk = clamp(snap(w.y), -9, 9);
+      S.b = -2 * S.a * nh; S.c = nk + S.a * nh * nh;
+      addParticles(nh, nk, 2);
+    } else {
+      let na = w.y - k; na = clamp(na, -5, 5);
+      if (Math.abs(na) < 0.1) na = na < 0 ? -0.1 : 0.1;
+      S.b = -2 * na * h; S.c = k + na * h * h; S.a = na;
+      addParticles(h + 1, k + na, 2);
+    }
+    refreshUI();
+    if(S.mode === 'game') checkGameMatches();
+    draw();
+  });
+  function endDrag(){ S.drag = -1; draw(); }
+  canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag);
+
+  g('tGrid').onchange = e => { S.grid = e.target.checked; draw(); };
+  g('tVx').onchange = e => { S.vx = e.target.checked; draw(); };
+  g('tRoot').onchange = e => { S.root = e.target.checked; draw(); };
+  g('tSnap').onchange = e => { S.snap = e.target.checked; };
+  g('resetBtn').onclick = () => {
+    playSynth('click'); S.a = 1.0; S.b = 0.0; S.c = -3.0; S.t = -6.0; S.playing = false;
+    stopAll();
+    g('playBtn').textContent = '▶ โยนลูกบาสเกตบอล'; refreshUI(); draw();
+  };
+
+  // Tabs handling
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.onclick = () => {
+      playSynth('click');
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      tab.classList.add('active');
+      S.mode = tab.dataset.mode; S.playing = false;
+      stopAll();
+      
+      // hide/show panels
+      g('panel-learn').classList.toggle('hidden', S.mode !== 'learn');
+      g('panel-explore').classList.toggle('hidden', S.mode !== 'explore');
+      g('panel-challenge').classList.toggle('hidden', S.mode !== 'challenge');
+      g('panel-physics').classList.toggle('hidden', S.mode !== 'physics');
+      g('panel-realworld').classList.toggle('hidden', S.mode !== 'realworld');
+      g('panel-game').classList.toggle('hidden', S.mode !== 'game');
+      g('panel-exercises').classList.toggle('hidden', S.mode !== 'exercises');
+      g('panel-assign').classList.toggle('hidden', S.mode !== 'assign');
+      g('panel-shop').classList.toggle('hidden', S.mode !== 'explore' && S.mode !== 'game');
+      
+      if (S.mode === 'learn') selectLearnPart(S.learnSel);
+      if (S.mode === 'challenge' && !S.target) newTarget();
+      if (S.mode === 'game') loadLevel(S.level);
+      if (S.mode === 'exercises' && S.ex.probs.length === 0) buildExercises();
+      if (S.mode === 'realworld') {
+        S.scenario = 'angry'; S.rwX = -6; S.a = -0.25; S.b = 0; S.c = 6;
+        refreshUI(); updateRealWorldUI();
+      }
+      
+      // Pet reactions
+      if (S.mode === 'learn') petSpeak('สวัสดี! มาทำภารกิจเรียนรู้ 3 ขั้นตอนด้านบน เพื่อไขความลับของพาราโบลากันเถอะ!');
+      if (S.mode === 'challenge') petSpeak('เป้าหมายคือปรับเส้นเขียวของเราทับเส้นส้มของด่านให้ได้ ลองหาจุดยอดก่อนเป็นอันดับแรกนะ!');
+      if (S.mode === 'physics') petSpeak('ตั้ง a เป็นค่าลบ! แล้วโยนลูกบาสดูสิ ยิ่ง a ติดลบเยอะแรงดึงดูดจะยิ่งมากนะ!');
+      if (S.mode === 'realworld') petSpeak('พาราโบลาอยู่รอบตัวเราจริง ๆ ทั้งมุมยิงของนกโกรธ หรือจานดาวเทียมที่สะท้อนรวมแสงคลื่นวิทยุ!');
+      if (S.mode === 'game') petSpeak('ยินดีต้อนรับสู่เกมเก็บดาวกำลังสอง! กราฟของคุณต้องกวาดทับผ่านดาวสีฟ้าทั้งหมดนะ');
+      
+      draw();
+    };
+  });
+
+  // Learn tab details
+  const LEARN_TEXT = {
+    all: 'พาราโบลาเป็นกราฟรูปถ้วยหรือสะพานโค้งที่สมมาตร สรุปได้จากสมการพหุนามกำลังสอง y = ax² + bx + c โดยค่า a จะเป็นตัวคุมความคว่ำหงาย ส่วน b และ c จะช่วยขยับตำแหน่งยอดและจุดตัด',
+    a: '<b>a คือสัมประสิทธิ์ความโค้ง:</b><br>• ถ้า a > 0 กราฟจะ <b>หงายขึ้น</b> (รูปถ้วย)<br>• ถ้า a < 0 กราฟจะ <b>คว่ำลง</b> (รูปโดม)<br>• ยิ่งขนาดของ |a| มีค่ามากขึ้น กราฟจะยิ่ง <b>แคบ/ชันขึ้น</b> ลู่เข้าหาแกน Y',
+    b: '<b>b คือตัวแปรขยับเฉียง:</b><br>• มีอิทธิพลร่วมกับ a ในการระบุแกนสมมาตรที่สูตร x = −b / (2a)<br>• ปรับ b จะย้ายกราฟพาราโบลาเอียงไปทางซ้ายหรือขวา',
+    c: '<b>c คือจุดตัดแกน Y:</b><br>• เมื่อ x = 0 จะได้ y = c เสมอ ดังนั้น จุด (0, c) จึงเป็นจุดที่พาราโบลาลากตัดแกนตั้ง Y พอดี'
+  };
+  function selectLearnPart(part){
+    S.learnSel = part;
+    document.querySelectorAll('.learn-eq .lp').forEach(el => {
+      el.classList.toggle('sel', el.dataset.part === part);
+    });
+    document.querySelectorAll('.lchip').forEach(el => {
+      el.classList.toggle('active', el.dataset.part === part);
+    });
+    g('learnDef').innerHTML = LEARN_TEXT[part];
+  }
+  document.querySelectorAll('.learn-eq .lp').forEach(el => {
+    el.onclick = () => { playSynth('click'); selectLearnPart(el.dataset.part); };
+  });
+  document.querySelectorAll('.lchip').forEach(el => {
+    el.onclick = () => { playSynth('click'); selectLearnPart(el.dataset.part); };
+  });
+
+  // Animated teaching tutorial
+  let teachTimer = null, teachStep = 0;
+  g('teachBtn').onclick = () => {
+    if(teachTimer) clearInterval(teachTimer);
+    playSynth('click'); g('teachCap').style.display = 'block';
+    teachStep = 0; runTeaching();
+    teachTimer = setInterval(runTeaching, 3200);
+  };
+  function runTeaching(){
+    if (teachStep === 0) {
+      S.a = 2.0; S.b = 0; S.c = -2; petSpeak('ลองปรับ a = 2.00 หงายขึ้นและแคบ ชันมาก!'); g('teachCap').textContent = 'ขั้นตอนที่ 1: หงาย ชัน (a = 2)';
+    } else if (teachStep === 1) {
+      S.a = -0.5; S.b = 0; S.c = 4; petSpeak('ปรับ a = -0.50 คราวนี้คว่ำลงเป็นรูปโดมเตี้ย ๆ'); g('teachCap').textContent = 'ขั้นตอนที่ 2: คว่ำ กว้าง (a = -0.5)';
+    } else if (teachStep === 2) {
+      S.a = 1.0; S.b = -4; S.c = 1; petSpeak('ปรับ b = -4 ย้ายแกนสมมาตรมาอยู่ที่ x = 2'); g('teachCap').textContent = 'ขั้นตอนที่ 3: ขยับแกนสมมาตรไปขวา';
+    } else {
+      clearInterval(teachTimer); teachTimer = null;
+      g('teachCap').style.display = 'none';
+      petSpeak('จบบทเรียนแบบเคลื่อนไหวแล้ว! ลองสลับแท็บไปโหมดอื่นได้เลยครับ');
+    }
+    refreshUI(); draw(); teachStep++;
+  }
+
+  // Challenge Mode
+  const fb = g('cFeedback');
+  function newTarget(){
+    const as = [-2, -1, -0.5, 0.5, 1, 2];
+    let a, h, k;
+    do {
+      a = as[Math.floor(Math.random() * as.length)];
+      h = Math.floor(Math.random() * 9) - 4;
+      k = Math.floor(Math.random() * 9) - 4;
+    } while(S.target && a === S.target._a && h === S.target._h);
+    S.target = { a: a, b: -2 * a * h, c: k + a * h * h, _a: a, _h: h, _k: k };
+    fb.className = 'feedback'; draw();
+  }
+  function checkAnswer(){
+    if(!S.target) return;
+    const da = Math.abs(S.a - S.target.a);
+    const h = vertexH(), k = vertexK();
+    const dh = Math.abs(h - S.target._h), dk = Math.abs(k - S.target._k);
+    let st = 0, p = 0, m = '', c = '';
+    
+    if (da < 0.15 && dh < 0.3 && dk < 0.45) {
+      st = 3; p = 100; m = 'สุดยอดพาราโบลา! ตรงเป๊ะสมบูรณ์แบบ ⭐⭐⭐'; c = 'f-great';
+    } else if (da < 0.65 && dh < 0.7 && dk < 1.0) {
+      st = 2; p = 60; m = 'ดีมาก! ใกล้เคียงกับจุดเป้าหมายแล้ว ⭐⭐'; c = 'f-ok';
+    } else if (da < 1.25 && dh < 1.4 && dk < 2.0) {
+      st = 1; p = 30; m = 'พอใช้ได้ ⭐ ลองดูสัมประสิทธิ์คว่ำหงายดีๆ อีกรอบ'; c = 'f-ok';
+    } else {
+      st = 0; m = `ยังไม่ตรง เป้าหมายจุดยอด: (${S.target._h}, ${S.target._k}) และ a = ${S.target.a}`; c = 'f-bad';
+    }
+    S.score += p; S.round++; S.stars += st; S.coins += Math.round(p / 5);
+    localStorage.setItem('math_coins', S.coins); updateShopUI();
+    g('cScore').textContent = S.score; g('cRound').textContent = S.round;
+    g('cStars').textContent = '⭐ ' + S.stars;
+    fb.textContent = m; fb.className = 'feedback show ' + c;
+    
+    if(st === 3) {
+      playSynth('perfect'); triggerConfetti();
+      setTimeout(newTarget, 1500);
+    } else if(st > 0) {
+      playSynth('match');
+    } else {
+      playSynth('fail');
+    }
+  }
+  g('checkBtn').onclick = checkAnswer; g('newTargetBtn').onclick = newTarget;
+
+  // Physics tab loop
+  const playBtn = g('playBtn');
+  function tick(ts){
+    if(!S.playing) return;
+    if(!S.lastTs) S.lastTs = ts;
+    const dt = (ts - S.lastTs) / 1000; S.lastTs = ts;
+    
+    if (S.mode === 'physics') {
+      S.t += dt * 4.5;
+      if (S.t > 8.0) S.t = -8.0;
+    } else if (S.mode === 'realworld') {
+      S.rwX += dt * 3.5;
+      if (S.rwX > 8.0) {
+        if(S.scenario === 'angry') S.rwX = -6.0;
+        else if (S.scenario === 'bridge') S.rwX = -8.0;
+        else S.rwX = -8.0;
+      }
+      // check angry pig hits
+      if (S.scenario === 'angry') {
+        const yLine = yAt(S.rwX);
+        if (Math.abs(S.rwX - 6.0) < 0.35 && Math.abs(yLine - 2.0) < 0.45) {
+          petSpeak('ปัง! ยิงนกแดงชนเจ้าหมูเขียวสำเร็จ! ยิงแม่นมาก 🪙');
+          playSynth('perfect'); triggerConfetti(); S.coins += 10;
+          localStorage.setItem('math_coins', S.coins); updateShopUI();
+          stopRwPlay(); S.rwX = 6.0;
+        }
+      }
+      updateRealWorldUI();
+    }
+    
+    draw();
+    requestAnimationFrame(tick);
+  }
+  playBtn.onclick = () => {
+    if(S.playing) stopPlay();
+    else {
+      initAudio();
+      stopAll();
+      if (S.mode === 'physics' && S.a >= 0) {
+        petSpeak('เฮ้! แรงดึงดูดโลกต้องดึงลงนะ ลองปรับค่า a เป็นค่าติดลบก่อนโยนสิครับ!');
+        playSynth('fail'); return;
+      }
+      S.playing = true; S.lastTs = 0;
+      if(S.mode==='physics') S.t = -7.5;
+      playBtn.textContent = '⏸ หยุด'; requestAnimationFrame(tick);
+    }
+  };
+  g('rewindBtn').onclick = () => {
+    playSynth('click');
+    if (S.mode === 'physics') S.t = -8.0;
+    else S.rwX = -6.0;
+    draw();
+  };
+
+  const rwPlayBtn = g('rwPlayBtn');
+  rwPlayBtn.onclick = () => {
+    if(S.playing) stopRwPlay();
+    else {
+      initAudio();
+      stopAll();
+      S.playing = true; S.lastTs = 0;
+      if (S.scenario === 'angry' && S.rwX >= 6.0) S.rwX = -6.0;
+      if (S.scenario === 'bridge' && S.rwX >= 8.0) S.rwX = -8.0;
+      rwPlayBtn.textContent = '⏸ หยุด'; requestAnimationFrame(tick);
+    }
+  };
+  g('rwRewindBtn').onclick = () => {
+    playSynth('click');
+    if (S.scenario === 'angry') S.rwX = -6.0;
+    else if (S.scenario === 'bridge') S.rwX = -8.0;
+    else S.rwX = -8.0;
+    refreshUI();
+    draw();
+  };
+
+  // Exercises generation (seeded)
+  function hashStr(s){
+    let h = 2166136261 >>> 0;
+    for(let i=0; i<s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return h >>> 0;
+  }
+  function mulberry32(a){
+    return function(){
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function ri(r, lo, hi){ return lo + Math.floor(r() * (hi - lo + 1)); }
+  function pk(r, arr){ return arr[Math.floor(r() * arr.length)]; }
+  function genProblems(seed){
+    const r = mulberry32(seed), P = [];
+    const b1 = pk(r, [-6, -4, -2, 2, 4, 6]), c1 = ri(r, -8, 8);
+    P.push({ q: `จากพาราโบลา y = x² ${b1 >= 0 ? '+ ' + b1 : '− ' + Math.abs(b1)}x ${c1 >= 0 ? '+ ' + c1 : '− ' + Math.abs(c1)} จุดตัดแกน Y อยู่ที่ค่า y เท่ากับเท่าใด?`, a: c1 });
+    
+    const b2 = pk(r, [-8, -6, -4, 4, 6, 8]);
+    P.push({ q: `สมการ y = x² ${b2 >= 0 ? '+ ' + b2 : '− ' + Math.abs(b2)}x - 2 มีเส้นแกนสมมาตรอยู่ที่ x เท่ากับเท่าใด? (x = −b / 2a)`, a: -b2/2 });
+    
+    let root1 = ri(r, -4, 2), root2 = ri(r, 3, 6);
+    P.push({ q: `พาราโบลา y = (x - ${root1})(x - ${root2}) ลากตัดแกน X ณ รากที่มีค่าบวกมากที่สุดที่ x เท่ากับเท่าใด?`, a: root2 });
+    
+    const b4 = ri(r, -3, 3), c4 = ri(r, -5, 5), testX = ri(r, -2, 3);
+    P.push({ q: `สำหรับสมการ y = -x² ${b4 >= 0 ? '+ ' + b4 : '− ' + Math.abs(b4)}x ${c4 >= 0 ? '+ ' + c4 : '− ' + Math.abs(c4)} เมื่อกำหนด x = ${testX} จะได้ค่า y เท่ากับเท่าใด?`, a: -testX*testX + b4*testX + c4 });
+    return P;
+  }
+  function buildExercises(){
+    const name = g('exName').value.trim();
+    const seed = name ? hashStr(name) : (Math.random() * 4294967296) >>> 0;
+    S.ex.probs = genProblems(seed); S.ex.correct = new Array(S.ex.probs.length).fill(false);
+    const wrap = g('exList'); wrap.innerHTML = '';
+    S.ex.probs.forEach((p, i) => {
+      const q = document.createElement('div'); q.className = 'exq';
+      q.innerHTML = `<div class="exqt">${i+1}. ${p.q}</div><div class="exrow"><input type="number" step="any" placeholder="พิมพ์คำตอบ"><button class="act b-ok" style="flex:0 0 auto;padding:8px 14px">ตรวจ</button><span class="exfb"></span></div>`;
+      const inp = q.querySelector('input'), btn = q.querySelector('button'), efb = q.querySelector('.exfb');
+      btn.onclick = () => checkEx(i, inp, efb);
+      inp.onkeydown = e => { if(e.key === 'Enter') checkEx(i, inp, efb); };
+      wrap.appendChild(q);
+    });
+    updateExScore();
+  }
+  function checkEx(i, inp, efb){
+    const val = parseFloat(inp.value);
+    if(isNaN(val)) { efb.textContent = 'ใส่ตัวเลขก่อน'; efb.className = 'exfb no'; return; }
+    if(Math.abs(val - S.ex.probs[i].a) < 0.01) {
+      efb.textContent = '✓ ถูกต้อง'; efb.className = 'exfb ok'; S.ex.correct[i] = true; playSynth('match');
+    } else {
+      efb.textContent = `✗ ยังไม่ถูก (เฉลย: ${S.ex.probs[i].a})`; efb.className = 'exfb no'; S.ex.correct[i] = false; playSynth('fail');
+    }
+    updateExScore();
+  }
+  function updateExScore(){
+    g('exScore').textContent = `${S.ex.correct.filter(Boolean).length} / ${S.ex.probs.length}`;
+  }
+  g('exGenBtn').onclick = buildExercises;
+  g('exName').onkeydown = e => { if (e.key==='Enter') buildExercises(); };
+
+  // Assignment section checks
+  g('ckB1').onclick = () => {
+    // y = -x^2 + 4x - 2 -> a=-1, b=4, c=-2
+    if (Math.abs(S.a - (-1.0)) < 0.1 && Math.abs(S.b - 4.0) < 0.1 && Math.abs(S.c - (-2.0)) < 0.1) {
+      g('fbB1').textContent = '✓ สำเร็จ! สมการตรงตามเงื่อนไข'; g('fbB1').className = 'task-fb tf-ok'; playSynth('perfect');
+    } else {
+      g('fbB1').textContent = '✗ สัมประสิทธิ์หรือตำแหน่งยังไม่ถูกต้อง ลองตั้งค่าเป็น a=-1.00, b=4.0, c=-2.0'; g('fbB1').className = 'task-fb tf-bad'; playSynth('fail');
+    }
+  };
+  g('ckB2').onclick = () => {
+    // y = x^2 - 6x + 5 -> a=1, b=-6, c=5, vertex at (3, -4)
+    const h = vertexH(), k = vertexK();
+    if (Math.abs(S.a - 1.0) < 0.1 && Math.abs(h - 3.0) < 0.2 && Math.abs(k - (-4.0)) < 0.2) {
+      g('fbB2').textContent = '✓ ถูกต้อง! จุดยอดตรงตามข้อกำหนด'; g('fbB2').className = 'task-fb tf-ok'; playSynth('perfect');
+    } else {
+      g('fbB2').textContent = '✗ กราฟยังไม่ถูกต้อง! ลองเลื่อนจุดยอดสีเขียวไปวางที่พิกัด (3, -4)'; g('fbB2').className = 'task-fb tf-bad'; playSynth('fail');
+    }
+  };
+
+  // Screenshots in Assignment
+  g('capC1').onclick = () => {
+    const h = vertexH(), k = vertexK();
+    if (S.a > 0 && Math.abs(h - 0.0) < 0.2 && Math.abs(k - (-5.0)) < 0.2) {
+      captureScreenshot('C1');
+    } else {
+      petSpeak('คุณต้องปรับกราฟให้เป็นพาราโบลาหงายที่จุดยอดอยู่ที่ (0, -5) ก่อนนะ!');
+      playSynth('fail');
+    }
+  };
+  g('capC2').onclick = () => {
+    const h = vertexH(), k = vertexK();
+    if (S.a < 0 && Math.abs(h - 2.0) < 0.2 && Math.abs(k - 4.0) < 0.2) {
+      captureScreenshot('C2');
+    } else {
+      petSpeak('คุณต้องปรับกราฟให้เป็นพาราโบลาคว่ำที่จุดยอดอยู่ที่ (2, 4) ก่อนนะ!');
+      playSynth('fail');
+    }
+  };
+
+  function captureScreenshot(part){
+    playSynth('click');
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = canvas.width; tempCanvas.height = canvas.height;
+    const tempCtx = tempCanvas.getContext('2d');
+    tempCtx.drawImage(canvas, 0, 0);
+    
+    const url = tempCanvas.toDataURL('image/png');
+    g(`img${part}`).src = url;
+    g(`img${part}`).style.display = 'block';
+    g(`ph${part}`).style.display = 'none';
+    petSpeak(`📸 บันทึกภาพกราฟสำหรับข้อ ${part} เรียบร้อย!`);
+  }
+
+  // Pull score stats
+  g('pullScore').onclick = () => {
+    playSynth('click');
+    g('aRound').textContent = S.round;
+    g('aLevel').textContent = S.level;
+    g('aScore').textContent = S.gameScore;
+  };
+
+  // Fullscreen controller
+  g('fsBtn').onclick = () => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      document.documentElement.requestFullscreen().catch(e => {
+        alert('เบราว์เซอร์ของคุณไม่รองรับเต็มจอหรือห้ามทำงานในกรอบฝัง');
+      });
+    }
+  };
+  document.addEventListener('fullscreenchange', () => {
+    g('fsBtn').textContent = document.fullscreenElement ? '⛶ ออกเต็มจอ' : '⛶ เต็มจอ';
+  });
+
+  // Sound toggle
+  g('soundToggle').onclick = () => {
+    S.soundEnabled = !S.soundEnabled;
+    localStorage.setItem('math_sound_enabled', S.soundEnabled);
+    g('soundToggle').textContent = S.soundEnabled ? '🔊' : '🔇';
+  };
+  
+  // Printing assignment sheet
+  g('printBtn').onclick = () => {
+    playSynth('click'); window.print();
+  };
+
+  // Guided Walk-through checking function
+  function checkLearnSteps() {
+    if (S.mode !== 'learn') return;
+    
+    // Step 1 check (a is negative)
+    if (S.learnStep === 1) {
+      if (S.a < 0) {
+        S.learnStep = 2;
+        g('chkA').textContent = '✓';
+        g('lStep1').classList.add('completed');
+        g('lStep1Progress').textContent = '';
+        
+        // Unlock Step 2
+        g('lStep2').style.opacity = '1';
+        g('lStep2').style.pointerEvents = 'auto';
+        g('chkC').textContent = '⏳';
+        
+        petSpeak('ยอดเยี่ยมมาก! พาราโบลาคว่ำลงเป็นรูปโดมแล้ว เพราะสัมประสิทธิ์ a มีค่าติดลบ! ต่อไปลองทำขั้นที่ 2 ดูนะ');
+      } else {
+        g('lStep1Progress').innerHTML = `<span style="color:#b91c1c">❌ กราฟหงาย (ค่าปัจจุบัน a = ${S.a.toFixed(2)} > 0)</span><br>ปรับสไลเดอร์ a ให้ติดลบ (< 0) เพื่อทำให้กราฟคว่ำเป็นรูปโดม`;
+      }
+    }
+    
+    // Step 2 check (c is 3.0)
+    if (S.learnStep === 2) {
+      if (Math.abs(S.c - 3.0) < 0.01) {
+        g('chkC').textContent = '✓';
+        g('lStep2').classList.add('completed');
+        g('lStep2Quiz').classList.remove('hidden');
+        g('lStep2Progress').innerHTML = `<span style="color:#15803d">✓ ถูกต้อง! จุดตัดแกน Y อยู่ที่ (0, 3)</span>`;
+      } else {
+        const tooHigh = S.c > 3.0;
+        g('lStep2Progress').innerHTML = `<span style="color:#b91c1c">❌ จุดตัดแกน Y อยู่${tooHigh ? 'สูง' : 'ต่ำ'}เกินไป (ค่าปัจจุบัน c = ${S.c.toFixed(1)})</span><br>ปรับสไลเดอร์ c ให้เท่ากับ 3.0 เพื่อให้กราฟตัดแกน Y ที่จุดพอดี`;
+      }
+    }
+    
+    // Step 3 check (a = 1.00, b = -4.0, c = 0.0)
+    if (S.learnStep === 3) {
+      const isACorrect = Math.abs(S.a - 1.0) < 0.01;
+      const isCCorrect = Math.abs(S.c - 0.0) < 0.01;
+      const isBCorrect = Math.abs(S.b - (-4.0)) < 0.01;
+      
+      if (isACorrect && isCCorrect && isBCorrect) {
+        S.learnStep = 4;
+        g('chkB').textContent = '✓';
+        g('lStep3').classList.add('completed');
+        g('lStep3Progress').textContent = '';
+        
+        // Show Step 4 summary
+        g('lStep4').classList.remove('hidden');
+        
+        triggerConfetti();
+        petSpeak('ยอดเยี่ยมที่สุด! 🎉 คุณผ่านบทเรียนทำความเข้าใจพาราโบลาทั้งหมดแล้ว! ลองสลับไปเล่นเกมหรือแบบฝึกหัดได้เลย!');
+      } else {
+        let errs = [];
+        if (!isACorrect) errs.push(`ค่า a = ${S.a.toFixed(2)} (ต้องการ a = 1.00)`);
+        if (!isBCorrect) errs.push(`ค่า b = ${S.b.toFixed(1)} (ต้องการ b = -4.0)`);
+        if (!isCCorrect) errs.push(`ค่า c = ${S.c.toFixed(1)} (ต้องการ c = 0.0)`);
+        g('lStep3Progress').innerHTML = `<span style="color:#b91c1c">❌ ยังไม่ถูกต้อง:</span><br>${errs.join('<br>')}`;
+      }
+    }
+    
+    updateInteractiveCalc();
+  }
+
+  // Interactive Substitution Calculator Logic
+  function updateInteractiveCalc() {
+    const subXInp = g('subX');
+    if (!subXInp) return;
+    const xVal = parseFloat(subXInp.value) || 0;
+    
+    document.querySelectorAll('.subX-val').forEach(el => el.textContent = xVal);
+    
+    g('calc-a').textContent = S.a.toFixed(2);
+    g('calc-b').textContent = S.b.toFixed(1);
+    g('calc-c').textContent = S.c.toFixed(1);
+    
+    const ax2 = S.a * xVal * xVal;
+    const bx = S.b * xVal;
+    const c = S.c;
+    const yVal = ax2 + bx + c;
+    
+    const bSign = bx >= 0 ? `+ ${bx.toFixed(2)}` : `− ${Math.abs(bx).toFixed(2)}`;
+    const cSign = c >= 0 ? `+ ${c.toFixed(2)}` : `− ${Math.abs(c).toFixed(2)}`;
+    
+    g('calc-step-line').innerHTML = `y = ${ax2.toFixed(2)} ${bSign} ${cSign} = <b>${yVal.toFixed(2)}</b>`;
+    g('calc-coord-line').innerHTML = `จะได้พิกัดบนกราฟคือ: <span style="color:#0d9488"><b>(${xVal}, ${yVal.toFixed(2)})</b></span>`;
+  }
+
+  // Quiz Option Event Listeners
+  document.querySelectorAll('.quiz-opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (S.learnStep !== 2) return;
+      const isCorrect = btn.dataset.correct === 'true';
+      const qfb = g('quizFeedback');
+      if (isCorrect) {
+        qfb.textContent = '✓ ถูกต้อง! เมื่อ x = 0 ในสมการ y = x² - 2x - 5 จะได้ y = -5 จุดตัดคือ (0, -5)';
+        qfb.className = 'tf-ok';
+        
+        // Unlock Step 3
+        S.learnStep = 3;
+        g('lStep3').style.opacity = '1';
+        g('lStep3').style.pointerEvents = 'auto';
+        g('chkB').textContent = '⏳';
+        
+        petSpeak('ถูกต้องเก่งมาก! จุดตัดแกน Y คือพิกัด (0, c) เสมอ! ไปลุยขั้นที่ 3 กันต่อเลยครับ!');
+        checkLearnSteps();
+      } else {
+        qfb.textContent = '✗ ยังไม่ถูก ลองพิจารณาค่า c ในสมการ (x = 0)';
+        qfb.className = 'tf-bad';
+        petSpeak('ลองใหม่อีกทีนะจ๊ะ จุดตัดแกน Y หาได้โดยแทนค่า x = 0 เข้าไปในสมการนะ!');
+      }
+    });
+  });
+
+  // Dynamic Skin Special Effects Engine
+  function updateSkinEffects() {
+    // Snowfall Tempest effect
+    if (S.activeSkin === 'skin_snow') {
+      if (Math.random() < 0.25) {
+        S.skinEffects.push({
+          type: 'snow',
+          x: pad + Math.random() * (cssW - 2 * pad),
+          y: pad,
+          vy: 0.8 + Math.random() * 1.2,
+          vx: (Math.random() - 0.5) * 0.4,
+          size: 1.5 + Math.random() * 2.5
+        });
+      }
+    }
+    // Meteor Firestorm effect
+    if (S.activeSkin === 'skin_fire') {
+      if (Math.random() < 0.2) {
+        S.skinEffects.push({
+          type: 'fire',
+          x: pad + Math.random() * (cssW - 2 * pad),
+          y: pad,
+          vy: 2.0 + Math.random() * 2.0,
+          vx: (Math.random() - 0.5) * 0.8,
+          size: 2.5 + Math.random() * 3.5
+        });
+      }
+    }
+
+    // Update coordinates and check collisions
+    for (let i = S.skinEffects.length - 1; i >= 0; i--) {
+      const p = S.skinEffects[i];
+      p.x += p.vx; p.y += p.vy;
+
+      if (p.y > cssH - pad || p.x < pad || p.x > cssW - pad) {
+        S.skinEffects.splice(i, 1);
+        continue;
+      }
+
+      // Check collision with parabola curve y = ax^2 + bx + c
+      const wPos = toW(p.x, p.y);
+      const yParabola = yAt(wPos.x);
+      const pParabola = toPx(wPos.x, yParabola);
+
+      // If falling below the curve
+      if (p.y >= pParabola.py) {
+        if (p.type === 'snow') {
+          // Burst frost sparkles
+          for (let k = 0; k < 3; k++) {
+            S.particles.push({
+              x: p.x, y: pParabola.py,
+              vx: (Math.random() - 0.5) * 1.5, vy: -Math.random() * 1.0,
+              size: 1 + Math.random() * 2, alpha: 1,
+              color: '#bae6fd', life: 0, maxLife: 12 + Math.random() * 8
+            });
+          }
+        } else if (p.type === 'fire') {
+          // Explode fiery embers
+          for (let k = 0; k < 5; k++) {
+            S.particles.push({
+              x: p.x, y: pParabola.py,
+              vx: (Math.random() - 0.5) * 3.0, vy: -(0.8 + Math.random() * 2.0),
+              size: 1.5 + Math.random() * 2.5, alpha: 1,
+              color: Math.random() < 0.5 ? '#f97316' : '#ef4444',
+              life: 0, maxLife: 15 + Math.random() * 12
+            });
+          }
+        }
+        S.skinEffects.splice(i, 1);
+      }
+    }
+  }
+
+  function drawSkinEffects() {
+    ctx.save();
+    S.skinEffects.forEach(p => {
+      if (p.type === 'snow') {
+        // Draw fluffy snowflake
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (p.type === 'fire') {
+        // Draw glowing meteor fireball
+        const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 1.8);
+        grad.addColorStop(0, '#fef08a');
+        grad.addColorStop(0.3, '#f97316');
+        grad.addColorStop(1, 'rgba(239, 68, 68, 0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * 1.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    });
+    ctx.restore();
+  }
+
+  // Animation Loop for skins
+  function animLoop() {
+    let needsRedraw = false;
+    if (S.activeSkin === 'skin_snow' || S.activeSkin === 'skin_fire' || S.particles.length > 0 || S.skinEffects.length > 0) {
+      updateSkinEffects();
+      updateParticles();
+      needsRedraw = true;
+    }
+    if (needsRedraw && !S.playing) {
+      draw();
+    }
+    requestAnimationFrame(animLoop);
+  }
+
+  // Initialize
+  window.addEventListener('resize', resize);
+  updateShopUI(); refreshUI(); resize();
+  g('panel-shop').classList.toggle('hidden', S.mode !== 'explore' && S.mode !== 'game');
+  if (g('subX')) {
+    g('subX').addEventListener('input', updateInteractiveCalc);
+  }
+  selectLearnPart('a');
+  requestAnimationFrame(animLoop);
+})();
+</script>
+</body>
+</html>
