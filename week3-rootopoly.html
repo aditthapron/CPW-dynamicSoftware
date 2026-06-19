@@ -1,0 +1,1539 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Rootopoly 3D — เกมศึกชิงอสังหาริมทรัพย์สมการ</title>
+<style>
+  :root {
+    --brand-h: 220; /* Deep blue theme */
+    --bg-dark: oklch(0.12 0.04 var(--brand-h));
+    --surface-dark: oklch(0.18 0.05 var(--brand-h) / 0.85);
+    --border-color: oklch(0.3 0.08 var(--brand-h) / 0.5);
+    
+    --primary: oklch(0.65 0.2 var(--brand-h));
+    --primary-glow: oklch(0.65 0.2 var(--brand-h) / 0.4);
+    --accent: oklch(0.68 0.18 38); /* Amber gold */
+    --accent-glow: oklch(0.68 0.18 38 / 0.4);
+    
+    --p1-color: #f43f5e; /* Rose red */
+    --p2-color: #3b82f6; /* Electric blue */
+    --p3-color: #10b981; /* Emerald green */
+    --p4-color: #f59e0b; /* Amber/Orange */
+    
+    --shadow-premium: 0 15px 35px rgba(0, 0, 0, 0.4), 0 5px 15px rgba(0, 0, 0, 0.2);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    font-family: 'Inter', 'Sarabun', system-ui, sans-serif;
+    background: radial-gradient(circle at center, oklch(0.2 0.06 var(--brand-h)), oklch(0.08 0.03 var(--brand-h)));
+    color: #f1f5f9;
+    min-height: 100vh;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-color);
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 10;
+  }
+
+  header h1 {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #fff, oklch(0.7 0.1 var(--brand-h)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .header-actions { display: flex; gap: 12px; }
+  
+  .btn-ghost {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #f1f5f9;
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.18);
+    transform: translateY(-1px);
+  }
+
+  /* Main Area */
+  .game-container {
+    flex: 1;
+    display: flex;
+    max-width: 1400px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 24px;
+    gap: 24px;
+    align-items: stretch;
+  }
+
+  /* 3D Board Column */
+  .board-section {
+    flex: 1.3;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    min-height: 550px;
+  }
+
+  /* Side HUD Column */
+  .hud-section {
+    flex: 0.8;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .glass-panel {
+    background: var(--surface-dark);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: var(--shadow-premium);
+  }
+
+  /* Perspective Viewport wrapper */
+  .board-viewport {
+    perspective: 1400px;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+  }
+
+  /* The actual rotated board */
+  .board-3d {
+    position: relative;
+    width: 100%;
+    max-width: 650px;
+    aspect-ratio: 5/4;
+    background: oklch(0.15 0.04 var(--brand-h));
+    border: 6px solid oklch(0.4 0.1 var(--brand-h));
+    border-radius: 16px;
+    padding: 6px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    gap: 6px;
+    transform: rotateX(32deg) rotateZ(-12deg);
+    transform-style: preserve-3d;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), 0 0 40px oklch(0.5 0.15 var(--brand-h) / 0.15);
+    transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  
+  .board-3d:hover {
+    transform: rotateX(28deg) rotateZ(-8deg);
+  }
+
+  /* Grid Cells */
+  .cell {
+    background: oklch(0.22 0.03 var(--brand-h));
+    border-radius: 8px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform-style: preserve-3d;
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .cell:hover {
+    transform: translateZ(10px);
+    background: oklch(0.26 0.04 var(--brand-h));
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+  }
+
+  /* Grid Pos */
+  .cell-0 { grid-column: 5; grid-row: 4; }
+  .cell-1 { grid-column: 4; grid-row: 4; }
+  .cell-2 { grid-column: 3; grid-row: 4; }
+  .cell-3 { grid-column: 2; grid-row: 4; }
+  .cell-4 { grid-column: 1; grid-row: 4; }
+  .cell-5 { grid-column: 1; grid-row: 3; }
+  .cell-6 { grid-column: 1; grid-row: 2; }
+  .cell-7 { grid-column: 1; grid-row: 1; }
+  .cell-8 { grid-column: 2; grid-row: 1; }
+  .cell-9 { grid-column: 3; grid-row: 1; }
+  .cell-10 { grid-column: 4; grid-row: 1; }
+  .cell-11 { grid-column: 5; grid-row: 1; }
+  .cell-12 { grid-column: 5; grid-row: 2; }
+  .cell-13 { grid-column: 5; grid-row: 3; }
+
+  /* Cell Header/Body */
+  .cell-header {
+    height: 18px;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+    color: #fff;
+  }
+  
+  .cell-body {
+    flex: 1;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .cell-title {
+    font-size: 11px;
+    font-weight: 800;
+    color: #fff;
+    font-family: 'Cambria Math', 'Times New Roman', serif;
+    letter-spacing: -0.2px;
+  }
+  
+  .cell-price {
+    font-size: 9px;
+    font-weight: 600;
+    color: oklch(0.7 0.05 var(--brand-h));
+    margin-top: 2px;
+  }
+
+  /* Colors */
+  .bg-start { background: linear-gradient(135deg, #10b981, #059669); }
+  .bg-prop1 { background: linear-gradient(135deg, #a855f7, #7c3aed); }
+  .bg-prop2 { background: linear-gradient(135deg, #ec4899, #db2777); }
+  .bg-prop3 { background: linear-gradient(135deg, #f59e0b, #d97706); }
+  .bg-chance { background: linear-gradient(135deg, #0ea5e9, #0284c7); }
+  .bg-jail { background: linear-gradient(135deg, #64748b, #475569); }
+
+  /* Board Center */
+  .board-center {
+    grid-column: 2 / 5;
+    grid-row: 2 / 4;
+    background: oklch(0.16 0.04 var(--brand-h) / 0.5);
+    border: 2px dashed oklch(0.3 0.08 var(--brand-h));
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    transform-style: preserve-3d;
+    transform: translateZ(5px);
+  }
+
+  /* 3D Tokens Container */
+  .token-container {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 100;
+    transform-style: preserve-3d;
+  }
+
+  /* 3D Cylinder Token styling */
+  .token {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    transform-style: preserve-3d;
+    transform: translate3d(-50%, -50%, 0);
+    transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 800;
+    color: #fff;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
+  }
+  
+  .token::before {
+    content: '';
+    position: absolute;
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    background: inherit;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    transform: translateZ(6px);
+  }
+
+  .tok-p1 { background: var(--p1-color); box-shadow: 0 0 10px var(--p1-color); }
+  .tok-p2 { background: var(--p2-color); box-shadow: 0 0 10px var(--p2-color); }
+  .tok-p3 { background: var(--p3-color); box-shadow: 0 0 10px var(--p3-color); }
+  .tok-p4 { background: var(--p4-color); box-shadow: 0 0 10px var(--p4-color); }
+
+  /* Neon border highlight for owned properties */
+  .cell-neon {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    z-index: 5;
+  }
+
+  /* Interactive 3D Dice Scene */
+  .dice-scene {
+    width: 60px;
+    height: 60px;
+    perspective: 600px;
+    margin: 16px 0;
+    transform-style: preserve-3d;
+    transform: translateZ(20px);
+  }
+
+  .dice-cube {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transform: rotateX(-20deg) rotateY(25deg);
+    transition: transform 1.5s cubic-bezier(0.2, 0.8, 0.3, 1.05);
+  }
+
+  .dice-face {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    background: radial-gradient(circle at center, #ffffff 60%, #cbd5e1 100%);
+    border: 2px solid #94a3b8;
+    border-radius: 12px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    padding: 6px;
+    box-shadow: inset 0 0 12px rgba(0,0,0,0.1), 0 4px 10px rgba(0,0,0,0.3);
+  }
+
+  .dice-face .dot {
+    width: 9px;
+    height: 9px;
+    background: #1e293b;
+    border-radius: 50%;
+    align-self: center;
+    justify-self: center;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.4);
+  }
+  
+  .dice-face.face-1 .dot { background: #e11d48; width: 13px; height: 13px; }
+
+  /* 3D Dice Face Positionings */
+  .face-1 { transform: rotateY(0deg) translateZ(30px); }
+  .face-2 { transform: rotateY(180deg) translateZ(30px); }
+  .face-3 { transform: rotateY(90deg) translateZ(30px); }
+  .face-4 { transform: rotateY(-90deg) translateZ(30px); }
+  .face-5 { transform: rotateX(90deg) translateZ(30px); }
+  .face-6 { transform: rotateX(-90deg) translateZ(30px); }
+
+  /* Dot Grid coordinates */
+  .dot.tl { grid-column: 1; grid-row: 1; }
+  .dot.tr { grid-column: 3; grid-row: 1; }
+  .dot.ml { grid-column: 1; grid-row: 2; }
+  .dot.cc { grid-column: 2; grid-row: 2; }
+  .dot.mr { grid-column: 3; grid-row: 2; }
+  .dot.bl { grid-column: 1; grid-row: 3; }
+  .dot.br { grid-column: 3; grid-row: 3; }
+
+  /* Roll button */
+  .dice-btn {
+    background: linear-gradient(135deg, var(--accent), oklch(0.55 0.18 35));
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 24px;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 6px 20px var(--accent-glow);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: inherit;
+    transform: translateZ(10px);
+  }
+  .dice-btn:hover {
+    transform: scale(1.05) translateZ(12px);
+    box-shadow: 0 10px 25px var(--accent-glow);
+  }
+  .dice-btn:active {
+    transform: scale(0.95) translateZ(8px);
+  }
+  .dice-btn:disabled {
+    background: #475569;
+    box-shadow: none;
+    transform: none;
+    cursor: not-allowed;
+  }
+
+  /* Player cards in HUD */
+  .hud-title {
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 16px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .players-hub {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .player-card {
+    background: oklch(0.25 0.04 var(--brand-h));
+    border: 2px solid transparent;
+    border-radius: 16px;
+    padding: 14px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .player-card.active {
+    transform: scale(1.03);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  }
+  .player-card.p1.active { border-color: var(--p1-color); background: oklch(0.25 0.04 var(--brand-h) / 0.8); }
+  .player-card.p2.active { border-color: var(--p2-color); background: oklch(0.25 0.04 var(--brand-h) / 0.8); }
+  .player-card.p3.active { border-color: var(--p3-color); background: oklch(0.25 0.04 var(--brand-h) / 0.8); }
+  .player-card.p4.active { border-color: var(--p4-color); background: oklch(0.25 0.04 var(--brand-h) / 0.8); }
+
+  .player-name {
+    font-weight: 800;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .player-name::before {
+    content: '';
+    display: inline-block;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+  }
+  .p1 .player-name::before { background: var(--p1-color); }
+  .p2 .player-name::before { background: var(--p2-color); }
+  .p3 .player-name::before { background: var(--p3-color); }
+  .p4 .player-name::before { background: var(--p4-color); }
+
+  .player-balance {
+    font-weight: 800;
+    font-size: 16px;
+    color: var(--accent);
+  }
+
+  /* Log output */
+  .log-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 150px;
+  }
+  
+  .log-box {
+    flex: 1;
+    background: rgba(15, 23, 42, 0.4);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 12px;
+    overflow-y: auto;
+    font-size: 13px;
+    font-family: monospace;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 200px;
+  }
+  
+  .log-entry {
+    animation: slideIn 0.2s ease-out;
+    line-height: 1.4;
+  }
+  
+  @keyframes slideIn { from { opacity: 0; transform: translateX(5px); } to { opacity: 1; transform: translateX(0); } }
+
+  /* Setup & overlay Screen */
+  .overlay-screen {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  
+  .setup-card {
+    max-width: 460px;
+    width: 100%;
+    animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  
+  @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+  
+  .big-title {
+    font-size: 26px;
+    font-weight: 800;
+    margin-bottom: 12px;
+    color: #fff;
+    background: linear-gradient(135deg, var(--accent), #fff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  .toggle-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .toggle-btn {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    color: #cbd5e1;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+    outline: none;
+    font-family: inherit;
+  }
+  .toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  .toggle-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    box-shadow: 0 0 10px var(--primary-glow);
+  }
+
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 20px 0;
+  }
+
+  .player-input-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 6px 12px;
+  }
+  
+  .player-input-row input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: white;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 10px 4px;
+  }
+  
+  .p-dot {
+    width: 16px; height: 16px; border-radius: 50%;
+  }
+  
+  .btn-primary {
+    background: linear-gradient(135deg, var(--primary), oklch(0.5 0.2 var(--brand-h)));
+    color: white;
+    border: none;
+    border-radius: 14px;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    width: 100%;
+    box-shadow: 0 6px 20px var(--primary-glow);
+    transition: all 0.2s ease;
+  }
+  
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 25px var(--primary-glow);
+  }
+
+  /* Modal Question Card */
+  .modal-card {
+    background: oklch(0.18 0.05 var(--brand-h));
+    border: 1px solid oklch(0.3 0.1 var(--brand-h));
+    border-radius: 24px;
+    padding: 30px;
+    max-width: 440px;
+    width: 100%;
+    text-align: center;
+    box-shadow: var(--shadow-premium);
+    animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .mc-eq {
+    font-size: 28px;
+    font-family: 'Cambria Math', serif;
+    font-weight: 800;
+    color: var(--accent);
+    margin: 20px 0;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 16px;
+    border: 1px dashed var(--border-color);
+  }
+
+  .mc-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .mc-opt {
+    background: rgba(255, 255, 255, 0.03);
+    border: 2px solid var(--border-color);
+    border-radius: 14px;
+    color: white;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+  }
+  .mc-opt:hover {
+    border-color: var(--primary);
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  /* Game end styles */
+  .standings-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 14px;
+  }
+  .standings-table th, .standings-table td {
+    padding: 10px;
+    text-align: left;
+  }
+  .standings-table th {
+    border-bottom: 2px solid var(--border-color);
+    color: var(--accent);
+  }
+  .standings-table td {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  /* Rules Overlay */
+  .rules-content {
+    max-width: 500px;
+    text-align: left;
+  }
+  .rules-content p {
+    margin-bottom: 10px;
+    line-height: 1.6;
+    font-size: 14.5px;
+  }
+  .rules-content ul {
+    margin-left: 20px;
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 14px;
+  }
+
+  /* Animations */
+  @keyframes hop {
+    0% { transform: translate3d(-50%, -50%, 0) scale(1); }
+    50% { transform: translate3d(-50%, -50%, 35px) scale(1.3); }
+    100% { transform: translate3d(-50%, -50%, 0) scale(1); }
+  }
+  
+  .hop-animation {
+    animation: hop 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+  }
+
+  /* Responsive layout */
+  @media (max-width: 960px) {
+    .game-container {
+      flex-direction: column;
+    }
+    .board-viewport {
+      padding: 10px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🎲 Rootopoly 3D</h1>
+  <div class="header-actions">
+    <button class="btn-ghost" onclick="toggleRules(true)">📖 กติกาการเล่น</button>
+    <button class="btn-ghost" onclick="confirmQuit()">↩ ออก</button>
+  </div>
+</header>
+
+<div class="game-container">
+  
+  <!-- Left Side: Interactive 3D Board -->
+  <div class="board-section">
+    <div class="board-viewport">
+      <div class="board-3d" id="board">
+        <!-- Cells -->
+        <div class="cell cell-0">
+          <div class="cell-header bg-start">GO</div>
+          <div class="cell-body">
+            <div class="cell-title">จุดเริ่ม</div>
+            <div class="cell-price">รับ 200 🪙</div>
+          </div>
+          <div class="cell-neon" id="neon-0"></div>
+        </div>
+        
+        <div class="cell cell-1" data-id="1">
+          <div class="cell-header bg-prop1">Prop 1</div>
+          <div class="cell-body">
+            <div class="cell-title">y = x²-4</div>
+            <div class="cell-price">100 🪙</div>
+          </div>
+          <div class="cell-neon" id="neon-1"></div>
+        </div>
+        
+        <div class="cell cell-2">
+          <div class="cell-header bg-chance">สุ่มดวง</div>
+          <div class="cell-body">
+            <div class="cell-title" style="font-size: 24px;">❓</div>
+          </div>
+          <div class="cell-neon" id="neon-2"></div>
+        </div>
+        
+        <div class="cell cell-3" data-id="3">
+          <div class="cell-header bg-prop1">Prop 2</div>
+          <div class="cell-body">
+            <div class="cell-title">y = x²-5x+6</div>
+            <div class="cell-price">120 🪙</div>
+          </div>
+          <div class="cell-neon" id="neon-3"></div>
+        </div>
+        
+        <div class="cell cell-4">
+          <div class="cell-header bg-jail">JAIL</div>
+          <div class="cell-body">
+            <div class="cell-title">แดน<br>จินตภาพ</div>
+            <div class="cell-price">พัก 1 ตา</div>
+          </div>
+          <div class="cell-neon" id="neon-4"></div>
+        </div>
+        
+        <div class="cell cell-5" data-id="5">
+          <div class="cell-header bg-prop2">Prop 3</div>
+          <div class="cell-body">
+            <div class="cell-title">y = 2x-4</div>
+            <div class="cell-price">140 🪙</div>
+          </div>
+          <div class="cell-neon" id="neon-5"></div>
+        </div>
+        
+        <div class="cell cell-6" data-id="6">
+          <div class="cell-header bg-prop2">Prop 4</div>
+          <div class="cell-body">
+            <div class="cell-title">y = -x²+9</div>
+            <div class="cell-price">160 🪙</div>
+          </div>
+          <div class="cell-neon" id="neon-6"></div>
+        </div>
+        
+        <div class="cell cell-7">
+          <div class="cell-header bg-chance">สุ่มดวง</div>
+          <div class="cell-body">
+            <div class="cell-title" style="font-size: 24px;">❓</div>
+          </div>
+          <div class="cell-neon" id="neon-7"></div>
+        </div>
+        
+        <div class="cell cell-8" data-id="8">
+          <div class="cell-header bg-prop3">Prop 5</div>
+          <div class="cell-body">
+            <div class="cell-title">y = x²+1</div>
+            <div class="cell-price">200 🪙</div>
+          </div>
+          <div class="cell-neon" id="neon-8"></div>
+        </div>
+        
+        <div class="cell cell-9" data-id="9">
+          <div class="cell-header bg-prop3">Prop 6</div>
+          <div class="cell-body">
+            <div class="cell-title">y = x²</div>
+            <div class="cell-price">180 🪙</div>
+          </div>
+          <div class="cell-neon" id="neon-9"></div>
+        </div>
+        
+        <div class="cell cell-10">
+          <div class="cell-header bg-chance">สุ่มดวง</div>
+          <div class="cell-body">
+            <div class="cell-title" style="font-size: 24px;">❓</div>
+          </div>
+          <div class="cell-neon" id="neon-10"></div>
+        </div>
+        
+        <div class="cell cell-11" data-id="11">
+          <div class="cell-header bg-prop1">Prop 7</div>
+          <div class="cell-body">
+            <div class="cell-title">y=-x²-2x-1</div>
+            <div class="cell-price">220 🪙</div>
+          </div>
+          <div class="cell-neon" id="neon-11"></div>
+        </div>
+        
+        <div class="cell cell-12">
+          <div class="cell-header bg-start">FREE</div>
+          <div class="cell-body">
+            <div class="cell-title">พักผ่อน</div>
+            <div class="cell-price">จุดพักสายตา</div>
+          </div>
+          <div class="cell-neon" id="neon-12"></div>
+        </div>
+        
+        <div class="cell cell-13" data-id="13">
+          <div class="cell-header bg-prop2">Prop 8</div>
+          <div class="cell-body">
+            <div class="cell-title">y=(x-3)²</div>
+            <div class="cell-price">250 🪙</div>
+          </div>
+          <div class="cell-neon" id="neon-13"></div>
+        </div>
+        
+        <!-- Board Center Container -->
+        <div class="board-center">
+          <div class="dice-scene">
+            <div class="dice-cube" id="dice">
+              <!-- Face 1 -->
+              <div class="dice-face face-1"><div class="dot cc"></div></div>
+              <!-- Face 2 -->
+              <div class="dice-face face-2"><div class="dot tl"></div><div class="dot br"></div></div>
+              <!-- Face 3 -->
+              <div class="dice-face face-3"><div class="dot tl"></div><div class="dot cc"></div><div class="dot br"></div></div>
+              <!-- Face 4 -->
+              <div class="dice-face face-4"><div class="dot tl"></div><div class="dot tr"></div><div class="dot bl"></div><div class="dot br"></div></div>
+              <!-- Face 5 -->
+              <div class="dice-face face-5"><div class="dot tl"></div><div class="dot tr"></div><div class="dot cc"></div><div class="dot bl"></div><div class="dot br"></div></div>
+              <!-- Face 6 -->
+              <div class="dice-face face-6"><div class="dot tl"></div><div class="dot tr"></div><div class="dot ml"></div><div class="dot mr"></div><div class="dot bl"></div><div class="dot br"></div></div>
+            </div>
+          </div>
+          
+          <button class="dice-btn" id="btn-roll" onclick="rollDice()">🎲 ทอยลูกเต๋า</button>
+        </div>
+        
+        <!-- Tokens -->
+        <div class="token-container" id="token-container">
+          <div class="token tok-p1" id="tok-0" style="display: none;">P1</div>
+          <div class="token tok-p2" id="tok-1" style="display: none;">P2</div>
+          <div class="token tok-p3" id="tok-2" style="display: none;">P3</div>
+          <div class="token tok-p4" id="tok-3" style="display: none;">P4</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Right Side: HUD Controls & Details -->
+  <div class="hud-section">
+    <div class="glass-panel">
+      <div class="hud-title">📊 สถิติผู้เล่น</div>
+      <div class="players-hub" id="players-hub">
+        <!-- JS Injected Player Cards -->
+      </div>
+    </div>
+    
+    <div class="glass-panel log-panel">
+      <div class="hud-title">📝 บันทึกเหตุการณ์</div>
+      <div class="log-box" id="log-box">
+        <div class="log-entry" style="color: var(--accent);">ยินดีต้อนรับเข้าสู่ Rootopoly 3D!</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Setup Screen Overlay -->
+<div class="overlay-screen" id="setup-screen">
+  <div class="glass-panel setup-card">
+    <div class="big-title">เตรียมตั้งรับกระดาน 3D</div>
+    <p style="color: #94a3b8; font-size: 14px; margin-bottom: 20px; line-height: 1.5;">
+      เลือกโหมดการเล่นและจำนวนผู้เล่น แล้วมาแข่งกันแก้รากสมการเพื่อซื้อกรรมสิทธิ์ที่ดินคณิตศาสตร์!
+    </p>
+    
+    <!-- Game Mode Selection -->
+    <div style="font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 8px;">โหมดการเล่น:</div>
+    <div class="toggle-group">
+      <button class="toggle-btn active" id="btn-mode-bot" onclick="setGameMode('bot')">🤖 แข่งกับบอท</button>
+      <button class="toggle-btn" id="btn-mode-multi" onclick="setGameMode('multi')">👥 แข่งกับเพื่อน</button>
+    </div>
+    
+    <!-- Player Count Selection -->
+    <div style="font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 8px; margin-top: 12px;">จำนวนผู้เล่นทั้งหมด:</div>
+    <div class="toggle-group">
+      <button class="toggle-btn active" id="btn-players-2" onclick="setPlayerCount(2)">2 คน</button>
+      <button class="toggle-btn" id="btn-players-3" onclick="setPlayerCount(3)">3 คน</button>
+      <button class="toggle-btn" id="btn-players-4" onclick="setPlayerCount(4)">4 คน</button>
+    </div>
+    
+    <!-- Name Inputs Container -->
+    <div style="font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 8px; margin-top: 12px;">รายชื่อผู้เล่น:</div>
+    <div class="input-group" id="name-inputs-container">
+      <!-- Dynamic inputs injected by JS -->
+    </div>
+    
+    <button class="btn-primary" onclick="startGame()">เริ่มเล่นเกม 🚀</button>
+  </div>
+</div>
+
+<!-- Challenge & Action Modal -->
+<div class="overlay-screen" id="action-modal" style="display: none;">
+  <div class="modal-card">
+    <div class="big-title" id="mc-title">ซื้อที่ดินสมการ</div>
+    <p style="color: #94a3b8; font-size: 14px; margin-bottom: 12px;" id="mc-desc">หารากของสมการเพื่อครอบครอง</p>
+    <div class="mc-eq" id="mc-eq">y = x² - 4</div>
+    <div class="mc-options" id="mc-options">
+      <!-- Options injected by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- Rules Overlay -->
+<div class="overlay-screen" id="rules-screen" style="display: none;">
+  <div class="glass-panel rules-content">
+    <div class="big-title" style="text-align: center;">📖 กติกาการเล่น Rootopoly 3D</div>
+    <div style="margin: 16px 0; overflow-y: auto; max-height: 350px; padding-right: 8px;">
+      <p><b>เป้าหมายเกม:</b> หาคำตอบรากสมการที่ถูกต้องเพื่อจับจองที่ดิน และสะสมมูลค่ารวม (Net Worth) ให้มากที่สุด!</p>
+      <p><b>การเล่นแต่ละตา:</b></p>
+      <ul>
+        <li>1. กดปุ่มทอยลูกเต๋า (1-4 ช่องต่อตาเนื่องจากกระดานมีขนาด 14 ช่อง)</li>
+        <li>2. เมื่อผู้เล่นเดินไปตกที่ดินที่<b>ยังไม่มีเจ้าของ</b> สามารถตอบคำถามหารากสมการเพื่อซื้อที่ดินนั้น</li>
+        <li>3. หากตอบถูกและมีเงินสดเพียงพอ จะได้รับการบันทึกเป็นเจ้าของพร้อมขอบไฟเรืองแสง</li>
+        <li>4. หากเดินไปตกช่องของ<b>ผู้เล่นอื่น</b> จะต้องจ่ายค่าเช่า 40% ของมูลค่าที่ดินให้แก่เจ้าของ</li>
+        <li>5. หากเดินไปตกช่อง<b>แดนจินตภาพ (Jail)</b> จะเสียค่าปรับ 50 🪙 และผ่านการเดิน 1 รอบ</li>
+        <li>6. การเดินผ่านจุดเริ่ม (GO) จะได้รับเงินเพิ่มตาละ 200 🪙</li>
+      </ul>
+      <p><b>เงื่อนไขการจบเกม:</b></p>
+      <ul>
+        <li><b>การล้มละลาย (Bankruptcy)</b>: หากเงินสดของผู้เล่นคนใดติดลบต่ำกว่า 0</li>
+        <li><b>ที่ดินถูกครอบครองหมด</b>: หากที่ดินพาราโบลา/เชิงเส้นทั้งหมด 8 จุดโดนจับจองแล้ว</li>
+      </ul>
+      <p>เมื่อเข้าสู่เงื่อนไขจบเกม ระบบจะคำนวณ <b>มูลค่าสินทรัพย์รวม (Net Worth) = เงินสด + ราคากลางที่ดินที่ถือครอง</b> เพื่อจัดอันดับผู้ชนะ</p>
+    </div>
+    <button class="btn-primary" onclick="toggleRules(false)">เข้าใจแล้ว ลุยกันเลย!</button>
+  </div>
+</div>
+
+<script>
+const GAME = {
+  active: false,
+  players: [],
+  turn: 0,
+  board: [
+    { type: 'start', name: 'จุดเริ่มต้น', price: 0 },
+    { type: 'prop', name: 'y = x² - 4', eq: {r1:-2, r2:2}, price: 100, owner: -1 },
+    { type: 'chance', name: 'สุ่มดวง' },
+    { type: 'prop', name: 'y = x² - 5x + 6', eq: {r1:2, r2:3}, price: 120, owner: -1 },
+    { type: 'jail', name: 'แดนจินตภาพ' },
+    { type: 'prop', name: 'y = 2x - 4', eq: {type:'linear', root:2}, price: 140, owner: -1 },
+    { type: 'prop', name: 'y = -x² + 9', eq: {r1:-3, r2:3}, price: 160, owner: -1 },
+    { type: 'chance', name: 'สุ่มดวง' },
+    { type: 'prop', name: 'y = x² + 1', eq: {type:'noroot'}, price: 200, owner: -1 },
+    { type: 'prop', name: 'y = x²', eq: {type:'double', root:0}, price: 180, owner: -1 },
+    { type: 'chance', name: 'สุ่มดวง' },
+    { type: 'prop', name: 'y = -x² - 2x - 1', eq: {type:'double', root:-1}, price: 220, owner: -1 },
+    { type: 'free', name: 'จุดพักผ่อน' },
+    { type: 'prop', name: 'y = (x-3)²', eq: {type:'double', root:3}, price: 250, owner: -1 },
+  ]
+};
+
+let setupMode = 'bot';
+let setupPlayers = 2;
+
+function setGameMode(mode) {
+  setupMode = mode;
+  document.getElementById('btn-mode-bot').classList.toggle('active', mode === 'bot');
+  document.getElementById('btn-mode-multi').classList.toggle('active', mode === 'multi');
+  updateSetupFields();
+}
+
+function setPlayerCount(count) {
+  setupPlayers = count;
+  document.getElementById('btn-players-2').classList.toggle('active', count === 2);
+  document.getElementById('btn-players-3').classList.toggle('active', count === 3);
+  document.getElementById('btn-players-4').classList.toggle('active', count === 4);
+  updateSetupFields();
+}
+
+function updateSetupFields() {
+  const container = document.getElementById('name-inputs-container');
+  if (!container) return;
+  container.innerHTML = '';
+  
+  const colors = ['var(--p1-color)', 'var(--p2-color)', 'var(--p3-color)', 'var(--p4-color)'];
+  const defaultNames = {
+    bot: ['คุณ (ผู้เล่น 1)', '🤖 บอทมะม่วง', '🤖 บอทกล้วยหอม', '🤖 บอทส้มโอ'],
+    multi: ['คนเก่ง (P1)', 'เซียนคณิต (P2)', 'ผู้กล้า (P3)', 'เทพสมการ (P4)']
+  };
+  
+  for (let i = 0; i < setupPlayers; i++) {
+    const row = document.createElement('div');
+    row.className = 'player-input-row';
+    
+    const dot = document.createElement('div');
+    dot.className = 'p-dot';
+    dot.style.background = colors[i];
+    
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.id = `setup-p${i+1}-name`;
+    input.value = defaultNames[setupMode][i];
+    
+    if (setupMode === 'bot' && i > 0) {
+      input.disabled = true;
+      input.style.opacity = '0.6';
+      input.style.cursor = 'not-allowed';
+    }
+    
+    row.appendChild(dot);
+    row.appendChild(input);
+    container.appendChild(row);
+  }
+}
+
+function startGame() {
+  GAME.players = [];
+  const colors = ['var(--p1-color)', 'var(--p2-color)', 'var(--p3-color)', 'var(--p4-color)'];
+  
+  for (let i = 0; i < setupPlayers; i++) {
+    const nameEl = document.getElementById(`setup-p${i+1}-name`);
+    const name = nameEl ? nameEl.value.trim() : `Player ${i+1}`;
+    const isBot = (setupMode === 'bot' && i > 0);
+    GAME.players.push({
+      id: i,
+      name: name,
+      money: 800,
+      pos: 0,
+      color: colors[i],
+      isBot: isBot,
+      skip: 0
+    });
+  }
+  
+  GAME.active = true;
+  GAME.turn = 0;
+  
+  document.getElementById('setup-screen').style.display = 'none';
+  
+  renderHUD();
+  setTimeout(() => {
+    updateTokensInstant();
+  }, 100);
+  
+  logMessage(`🏆 เริ่มต้นการเล่นเกม! สิทธิ์การเดินรอบแรกเป็นของ ${GAME.players[0].name}`, 'var(--accent)');
+  
+  const currentPlayer = GAME.players[GAME.turn];
+  if (currentPlayer.isBot) {
+    document.getElementById('btn-roll').disabled = true;
+    logMessage(`🤖 ตาของบอท ${currentPlayer.name} (กำลังวิเคราะห์...)`, 'var(--accent)');
+    setTimeout(runBotTurn, 1500);
+  } else {
+    document.getElementById('btn-roll').disabled = false;
+  }
+}
+
+function logMessage(text, color = '#cbd5e1') {
+  const box = document.getElementById('log-box');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.style.color = color;
+  entry.innerHTML = `&gt; ${text}`;
+  box.appendChild(entry);
+  box.scrollTop = box.scrollHeight;
+}
+
+function renderHUD() {
+  const hub = document.getElementById('players-hub');
+  hub.innerHTML = '';
+  GAME.players.forEach((p, idx) => {
+    const card = document.createElement('div');
+    card.className = `player-card p${idx+1} ${idx === GAME.turn ? 'active' : ''}`;
+    if (idx === GAME.turn) {
+      card.style.boxShadow = `0 0 15px ${p.color}`;
+    }
+    const nameDisplay = p.isBot ? `🤖 ${p.name}` : p.name;
+    card.innerHTML = `
+      <div class="player-name">${nameDisplay}</div>
+      <div class="player-balance">${p.money} 🪙</div>
+    `;
+    hub.appendChild(card);
+  });
+}
+
+function getTokenOffset(playerId) {
+  if (playerId === 0) return { x: -12, y: -12 };
+  if (playerId === 1) return { x: 12, y: -12 };
+  if (playerId === 2) return { x: -12, y: 12 };
+  return { x: 12, y: 12 };
+}
+
+// Cell centre in the board's local layout space (offsetLeft/Top), so tokens stay glued to
+// their cells even though the board is 3D-rotated. (getBoundingClientRect is screen-space and
+// would be distorted by the rotation/perspective.)
+function cellCenter(cell, playerId) {
+  const offset = getTokenOffset(playerId);
+  return {
+    x: cell.offsetLeft + cell.offsetWidth / 2 + offset.x,
+    y: cell.offsetTop + cell.offsetHeight / 2 + offset.y
+  };
+}
+
+function updateTokensInstant() {
+  // Hide all tokens first
+  for (let i = 0; i < 4; i++) {
+    const tok = document.getElementById(`tok-${i}`);
+    if (tok) tok.style.display = 'none';
+  }
+  
+  GAME.players.forEach((p) => {
+    const tok = document.getElementById(`tok-${p.id}`);
+    if (!tok) return;
+    tok.style.display = 'flex';
+    
+    const cell = document.querySelector(`.cell-${p.pos}`);
+    if (cell) {
+      const c = cellCenter(cell, p.id);
+      tok.style.left = `${c.x}px`;
+      tok.style.top = `${c.y}px`;
+      tok.style.transform = `translate3d(-50%, -50%, 6px)`;
+    }
+  });
+}
+
+let diceRotationX = 0;
+let diceRotationY = 0;
+
+// Roll Dice logic with fully animated 3D cube
+function rollDice() {
+  const btn = document.getElementById('btn-roll');
+  btn.disabled = true;
+  
+  const roll = Math.floor(Math.random() * 4) + 1; // standard Monopoly 1-4 roll
+  
+  // 3D rotations based on final rolled value
+  let rotX = 0, rotY = 0;
+  if (roll === 1) { rotX = 0; rotY = 0; }
+  else if (roll === 2) { rotX = 0; rotY = 180; }
+  else if (roll === 3) { rotX = 0; rotY = -90; }
+  else if (roll === 4) { rotX = 0; rotY = 90; }
+  
+  // Generate a massive spin count (at least 3 full rotations)
+  const spinsX = (Math.floor(Math.random() * 3) + 3) * 360;
+  const spinsY = (Math.floor(Math.random() * 3) + 3) * 360;
+  
+  // Align rotation to multiple of 360 before adding next roll offsets to ensure correct landing face
+  diceRotationX = Math.floor(diceRotationX / 360) * 360 + spinsX + rotX;
+  diceRotationY = Math.floor(diceRotationY / 360) * 360 + spinsY + rotY;
+  
+  const dice = document.getElementById('dice');
+  dice.style.transform = `rotateX(${diceRotationX}deg) rotateY(${diceRotationY}deg)`;
+  
+  setTimeout(() => {
+    logMessage(`${GAME.players[GAME.turn].name} ทอยลูกเต๋าได้ ${roll} 🎲`, 'var(--accent)');
+    movePlayer(GAME.players[GAME.turn], roll);
+  }, 1600);
+}
+
+function movePlayer(player, steps) {
+  let count = 0;
+  
+  // Hop animation step-by-step
+  function stepMove() {
+    if (count < steps) {
+      player.pos = (player.pos + 1) % 14;
+      count++;
+      
+      // Calculate token offsets (board-local layout space — see cellCenter)
+      const cell = document.querySelector(`.cell-${player.pos}`);
+      const tok = document.getElementById(`tok-${player.id}`);
+      const c = cellCenter(cell, player.id);
+
+      // Visual jump animation using transition and scale/translateZ
+      tok.style.left = `${c.x}px`;
+      tok.style.top = `${c.y}px`;
+      
+      // Apply the jumping effect
+      tok.style.transform = `translate3d(-50%, -50%, 25px) scale(1.3)`;
+      setTimeout(() => {
+        tok.style.transform = `translate3d(-50%, -50%, 6px) scale(1)`;
+      }, 200);
+      
+      if (player.pos === 0) {
+        player.money += 200;
+        logMessage(`🎉 ${player.name} เดินผ่านจุดเริ่ม รับโบนัส 200 🪙`, '#10b981');
+        renderHUD();
+      }
+      
+      setTimeout(stepMove, 400);
+    } else {
+      setTimeout(() => handleLand(player), 300);
+    }
+  }
+  
+  stepMove();
+}
+
+function handleLand(player) {
+  const cell = GAME.board[player.pos];
+  
+  if (cell.type === 'prop') {
+    if (cell.owner === -1) {
+      openBuyModal(cell, player);
+    } else if (cell.owner !== player.id) {
+      const rent = Math.floor(cell.price * 0.4);
+      logMessage(`💸 ${player.name} ตกที่ดินของ ${GAME.players[cell.owner].name} จ่ายค่าเช่า ${rent} 🪙`, '#ef4444');
+      player.money -= rent;
+      GAME.players[cell.owner].money += rent;
+      renderHUD();
+      nextTurn();
+    } else {
+      logMessage(`🏡 ${player.name} พักผ่อนในที่ดินของตนเอง (${cell.name})`, '#cbd5e1');
+      nextTurn();
+    }
+  } else if (cell.type === 'chance') {
+    handleChance(player);
+  } else if (cell.type === 'jail') {
+    player.money -= 50;
+    player.skip = 1;
+    logMessage(`🚔 ${player.name} หลงเข้าไปในแดนจินตภาพ! โดนปรับ 50 🪙 และต้องพักตาถัดไป 1 รอบ`, '#ef4444');
+    renderHUD();
+    nextTurn();
+  } else {
+    logMessage(`🧘 ${player.name} จอดพักผ่อนจุดพักผ่อน ไม่เสียค่าใช้จ่าย`, '#cbd5e1');
+    nextTurn();
+  }
+}
+
+function handleChance(player) {
+  const cards = [
+    { m: "ได้รางวัลนักคณิตศาสตร์เยาวชนดีเด่น! ได้รับเงินรางวัล 150 🪙", v: 150, c: '#10b981' },
+    { m: "เขียนกราฟเชิงเส้นสลับเครื่องหมายความชัน! เสีย 60 🪙", v: -60, c: '#f43f5e' },
+    { m: "คำนวณสมการแบบอัจฉริยะ! ได้รับโบนัสพิเศษ 100 🪙", v: 100, c: '#10b981' },
+    { m: "พาราโบลาบิดเบี้ยวโดนสั่งแก้งาน เสียค่าปรับ 80 🪙", v: -80, c: '#f43f5e' }
+  ];
+  const card = cards[Math.floor(Math.random() * cards.length)];
+  logMessage(`🎲 โชคชะตาของ ${player.name}: ${card.m}`, card.c);
+  player.money += card.v;
+  renderHUD();
+  nextTurn();
+}
+
+function openBuyModal(cell, player) {
+  const modal = document.getElementById('action-modal');
+  document.getElementById('mc-title').textContent = "ซื้อที่ดินสมการ";
+  document.getElementById('mc-desc').innerHTML = `หารากของสมการนี้เพื่อแลกกับการซื้อที่ดิน <b>ราคา ${cell.price} 🪙</b>`;
+  document.getElementById('mc-eq').textContent = cell.name;
+  
+  const optionsDiv = document.getElementById('mc-options');
+  optionsDiv.innerHTML = '';
+  
+  let qType = cell.eq.type || 'quadratic';
+  let correctAnswer = "";
+  let options = [];
+  
+  if (qType === 'quadratic') {
+    const r1 = cell.eq.r1, r2 = cell.eq.r2;
+    correctAnswer = `รากคือ ${r1} และ ${r2}`;
+    // Distractors must never equal the real root set {r1, r2}. (No board quadratic has 0 as a root,
+    // and r2+1 is never a root — so both stay wrong even when the roots are symmetric, e.g. ±2.)
+    options = [
+      correctAnswer,
+      `รากคือ ${r1} และ ${r2 + 1}`,
+      `รากคือ 0 และ ${r2}`
+    ];
+  } else if (qType === 'linear') {
+    correctAnswer = `รากคือ ${cell.eq.root}`;
+    options = [ correctAnswer, `รากคือ ${-cell.eq.root}`, `ไม่มีรากจริง` ];
+  } else if (qType === 'noroot') {
+    correctAnswer = `ไม่มีรากจริง (ไม่ตัดแกน X)`;
+    options = [ correctAnswer, `รากคือ 1 และ -1`, `รากคือ 0` ];
+  } else if (qType === 'double') {
+    const r = cell.eq.root;
+    correctAnswer = `รากซ้ำคือ ${r}`;
+    // Two distinct wrong roots straddling the true double root (avoids the "0 และ 0" case at r = 0).
+    options = [ correctAnswer, `รากคือ ${r - 1} และ ${r + 1}`, `ไม่มีรากจริง` ];
+  }
+  
+  options.sort(() => Math.random() - 0.5);
+  
+  const isBot = player.isBot;
+  let selectedOpt = "";
+  
+  if (isBot) {
+    // Decide if bot answers correctly (75% accuracy)
+    const isCorrect = Math.random() < 0.75;
+    if (isCorrect) {
+      selectedOpt = correctAnswer;
+    } else {
+      const incorrectOpts = options.filter(o => o !== correctAnswer);
+      selectedOpt = incorrectOpts[Math.floor(Math.random() * incorrectOpts.length)];
+    }
+  }
+  
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'mc-opt';
+    btn.textContent = opt;
+    
+    if (isBot) {
+      btn.disabled = true;
+      btn.style.cursor = 'default';
+      if (opt === selectedOpt) {
+        btn.id = 'bot-selected-opt';
+      }
+    } else {
+      btn.onclick = () => {
+        resolvePurchase(opt, correctAnswer, cell, player);
+      };
+    }
+    optionsDiv.appendChild(btn);
+  });
+  
+  modal.style.display = 'flex';
+  
+  if (isBot) {
+    // Bot choice visualization delay
+    setTimeout(() => {
+      const botBtn = document.getElementById('bot-selected-opt');
+      if (botBtn) {
+        // Highlight bot selection in gold/amber
+        botBtn.style.borderColor = 'var(--accent)';
+        botBtn.style.background = 'rgba(245, 158, 11, 0.2)';
+        botBtn.style.boxShadow = '0 0 10px var(--accent-glow)';
+      }
+      
+      // Resolve after 1.5 seconds so the user can see what choice the bot made
+      setTimeout(() => {
+        resolvePurchase(selectedOpt, correctAnswer, cell, player);
+      }, 1500);
+    }, 1500);
+  }
+}
+
+function resolvePurchase(selectedOpt, correctAnswer, cell, player) {
+  document.getElementById('action-modal').style.display = 'none';
+  if (selectedOpt === correctAnswer) {
+    if (player.money >= cell.price) {
+      player.money -= cell.price;
+      cell.owner = player.id;
+      logMessage(`🎨 ${player.name} ตอบถูกและครอบครอง ${cell.name} สำเร็จ!`, '#10b981');
+      
+      const neon = document.getElementById(`neon-${player.pos}`);
+      if (neon) {
+        neon.style.borderColor = player.color;
+        neon.style.boxShadow = `0 0 15px ${player.color}, inset 0 0 8px ${player.color}`;
+      }
+    } else {
+      logMessage(`⚠️ ${player.name} ตอบถูกแต่เงินไม่พอซื้อที่ดินจำนวน ${cell.price} 🪙`, '#f59e0b');
+    }
+  } else {
+    logMessage(`❌ ${player.name} ตอบผิด พลาดโอกาสเข้าครอบครองที่ดิน`, '#f43f5e');
+  }
+  renderHUD();
+  nextTurn();
+}
+
+function calculateNetWorth(player) {
+  let worth = player.money;
+  GAME.board.forEach(cell => {
+    if (cell.type === 'prop' && cell.owner === player.id) {
+      worth += cell.price;
+    }
+  });
+  return worth;
+}
+
+function checkGameEnd() {
+  if (!GAME.active) return false;
+  
+  const bankrupt = GAME.players.find(p => p.money < 0);
+  const unowned = GAME.board.find(cell => cell.type === 'prop' && cell.owner === -1);
+  const allBought = !unowned;
+  
+  if (bankrupt || allBought) {
+    GAME.active = false;
+    document.getElementById('btn-roll').disabled = true;
+    
+    // Create leaderboard standings
+    const standings = GAME.players.map(p => {
+      return {
+        name: p.name,
+        money: p.money,
+        worth: calculateNetWorth(p),
+        color: p.color
+      };
+    }).sort((a,b) => b.worth - a.worth);
+    
+    const modal = document.getElementById('action-modal');
+    document.getElementById('mc-title').innerHTML = "🏆 จบการแข่งขัน! 🏆";
+    
+    let reason = bankrupt ? `ผู้เล่น <b>${bankrupt.name}</b> เงินสดล้มละลายต่ำกว่า 0` : `ที่ดินทั้งหมดบนบอร์ดโดนกว้านซื้อเรียบร้อย!`;
+    
+    let html = `<p style="color: #94a3b8; font-size:14px; margin-bottom: 12px;">${reason}</p>`;
+    html += `<table class="standings-table">
+      <thead>
+        <tr>
+          <th>อันดับ</th>
+          <th>ผู้เล่น</th>
+          <th>เงินสด</th>
+          <th>มูลค่าสุทธิ</th>
+        </tr>
+      </thead>
+      <tbody>
+    `;
+    standings.forEach((s, idx) => {
+      const trophy = idx === 0 ? "🥇" : idx === 1 ? "🥈" : "🥉";
+      html += `
+        <tr>
+          <td>${trophy} ${idx+1}</td>
+          <td style="font-weight:800; color: ${s.color};">${s.name}</td>
+          <td>${s.money} 🪙</td>
+          <td style="font-weight:800;">${s.worth} 🪙</td>
+        </tr>
+      `;
+    });
+    html += `</tbody></table>`;
+    
+    document.getElementById('mc-desc').innerHTML = html;
+    document.getElementById('mc-eq').innerHTML = `ผู้ชนะสุทธิคือ <span style="color: ${standings[0].color};">${standings[0].name}</span>! 🎉`;
+    
+    const optionsDiv = document.getElementById('mc-options');
+    optionsDiv.innerHTML = `
+      <button class="btn-primary" onclick="restartGame()">เริ่มท้าทายใหม่ 🔄</button>
+      <button class="btn-ghost" style="width:100%; margin-top:8px;" onclick="confirmQuit()">ออกจากหน้านี้</button>
+    `;
+    modal.style.display = 'flex';
+    return true;
+  }
+  return false;
+}
+
+function runBotTurn() {
+  if (!GAME.active) return;
+  rollDice();
+}
+
+function nextTurn() {
+  if (checkGameEnd()) return;
+  GAME.turn = (GAME.turn + 1) % GAME.players.length;
+
+  const currentPlayer = GAME.players[GAME.turn];
+  // A player who landed in the Imaginary Realm (Jail) sits out this turn.
+  if (currentPlayer.skip > 0) {
+    currentPlayer.skip--;
+    renderHUD();
+    logMessage(`⏭️ ${currentPlayer.name} ติดอยู่ในแดนจินตภาพ พักตานี้ 1 รอบ`, '#94a3b8');
+    document.getElementById('btn-roll').disabled = true;
+    setTimeout(nextTurn, 1200);
+    return;
+  }
+  renderHUD();
+
+  if (currentPlayer.isBot) {
+    document.getElementById('btn-roll').disabled = true;
+    logMessage(`🤖 ตาของบอท ${currentPlayer.name} (กำลังวิเคราะห์...)`, 'var(--accent)');
+    setTimeout(runBotTurn, 2000);
+  } else {
+    document.getElementById('btn-roll').disabled = false;
+  }
+}
+
+function restartGame() {
+  GAME.board.forEach(cell => { if(cell.type==='prop') cell.owner = -1; });
+  GAME.players.forEach(p => { p.money = 800; p.pos = 0; p.skip = 0; });
+  GAME.turn = 0;
+  
+  // Clear neon borders
+  document.querySelectorAll('.cell-neon').forEach(neon => {
+    neon.style.borderColor = 'transparent';
+    neon.style.boxShadow = 'none';
+  });
+  
+  document.getElementById('action-modal').style.display = 'none';
+  GAME.active = true;
+  
+  const currentPlayer = GAME.players[0];
+  if (currentPlayer.isBot) {
+    document.getElementById('btn-roll').disabled = true;
+    setTimeout(runBotTurn, 1500);
+  } else {
+    document.getElementById('btn-roll').disabled = false;
+  }
+  
+  renderHUD();
+  updateTokensInstant();
+  logMessage("🔄 ทำการล้างกระดานและเริ่มต้นใหม่อีกครั้ง!", "var(--accent)");
+}
+
+function confirmQuit() {
+  if(confirm("คุณต้องการออกจากหน้านี้ใช่หรือไม่? ความก้าวหน้าปัจจุบันจะหายไป")) {
+    window.location.href = '../index.html';
+  }
+}
+
+function toggleRules(show) {
+  document.getElementById('rules-screen').style.display = show ? 'flex' : 'none';
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  setGameMode('bot');
+  setPlayerCount(2);
+});
+window.addEventListener('resize', updateTokensInstant);
+</script>
+</body>
+</html>
