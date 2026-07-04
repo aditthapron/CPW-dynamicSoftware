@@ -837,34 +837,72 @@
 
 <script>
   // === TAB NAVIGATION LOGIC ===
+  // A tab is fully initialized (fresh problem set + progress reset) only on its
+  // FIRST visit. Coming back later just rebuilds its board and keeps the work —
+  // progress, the current problem, and typed answers all stay. recap & practice
+  // are already initialized in the DOMContentLoaded handler below.
+  let currentTab = 'recap';
+  const initedTabs = new Set(['recap', 'practice']);
+  const boardMemory = {}; // tab -> hand-placed tiles [{type, x, y}]
+
+  // Remember the tiles a student dragged onto the shared board before leaving a tab
+  function saveBoardFor(tabName) {
+    boardMemory[tabName] = tiles
+      .filter(t => !t.classList.contains('removing'))
+      .map(t => ({ type: t.dataset.type, x: parseFloat(t.dataset.x), y: parseFloat(t.dataset.y) }));
+  }
+
+  // Re-render a previously-visited tab's board WITHOUT resetting its progress/problem
+  function restoreTabBoard(tabName) {
+    clearCanvas();
+    if (tabName === 'recap') {
+      (boardMemory.recap || []).forEach(s => spawnTile(s.type, s.x, s.y));
+      updateRecapEquation();
+    } else if (tabName === 'multiply') {
+      updateMultiplyTab(); // redraws area model / brackets from the preserved multState
+      if (multMode === 'manual') (boardMemory.multiply || []).forEach(s => spawnTile(s.type, s.x, s.y));
+    } else if (tabName === 'multiply-test') {
+      if (mtestTarget) drawAreaModelGrid(1, mtestTarget.p, 1, mtestTarget.q, currentMtestStage() < MTEST_GUIDED);
+    } else if (tabName === 'practice') {
+      const q = practiceData[pracIdx];
+      if (q && q.type === 'multiplication') drawAreaModelGrid(1, q.p, 1, q.q, false);
+      updateRecapEquation();
+    }
+    // pairsum and assign have no board
+  }
+
   document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', () => {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      const t = tab.dataset.tab;
+      saveBoardFor(currentTab); // preserve the outgoing tab's hand-placed tiles
+
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
       document.querySelectorAll('.panel').forEach(p => p.classList.add('hidden'));
-      
+
       tab.classList.add('active');
-      const panelId = 'tab-' + tab.dataset.tab;
-      document.getElementById(panelId).classList.remove('hidden');
+      document.getElementById('tab-' + t).classList.remove('hidden');
 
       // Board and toolbox are only useful for the tile tabs — hide them for the
       // worksheet and for the number-pair tab (which is pure number reasoning)
-      const noBoard = tab.dataset.tab === 'assign' || tab.dataset.tab === 'pairsum';
+      const noBoard = t === 'assign' || t === 'pairsum';
       document.querySelector('.layout').classList.toggle('board-hidden', noBoard);
       document.querySelector('.layout').classList.toggle('toolbox-hidden', noBoard);
 
-      // Tab Init logic
-      clearCanvas();
-      if (tab.dataset.tab === 'recap') {
-        initRecapTab();
-      } else if (tab.dataset.tab === 'multiply') {
-        initMultiplyTab();
-      } else if (tab.dataset.tab === 'multiply-test') {
-        initMultTestTab();
-      } else if (tab.dataset.tab === 'pairsum') {
-        initPairSumTab();
-      } else if (tab.dataset.tab === 'practice') {
-        loadPracQuestion(); // redraw the question guide after the canvas was cleared
+      if (!initedTabs.has(t)) {
+        // First visit — set up a fresh problem set for this tab
+        initedTabs.add(t);
+        clearCanvas();
+        if (t === 'recap') initRecapTab();
+        else if (t === 'multiply') initMultiplyTab();
+        else if (t === 'multiply-test') initMultTestTab();
+        else if (t === 'pairsum') initPairSumTab();
+        else if (t === 'practice') loadPracQuestion();
+      } else {
+        // Revisit — keep the work, just rebuild the board for this tab
+        restoreTabBoard(t);
       }
+
+      currentTab = t;
     });
   });
 
