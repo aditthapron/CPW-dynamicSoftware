@@ -1,0 +1,2371 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Algebra Tiles — สัปดาห์ที่ 6 (การแยกตัวประกอบ)</title>
+<style>
+  :root {
+    --brand-h: 245;
+    --brand-c: 0.18;
+    --brand-l: 0.58;
+    /* OKLCH Base Colors */
+    --bg: oklch(0.98 0.01 var(--brand-h));
+    --surface: oklch(1 0 0);
+    --surface-sunken: oklch(0.96 0.02 var(--brand-h));
+    --ink: oklch(0.2 0.05 var(--brand-h));
+    --ink-muted: oklch(0.5 0.05 var(--brand-h));
+    
+    --primary: oklch(var(--brand-l) var(--brand-c) var(--brand-h));
+    --primary-hover: oklch(0.48 0.18 var(--brand-h));
+    --primary-soft: oklch(0.92 0.05 var(--brand-h));
+    
+    --accent: oklch(0.68 0.18 42); /* Warm orange/amber */
+    --accent-soft: oklch(0.96 0.04 45);
+    
+    --success: oklch(0.62 0.16 142);
+    --success-soft: oklch(0.95 0.04 142);
+    --danger: oklch(0.62 0.18 28);
+    --danger-soft: oklch(0.96 0.04 28);
+    
+    --shadow-sm: 0 2px 8px oklch(0 0 0 / 0.04);
+    --shadow-md: 0 8px 24px oklch(0 0 0 / 0.08);
+    --shadow-lg: 0 24px 48px oklch(0 0 0 / 0.12);
+    
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-sm: 8px;
+    --border: oklch(0.9 0.02 var(--brand-h));
+
+    /* Tile specific */
+    --tile-blue: #0ea5e9;
+    --tile-blue-border: #0284c7;
+    --tile-green: #22c55e;
+    --tile-green-border: #16a34a;
+    --tile-yellow: #eab308;
+    --tile-yellow-border: #ca8a04;
+    --tile-red: #ef4444;
+    --tile-red-border: #b91c1c;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  html, body { height: 100%; overflow: hidden; }
+
+  body {
+    font-family: 'Noto Sans Thai', 'Sarabun', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Header */
+  header {
+    background: linear-gradient(135deg, var(--primary), oklch(0.5 0.22 290));
+    color: white;
+    padding: 16px 24px;
+    box-shadow: var(--shadow-md);
+    flex: 0 0 auto;
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  header h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 2px; }
+  header p { font-size: 13.5px; opacity: 0.9; font-weight: 500; }
+  
+  .btn-ghost-light {
+    background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+    color: white; padding: 8px 14px; border-radius: var(--radius-md);
+    font-weight: 700; font-size: 13px; cursor: pointer; transition: 0.2s;
+  }
+  .btn-ghost-light:hover { background: rgba(255,255,255,0.25); transform: translateY(-1px); }
+
+  /* Main Layout */
+  .wrap {
+    max-width: 1400px; width: 100%; margin: 0 auto;
+    padding: 16px 24px 24px;
+    flex: 1 1 auto; min-height: 0;
+    display: flex; flex-direction: column;
+  }
+
+  /* Navigation Tabs */
+  .tabs {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; flex: 0 0 auto;
+  }
+  .tab {
+    padding: 10px 18px;
+    background: var(--surface);
+    border: 1px solid oklch(0.9 0.02 var(--brand-h));
+    border-radius: 999px;
+    font-size: 14px; font-weight: 700; color: var(--ink-muted);
+    cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--shadow-sm);
+  }
+  .tab:hover { border-color: var(--primary); color: var(--primary); transform: translateY(-1px); }
+  .tab.active {
+    background: var(--primary); color: white; border-color: var(--primary);
+    box-shadow: 0 4px 12px oklch(var(--brand-l) var(--brand-c) var(--brand-h) / 0.3);
+  }
+  .tab.tab-practice { border-color: var(--accent); color: var(--accent); }
+  .tab.tab-practice.active { background: var(--accent); color: white; }
+  .tab.tab-assign { border-color: var(--success); color: var(--success); }
+  .tab.tab-assign.active { background: var(--success); color: white; }
+
+  /* Split Layout */
+  .layout {
+    display: flex; gap: 20px; align-items: stretch; flex: 1 1 auto; min-height: 0;
+  }
+  .main-content {
+    flex: 1 1 auto; display: flex; flex-direction: column; gap: 16px;
+    min-height: 0; border-radius: var(--radius-lg);
+    background: var(--surface); box-shadow: var(--shadow-md);
+    border: 1px solid oklch(0.9 0.02 var(--brand-h)); overflow: hidden;
+  }
+  
+  .side {
+    flex: 0 0 38%; min-width: 340px; max-width: 480px; display: flex; flex-direction: column; gap: 16px;
+    overflow-y: auto; min-height: 0; padding-right: 4px;
+    scrollbar-width: thin; scrollbar-color: var(--primary-soft) transparent;
+  }
+
+  @media (max-width: 960px) {
+    html, body { height: auto; overflow: auto; }
+    .layout { flex-direction: column; }
+    .main-content { min-height: 60vh; }
+    .side { flex: 1 1 auto; width: 100%; overflow: visible; }
+  }
+
+  /* Panels */
+  .panel {
+    background: var(--surface); border-radius: var(--radius-lg);
+    padding: 20px; box-shadow: var(--shadow-sm);
+    border: 1px solid oklch(0.92 0.02 var(--brand-h));
+    animation: fadeIn 0.3s ease-out;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+  .hidden { display: none !important; }
+
+  .big-title { font-size: 19px; font-weight: 800; margin-bottom: 12px; color: var(--ink); line-height: 1.3; }
+  .hint-box { background: var(--primary-soft); color: var(--primary); padding: 12px 16px; border-radius: var(--radius-md); font-size: 13.5px; font-weight: 600; line-height: 1.5; margin-bottom: 16px; }
+
+  .btn {
+    display: inline-flex; justify-content: center; align-items: center; gap: 8px;
+    padding: 10px 16px; border: none; border-radius: var(--radius-md);
+    font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.2s;
+    font-family: inherit; width: 100%;
+  }
+  .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 12px oklch(var(--brand-l) var(--brand-c) var(--brand-h) / 0.25); }
+  .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+  .btn-ghost { background: var(--primary-soft); color: var(--primary); }
+  .btn-ghost:hover { background: oklch(0.88 0.08 var(--brand-h)); }
+  .btn-ghost.active { background: var(--primary) !important; color: white !important; }
+  .btn-accent { background: var(--accent); color: white; box-shadow: 0 4px 12px oklch(0.68 0.18 42 / 0.3); }
+  .btn-accent:hover { background: oklch(0.58 0.18 42); transform: translateY(-1px); }
+  .btn-danger { background: var(--danger-soft); color: var(--danger); }
+  .btn-danger:hover { background: oklch(0.9 0.05 28); }
+
+  /* Workspace styling */
+  #workspace-container {
+    display: flex; flex: 1 1 auto; height: 100%; position: relative;
+  }
+  #toolbox {
+    width: 140px; background: var(--surface-sunken); border-right: 1px solid oklch(0.9 0.02 var(--brand-h));
+    padding: 16px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto;
+    transition: 0.2s;
+  }
+  .layout.toolbox-hidden #toolbox { display: none !important; }
+
+  .tool-item {
+    display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer;
+    background: var(--surface); padding: 8px; border-radius: 8px; border: 1px solid oklch(0.9 0.02 var(--brand-h));
+    box-shadow: var(--shadow-sm); transition: 0.2s;
+    font-family: inherit; color: var(--ink); text-align: center; width: 100%;
+  }
+  .tool-item:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+  .tool-item:hover { transform: scale(1.05); border-color: var(--primary); }
+  
+  #canvas-area {
+    flex: 1; position: relative; overflow: hidden; background: #fafafa;
+    background-image: radial-gradient(oklch(0.8 0.02 var(--brand-h)) 1px, transparent 1px);
+    background-size: 20px 20px;
+    touch-action: none;
+  }
+  
+  #eq-overlay {
+    position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+    background: rgba(255,255,255,0.95); padding: 12px 24px; border-radius: 999px;
+    box-shadow: var(--shadow-md); font-family: 'Cambria Math', serif; font-size: 22px;
+    font-weight: bold; border: 1px solid oklch(0.9 0.02 var(--brand-h)); z-index: 5;
+    white-space: nowrap; pointer-events: none;
+  }
+
+  /* Tile Styling */
+  .tile {
+    position: absolute; cursor: grab; display: flex; justify-content: center; align-items: center;
+    font-weight: bold; font-family: 'Cambria Math', serif; box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    border-radius: 4px; user-select: none; touch-action: none;
+    transition: box-shadow 0.15s;
+  }
+  .tile.animating { transition: all 0.4s ease-in-out; }
+  .tile:active { cursor: grabbing; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 100; }
+
+  /* Eraser mode: click a tile to delete it */
+  #canvas-area.erasing { cursor: cell; }
+  #canvas-area.erasing .tile { cursor: cell; }
+  #canvas-area.erasing .tile:hover { outline: 3px solid var(--danger); outline-offset: 1px; }
+  #btn-eraser.eraser-active { background: var(--danger) !important; color: #fff !important; border-color: var(--danger) !important; }
+  
+  /* Tile sizes based on unit = 30px */
+  .tile-x2 { width: 90px; height: 90px; font-size: 24px; }
+  .tile-x  { width: 30px; height: 90px; font-size: 18px; }
+  .tile-x-h { width: 90px; height: 30px; font-size: 18px; }
+  .tile-1  { width: 30px; height: 30px; font-size: 16px; }
+
+  /* Tile Variants */
+  .t-p-x2 { background: var(--tile-blue); color: white; border: 1px solid var(--tile-blue-border); }
+  .t-n-x2 { background: var(--tile-red); color: white; border: 1px solid var(--tile-red-border); }
+  .t-p-x  { background: var(--tile-green); color: white; border: 1px solid var(--tile-green-border); }
+  .t-n-x  { background: var(--tile-red); color: white; border: 1px solid var(--tile-red-border); }
+  .t-p-1  { background: var(--tile-yellow); color: white; border: 1px solid var(--tile-yellow-border); }
+  .t-n-1  { background: var(--tile-red); color: white; border: 1px solid var(--tile-red-border); }
+
+  /* Area model tiles rendering */
+  .area-tile {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-weight: bold;
+    font-family: 'Cambria Math', serif;
+    border-radius: 6px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+    border: 1.5px solid transparent;
+    transition: all 0.25s ease;
+    user-select: none;
+  }
+  .area-x2 {
+    background: linear-gradient(135deg, var(--tile-blue), oklch(0.55 0.16 220));
+    border-color: var(--tile-blue-border);
+  }
+  .area-tile.t-n-x2 {
+    background: linear-gradient(135deg, var(--tile-red), oklch(0.55 0.18 25));
+    border-color: var(--tile-red-border);
+    color: white;
+  }
+  .area-xv {
+    background: linear-gradient(135deg, var(--tile-green), oklch(0.65 0.15 140));
+    border-color: var(--tile-green-border);
+  }
+  .area-xh {
+    background: linear-gradient(135deg, var(--tile-green), oklch(0.65 0.15 140));
+    border-color: var(--tile-green-border);
+  }
+  .area-tile.t-n-x {
+    background: linear-gradient(135deg, var(--tile-red), oklch(0.55 0.18 25));
+    border-color: var(--tile-red-border);
+    color: white;
+  }
+  .area-1 {
+    background: linear-gradient(135deg, var(--tile-yellow), oklch(0.72 0.14 80));
+    border-color: var(--tile-yellow-border);
+    color: oklch(0.25 0.05 80);
+  }
+  .area-tile.t-n-1 {
+    background: linear-gradient(135deg, var(--tile-red), oklch(0.55 0.18 25));
+    border-color: var(--tile-red-border);
+    color: white;
+  }
+
+  .area-label {
+    position: absolute;
+    font-weight: 800;
+    color: var(--primary);
+    font-family: 'Cambria Math', serif;
+    font-size: 16px;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .area-label.negative {
+    color: var(--danger) !important;
+  }
+
+  /* Dimension Brackets styling */
+  .dimension-bracket-h {
+    position: absolute;
+    border-left: 2px solid var(--ink-muted);
+    border-right: 2px solid var(--ink-muted);
+    border-top: 2px solid var(--ink-muted);
+    height: 8px;
+  }
+  .dimension-bracket-h span {
+    position: absolute;
+    top: -24px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-weight: 800;
+    font-size: 15px;
+    white-space: nowrap;
+    font-family: 'Cambria Math', serif;
+    color: var(--primary);
+    background: #fafafa;
+    padding: 0 6px;
+  }
+
+  .dimension-bracket-v {
+    position: absolute;
+    border-top: 2px solid var(--ink-muted);
+    border-bottom: 2px solid var(--ink-muted);
+    border-left: 2px solid var(--ink-muted);
+    width: 8px;
+  }
+  .dimension-bracket-v span {
+    position: absolute;
+    left: -70px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-weight: 800;
+    font-size: 15px;
+    white-space: nowrap;
+    font-family: 'Cambria Math', serif;
+    color: var(--primary);
+    background: #fafafa;
+    padding: 4px 0;
+  }
+
+  /* Stepper controls */
+  .mult-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 0;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--ink);
+  }
+  .step-label {
+    min-width: 90px;
+  }
+  .step-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--primary);
+    font-size: 18px;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    transition: 0.2s;
+  }
+  .step-btn:hover { background: var(--primary-soft); }
+  .mult-chip {
+    min-width: 36px;
+    text-align: center;
+    font-weight: 800;
+    font-size: 15px;
+    background: var(--surface-sunken);
+    border-radius: 8px;
+    padding: 3px 0;
+    border: 1px solid var(--border);
+  }
+  .mult-chip.negative {
+    color: var(--danger) !important;
+    border-color: var(--danger) !important;
+    background: var(--danger-soft) !important;
+  }
+
+  /* Box Method Grid styling */
+  .xgrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    max-width: 330px;
+    margin: 14px auto;
+  }
+  .xcell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 52px;
+    border-radius: 8px;
+    font-family: 'Cambria Math', serif;
+    font-weight: bold;
+    font-size: 17px;
+  }
+  .xhead { background: var(--surface-sunken); border: 1px solid var(--border); color: var(--ink); }
+  .xprod { animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  @keyframes scaleIn { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .xc-x2 { background: #dbeafe; border: 1px solid #0284c7; color: #075985; }
+  .xc-x  { background: #dcfce7; border: 1px solid #16a34a; color: #166534; }
+  .xc-1  { background: #fef9c3; border: 1px solid #ca8a04; color: #854d0e; }
+  .xcell.negative {
+    background: var(--danger-soft) !important;
+    border-color: var(--danger) !important;
+    color: var(--danger) !important;
+  }
+
+  /* Practice answer feedback */
+  .q-input.correct { border-color: var(--success); background: var(--success-soft); color: var(--success); font-weight: 800; }
+  .q-input.incorrect { border-color: var(--danger); background: var(--danger-soft); color: var(--danger); font-weight: 800; }
+
+  /* Practice & Assignment styling */
+  .practice-box { border: 2px solid oklch(0.9 0.02 var(--brand-h)); padding: 16px; border-radius: var(--radius-md); margin-bottom: 16px; }
+  .q-text { font-size: 18px; font-weight: bold; font-family: 'Cambria Math', serif; text-align: center; margin: 12px 0; }
+  .q-input-group { display: flex; align-items: center; gap: 8px; justify-content: center; margin-top: 16px; }
+  .q-input { font-size: 16px; font-family: 'Cambria Math', serif; padding: 8px 12px; border: 2px solid oklch(0.8 0.02 var(--brand-h)); border-radius: 8px; width: 200px; text-align: center; }
+  .q-input:focus { border-color: var(--primary); outline: none; }
+  .sol-box { background: var(--success-soft); color: var(--success); padding: 12px; border-radius: 8px; font-weight: bold; text-align: center; margin-top: 12px; font-family: 'Cambria Math', serif; display: none; }
+
+  .btn-x2-helper {
+    background: var(--primary-soft);
+    color: var(--primary);
+    border: 1px solid var(--primary);
+    border-radius: 6px;
+    font-size: 13.5px;
+    font-weight: 800;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: 0.15s;
+    font-family: 'Cambria Math', serif;
+  }
+  .btn-x2-helper:hover {
+    background: var(--primary);
+    color: white;
+  }
+
+  /* Student Info styling */
+  .student-info { display: flex; gap: 16px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid var(--border); }
+  .info-field { display: flex; align-items: center; gap: 8px; font-weight: bold; }
+  .info-input { width: 100%; padding: 6px 12px; border: 2px solid var(--border); border-radius: var(--radius-sm); font-family: inherit; font-size: 14px; background: var(--surface); color: var(--ink); }
+  .info-input:focus { border-color: var(--primary); outline: none; }
+  .print-only-title { display: none; }
+
+  .layout.board-hidden .main-content { display: none; }
+  .layout.board-hidden .side { max-width: 100%; flex: 1 1 auto; }
+
+  .progress-track { height: 12px; background: var(--surface-sunken); border-radius: 999px; overflow: hidden; border: 1px solid var(--border); }
+  .progress-fill { height: 100%; width: 0%; background: var(--success); border-radius: 999px; transition: width 0.4s ease; }
+
+  /* Printable Drawing/Plot area style */
+  .ws-plot-area {
+    border: 1.5px dashed var(--ink-muted);
+    border-radius: var(--radius-md);
+    height: 150px;
+    margin: 10px auto;
+    width: 95%;
+    max-width: 420px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: var(--ink-muted);
+    background-image: radial-gradient(oklch(0.85 0.01 var(--brand-h)) 1px, transparent 1px);
+    background-size: 16px 16px;
+    touch-action: none;
+    font-weight: 600;
+  }
+  .ws-plot-area.has-tiles .ws-plot-hint { display: none; }
+  .ws-plot-area.tiles-correct { border-color: var(--success) !important; border-style: solid; }
+  .ws-plot-area.tiles-incorrect { border-color: var(--danger) !important; border-style: solid; }
+
+  /* Worksheet tiles (small unit = 16px so a full rectangle fits the plot area) */
+  .ws-tile-x2 { width: 48px; height: 48px; font-size: 14px; }
+  .ws-tile-xv { width: 16px; height: 48px; font-size: 10px; }
+  .ws-tile-xh { width: 48px; height: 16px; font-size: 10px; }
+  .ws-tile-1  { width: 16px; height: 16px; font-size: 9px; }
+
+  /* Per-question tile palette */
+  .ws-tools {
+    display: flex; gap: 6px; justify-content: center; align-items: center; flex-wrap: wrap;
+    margin: 8px 0 0; font-size: 11.5px; color: var(--ink-muted); font-weight: 600;
+  }
+  .ws-tool-btn {
+    border: 1px solid; border-radius: 5px; cursor: pointer;
+    font-family: 'Cambria Math', serif; font-weight: bold; font-size: 12px;
+    padding: 4px 10px; transition: 0.15s;
+  }
+  .ws-tool-btn:hover { transform: scale(1.08); }
+  .ws-tb-x2 { background: var(--tile-blue); border-color: var(--tile-blue-border); color: white; }
+  .ws-tb-x  { background: var(--tile-green); border-color: var(--tile-green-border); color: white; }
+  .ws-tb-1  { background: var(--tile-yellow); border-color: var(--tile-yellow-border); color: white; }
+  .ws-tb-clear { background: var(--danger-soft); border-color: var(--danger); color: var(--danger); font-family: inherit; }
+  .ws-tb-n { background: var(--tile-red); border-color: var(--tile-red-border); color: white; }
+
+  /* Print Styles for Assignment Tab */
+  @media print {
+    @page { margin: 15mm; size: A4 portrait; }
+    html, body { background: #fff !important; color: #000 !important; height: auto !important; overflow: visible !important; }
+    header, .tabs, .main-content, .no-print, button, .btn { display: none !important; }
+    .wrap, .layout, .side { display: block !important; width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
+    .panel { display: none !important; }
+    #tab-assign { display: block !important; border: none !important; box-shadow: none !important; padding: 0 !important; }
+    
+    .print-only-title { display: block !important; font-size: 20px; font-weight: 800; text-align: center; margin-bottom: 20px; }
+    .student-info { border-bottom: 2px solid #000 !important; margin-bottom: 24px !important; }
+    .info-input { border: none !important; border-bottom: 1px solid #000 !important; border-radius: 0 !important; background: transparent !important; color: #000 !important; font-size: 16px !important; padding: 2px 0 !important; }
+    .info-input::placeholder { color: transparent !important; }
+
+    .ws-item { margin-bottom: 24px; border-bottom: 1px dashed #ccc; padding-bottom: 12px; page-break-inside: avoid; }
+    .ws-q-title { font-weight: bold; font-size: 14px; margin-bottom: 8px; }
+    .ws-q-expr { font-family: 'Cambria Math', serif; font-size: 18px; text-align: center; margin-bottom: 16px; }
+    .ws-answer-line { border-bottom: 1px solid #000; width: 250px; margin: 0 auto; height: 30px; }
+    .as-input { border: none !important; border-bottom: 1px solid #000 !important; border-radius: 0 !important; background: transparent !important; color: #000 !important; font-size: 16px !important; width: 240px !important; max-width: 240px !important; padding: 2px 0 !important; }
+    .as-input::placeholder { color: transparent !important; }
+    .ws-plot-area { border: 1.5px dashed #000 !important; background-image: radial-gradient(#999 1px, transparent 1px) !important; }
+    /* Placed tiles must keep their colors on paper/PDF */
+    .ws-plot-area .tile { box-shadow: none !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .ws-tools { display: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<header class="no-print">
+  <div>
+    <h1>🧩 Algebra Tiles (การแยกตัวประกอบ)</h1>
+    <p>สัปดาห์ที่ 6 · แยกตัวประกอบพหุนามกำลังสองด้วยแผ่นพีชคณิต</p>
+  </div>
+  <button id="btn-fullscreen" class="btn-ghost-light">⛶ เต็มจอ</button>
+</header>
+
+<div class="wrap">
+  <div class="tabs no-print">
+    <button class="tab active" data-tab="divisor">🔢 หาคู่จำนวน</button>
+    <button class="tab" data-tab="concept">📖 เรียนรู้แนวคิด</button>
+    <button class="tab" data-tab="factor">🧩 การแยกตัวประกอบ</button>
+    <button class="tab tab-practice" data-tab="practice">🎯 ฝึกแยกตัวประกอบ</button>
+    <button class="tab tab-assign" data-tab="assign">📝 ใบงาน (พิมพ์ได้)</button>
+  </div>
+
+  <div class="layout">
+    <!-- LEFT PANEL: WORKSPACE -->
+    <div class="main-content no-print" id="main-content-area">
+      <div id="workspace-container">
+        <!-- Toolbox -->
+        <div id="toolbox">
+          <div style="font-size: 12px; font-weight: bold; text-align: center; color: var(--ink-muted); margin-bottom: 4px;">คลิกเพิ่มแผ่น</div>
+
+          <button type="button" class="tool-item" data-type="px2">
+            <div class="tile tile-x2 t-p-x2" style="position:static; transform:scale(0.55); pointer-events:none;">x²</div>
+            <span style="font-size: 11px; font-weight: bold;">+x²</span>
+          </button>
+          <button type="button" class="tool-item" data-type="nx2">
+            <div class="tile tile-x2 t-n-x2" style="position:static; transform:scale(0.55); pointer-events:none;">-x²</div>
+            <span style="font-size: 11px; font-weight: bold;">-x²</span>
+          </button>
+          <button type="button" class="tool-item" data-type="px">
+            <div class="tile tile-x t-p-x" style="position:static; transform:scale(0.9); pointer-events:none;">x</div>
+            <span style="font-size: 11px; font-weight: bold;">+x ตั้ง</span>
+          </button>
+          <button type="button" class="tool-item" data-type="nx">
+            <div class="tile tile-x t-n-x" style="position:static; transform:scale(0.9); pointer-events:none;">-x</div>
+            <span style="font-size: 11px; font-weight: bold;">-x ตั้ง</span>
+          </button>
+          <div style="display:flex; gap:6px; justify-content:center;">
+            <button type="button" class="tool-item" data-type="pxh" style="flex:1; padding: 6px;">
+              <div class="tile tile-x-h t-p-x" style="position:static; transform:scale(0.5); pointer-events:none;">x</div>
+              <span style="font-size: 10px; font-weight: bold;">+x นอน</span>
+            </button>
+            <button type="button" class="tool-item" data-type="nxh" style="flex:1; padding: 6px;">
+              <div class="tile tile-x-h t-n-x" style="position:static; transform:scale(0.5); pointer-events:none;">-x</div>
+              <span style="font-size: 10px; font-weight: bold;">-x นอน</span>
+            </button>
+          </div>
+          <div style="display:flex; gap:6px; justify-content:center;">
+            <button type="button" class="tool-item" data-type="p1" style="flex:1; padding: 6px;">
+              <div class="tile tile-1 t-p-1" style="position:static; pointer-events:none;">1</div>
+              <span style="font-size: 10px; font-weight: bold;">+1</span>
+            </button>
+            <button type="button" class="tool-item" data-type="n1" style="flex:1; padding: 6px;">
+              <div class="tile tile-1 t-n-1" style="position:static; pointer-events:none;">-1</div>
+              <span style="font-size: 10px; font-weight: bold;">-1</span>
+            </button>
+          </div>
+
+          <hr style="border:0; border-top: 1px dashed var(--border); margin: 6px 0;">
+          <button class="btn" id="btn-eraser" style="font-size: 12px; padding: 6px; background:var(--surface); color:var(--ink); border:1px solid var(--border);">🧽 ยางลบ</button>
+          <button class="btn btn-danger" id="btn-clear-all" style="font-size: 12px; padding: 6px;">🗑️ ล้างกระดาน</button>
+          <button class="btn btn-ghost" id="btn-cancel-pairs" style="font-size: 11.5px; padding: 6px; background:var(--accent-soft); color:var(--accent);">🧹 ลบหักล้าง (Zero)</button>
+        </div>
+        
+        <!-- Canvas Area -->
+        <div id="canvas-area">
+          <div id="eq-overlay">0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="side">
+      
+      <!-- DIVISOR PRACTICE PANEL -->
+      <div class="panel active" id="tab-divisor">
+        <div class="big-title">🔢 หาคู่จำนวน: คูณกันได้ · บวกกันได้</div>
+
+        <div style="background:var(--surface-sunken); padding:14px; border-radius:var(--radius-md); border:1px solid var(--border); margin-bottom:14px;">
+          <div style="font-weight:800; font-size:13.5px; margin-bottom:6px; color:var(--primary);">ทำไมต้องฝึกเรื่องนี้?</div>
+          <div style="font-size:13px; line-height:1.6;">
+            เมื่อแยกตัวประกอบ <b>x² + Bx + C</b> เป็น <b>(x + p)(x + q)</b> ต้องหา 2 จำนวนที่<br>
+            • คูณกันได้ <b>C</b> (ค่าคงที่)<br>
+            • บวกกันได้ <b>B</b> (สัมประสิทธิ์ของ x)<br>
+            ถ้า C เป็นลบ แสดงว่าจำนวนสองตัวมีเครื่องหมายต่างกัน (บวกหนึ่ง ลบหนึ่ง)!
+          </div>
+        </div>
+
+        <div style="background:var(--primary-soft); color:var(--primary); padding:12px 14px; border-radius:var(--radius-md); margin-bottom:14px; font-size:13px; line-height:1.6;">
+          <b>วิธีคิด:</b><br>
+          1) แตกค่าท้าย (C) ออกเป็นคู่ตัวประกอบทั้งหมด (รวมทั้งคู่ที่มีค่าลบถ้า C เป็นลบ)<br>
+          2) เลือกคู่ที่บวกกันได้ค่ากลาง (B)<br>
+          <span style="color:var(--ink-muted);">ตัวอย่าง: C = -6 → 1×-6, -1×6, 2×-3, -2×3 · ถ้า B = -1 ตอบ 2 กับ -3</span>
+        </div>
+
+        <div class="practice-box" style="padding:16px;">
+          <div style="font-size: 12.5px; color: var(--ink-muted); text-align:center;">หาสองจำนวนที่...</div>
+          <div class="q-text" style="line-height:1.5;">
+            คูณกันได้ <span id="dv-c" style="color:var(--primary)">12</span><br>
+            และบวกกันได้ <span id="dv-b" style="color:var(--accent)">7</span>
+          </div>
+          <div class="q-input-group">
+            <input type="number" id="dv-in-a" class="q-input" style="width:100px;" placeholder="จำนวนที่ 1">
+            <span style="font-weight:800;">และ</span>
+            <input type="number" id="dv-in-b" class="q-input" style="width:100px;" placeholder="จำนวนที่ 2">
+          </div>
+          <div style="text-align:center; margin-top:14px;">
+            <button class="btn btn-primary" style="width:auto;" onclick="checkDivisorPair()">✓ ตรวจคำตอบ</button>
+            <button class="btn btn-ghost" style="width:auto; margin-left:8px;" onclick="showDivisorFactorPairs()">💡 ดูตัวประกอบของค่าท้าย</button>
+          </div>
+          <div id="dv-hint-box" style="display:none; margin-top:12px; background:var(--surface-sunken); border:1px solid var(--border); border-radius:8px; padding:10px; font-size:13px; line-height:1.7; font-family:'Cambria Math',serif;"></div>
+          <div id="dv-feedback" style="margin-top:12px; font-weight:700; text-align:center; min-height:20px; font-size:13px;"></div>
+        </div>
+
+        <div style="font-size:13px; font-weight:bold; color:var(--ink); margin: 12px 0 6px;" id="dv-progress-text">ความก้าวหน้า: 0 / 10 ข้อ</div>
+        <div class="progress-track"><div class="progress-fill" id="dv-progress-fill"></div></div>
+
+        <button class="btn btn-ghost" style="margin-top:10px;" onclick="initDivisorTab()">↺ เริ่มโจทย์ชุดใหม่</button>
+      </div>
+
+      <!-- CONCEPT PANEL -->
+      <div class="panel hidden" id="tab-concept">
+        <div class="big-title">📖 เรียนรู้แนวคิดการแยกตัวประกอบ</div>
+        <p style="font-size: 13.5px; color: var(--ink-muted); margin-bottom: 12px;">
+          จัดแผ่นพีชคณิตบนกระดานให้เป็นรูปสี่เหลี่ยมผืนผ้าให้ตรงกับโจทย์ด้านล่าง — ใช้ <b>วิธีคิดด้วยมือ</b> เป็นตัวช่วย!
+        </p>
+
+        <div style="background:var(--surface-sunken); padding:12px; border-radius:var(--radius-md); border:1px solid var(--border); margin-bottom:14px;">
+          <div style="font-weight:800; font-size:13.5px; margin-bottom:4px; color:var(--primary);">โจทย์พหุนามเป้าหมาย:</div>
+          <div class="q-text" id="concept-target" style="margin:4px 0;">x² + 5x + 6</div>
+          <div id="concept-mode-hint" style="font-size:12px; color:var(--accent); font-weight:700; margin-top:6px;"></div>
+        </div>
+
+        <div id="concept-byhand-box" style="background:var(--primary-soft); color:var(--primary); padding:12px 14px; border-radius:var(--radius-md); margin-bottom:14px; font-size:13px; line-height:1.7; font-family:'Cambria Math',serif; min-height:90px;"></div>
+
+        <button class="btn btn-accent" onclick="checkConceptBuild()">✓ ตรวจการจัดเรียงบนกระดาน</button>
+        <div id="concept-build-feedback" style="margin-top:10px; font-weight:700; min-height:20px; text-align:center; font-size:13px;"></div>
+
+        <button class="btn btn-ghost" style="margin-top:10px;" onclick="conceptNextExample()">➡️ ตัวอย่างถัดไป</button>
+        <div style="font-size:12px; color:var(--ink-muted); text-align:center; margin-top:6px;" id="concept-step-label">ตัวอย่างที่ 1 / 5</div>
+      </div>
+
+      <!-- FACTOR PANEL -->
+      <div class="panel hidden" id="tab-factor">
+        <div class="big-title">🧩 แยกตัวประกอบพหุนาม</div>
+        <p style="font-size: 13.5px; color: var(--ink-muted); margin-bottom: 12px;">
+          หาตัวประกอบของพหุนาม x² + Bx + C โดยการจัดขนาดสี่เหลี่ยมผืนผ้าให้ได้พื้นที่ที่กำหนดพอดี<br>
+          <b>ข้อ 1-5</b> เปิดแผ่นเฉลยช่วยดูได้ · <b>ข้อ 6-10</b> ต้องฝึกแยกเอง ไม่มีแผ่นเฉลย
+        </p>
+
+        <div class="practice-box" style="padding:14px; margin-bottom:12px;">
+          <div style="font-size: 12.5px; font-weight: bold; color: var(--primary);">โจทย์พหุนามเป้าหมาย:</div>
+          <div class="q-text" id="factor-target" style="margin:6px 0 10px;">x² + 5x + 6</div>
+          <div style="font-size:12px; color:var(--ink-muted); line-height:1.4;">
+            ต้องการแผ่น: 🟦 <b>x²</b> = 1 แผ่น · <span id="factor-req-x-line"></span> · <span id="factor-req-1-line"></span>
+          </div>
+          <div style="font-size:12px; color:var(--accent); line-height:1.4; margin-top:6px; font-weight:700;">
+            💡 ใบ้: หา p และ q ที่ <span id="factor-guide-pq" style="font-family:'Cambria Math',serif;"></span>
+          </div>
+        </div>
+
+        <div style="background:var(--surface-sunken); padding:12px; border-radius:var(--radius-md); border:1px solid var(--border); margin-bottom:14px;">
+          <div style="font-weight:800; font-size:13.5px; margin-bottom:6px; color:var(--accent);">ปรับขนาดด้านของสี่เหลี่ยมเพื่อแยกตัวประกอบ:</div>
+          
+          <div class="mult-control">
+            <span class="step-label">ด้านสูง (x + p):</span>
+            <span class="mult-chip">1</span><span>x</span>
+            <span style="margin:0 6px;">+</span>
+            <button class="step-btn" onclick="adjustFactor('p', -1)">-</button>
+            <span class="mult-chip" id="lbl-factor-p">1</span>
+            <button class="step-btn" onclick="adjustFactor('p', 1)">+</button>
+          </div>
+
+          <div class="mult-control">
+            <span class="step-label">ด้านกว้าง (x + q):</span>
+            <span class="mult-chip">1</span><span>x</span>
+            <span style="margin:0 6px;">+</span>
+            <button class="step-btn" onclick="adjustFactor('q', -1)">-</button>
+            <span class="mult-chip" id="lbl-factor-q">1</span>
+            <button class="step-btn" onclick="adjustFactor('q', 1)">+</button>
+          </div>
+
+          <div style="margin-top: 14px; font-weight: bold; font-size: 13px; color: var(--ink);">โหมดกระดาน:</div>
+          <div style="margin-top: 6px; display: flex; gap: 8px;">
+            <button type="button" class="btn btn-ghost active" id="btn-factor-mode-auto" onclick="setFactorMode('auto')" style="flex:1; font-size:12px; padding:6px 0;">💻 แสดงแผ่นเฉลย</button>
+            <button type="button" class="btn btn-ghost" id="btn-factor-mode-manual" onclick="setFactorMode('manual')" style="flex:1; font-size:12px; padding:6px 0;">✏️ ฝึกแยกเอง</button>
+          </div>
+          <div id="factor-manual-instructions" style="display:none; font-size:12px; margin-top:8px; line-height:1.4; color:var(--accent); font-weight:bold;">
+            💡 ลากแผ่นตามจำนวนที่ระบุลงบอร์ด แล้วทดลองต่อเป็นสี่เหลี่ยมด้วยตัวเอง!
+          </div>
+        </div>
+
+        <button class="btn btn-accent" onclick="checkFactoringChallenge()">✓ ตรวจคำตอบ (จัดตัวประกอบสำเร็จ)</button>
+        <div id="factor-feedback" style="margin-top:10px; font-weight:700; min-height:20px; text-align:center; font-size:13px;"></div>
+
+        <div style="font-size:13px; font-weight:bold; color:var(--ink); margin: 12px 0 6px;" id="factor-progress-text">ความก้าวหน้า: 0 / 10 ข้อ</div>
+        <div class="progress-track"><div class="progress-fill" id="factor-progress-fill"></div></div>
+        
+        <button class="btn btn-ghost" style="margin-top:10px;" onclick="initFactorTab()">↺ เริ่มโจทย์ชุดใหม่</button>
+      </div>
+
+      <!-- 5. PRACTICE PANEL -->
+      <div class="panel hidden" id="tab-practice">
+        <div class="big-title">🎯 ฝึกแยกตัวประกอบพหุนาม</div>
+        <p style="font-size: 12.5px; color: var(--ink-muted); margin-bottom: 12px;">
+          จงแยกตัวประกอบ x² + bx + c · ใช้กระดานและเครื่องมือด้านซ้ายช่วยลากประกอบแผ่นพื้นที่เพื่อหาคำตอบได้!
+        </p>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+          <div style="font-size: 13.5px; font-weight: bold;">ข้อที่ <span id="prac-current">1</span> / <span id="prac-total">10</span></div>
+          <div style="font-size: 13.5px; font-weight: bold; color: var(--success);" id="prac-score">คะแนน: 0 / 10</div>
+        </div>
+        
+        <div class="practice-box">
+          <div style="font-size: 12px; color: var(--ink-muted); text-align: center;" id="prac-type-title">จงหาผลคูณของพหุนามต่อไปนี้</div>
+          <div class="q-text" id="prac-question">(x + 2)(x + 3)</div>
+          
+          <div class="q-input-group">
+            <input type="text" id="prac-input" class="q-input" placeholder="เช่น x^2 + 5x + 6">
+            <button type="button" class="btn-x2-helper no-print" onclick="insertX2('prac-input')">x²</button>
+          </div>
+          <div style="text-align: center; margin-top: 14px;">
+            <button class="btn btn-primary" id="btn-prac-check" style="width: auto;">✓ ตรวจคำตอบ</button>
+            <button class="btn btn-ghost" id="btn-prac-sol" style="width: auto; margin-left: 8px;">ดูเฉลย</button>
+          </div>
+          <div id="prac-feedback" style="margin-top:10px; font-weight:700; text-align:center; min-height:20px; font-size:13px;"></div>
+          <div class="sol-box" id="prac-sol-box"></div>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between;">
+          <button class="btn btn-ghost" id="btn-prac-prev" style="width: 48%;">◀ ย้อนกลับ</button>
+          <button class="btn btn-ghost" id="btn-prac-next" style="width: 48%;">ถัดไป ▶</button>
+        </div>
+      </div>
+
+      <!-- 6. ASSIGNMENT PANEL -->
+      <div class="panel hidden" id="tab-assign">
+        <div class="print-only-title">ใบงาน เรื่อง การแยกตัวประกอบพหุนามด้วยแผ่นพีชคณิต (Algebra Tiles)</div>
+        <div class="big-title no-print" style="color: var(--success);">📝 ใบงานการแยกตัวประกอบ (พิมพ์ได้ · บวกล้วน)</div>
+        <p class="no-print" style="font-size: 13.5px; color: var(--ink-muted); margin-bottom: 16px;">
+          กรอกข้อมูลให้ครบและทำแบบฝึกหัด จากนั้นคลิกปุ่มพิมพ์เพื่อส่งครู (โจทย์จะสุ่มใหม่ทุกครั้งที่รีโหลดหน้าเว็บ)
+        </p>
+        <button class="btn btn-primary no-print" onclick="window.print()" style="margin-bottom: 16px;">🖨️ บันทึกเป็น PDF / พิมพ์ใบงาน</button>
+
+        <div class="no-print" style="display:flex; gap:10px; align-items:center; margin-bottom: 20px; flex-wrap:wrap;">
+          <button class="btn btn-primary" style="width:auto;" onclick="gradeAssignment()">✓ ตรวจคะแนนใบงาน</button>
+          <div id="as-score" style="font-weight:800; color:var(--success); font-size:15px;">ตรวจแล้ว: 0 / 8 ข้อ</div>
+        </div>
+
+        <div class="student-info">
+          <div class="info-field" style="flex: 2;">
+            <span>ชื่อ-นามสกุล:</span>
+            <input type="text" class="info-input" placeholder="พิมพ์ชื่อ-นามสกุล...">
+          </div>
+          <div class="info-field" style="flex: 1;">
+            <span>ชั้น:</span>
+            <input type="text" class="info-input" placeholder="ม.2/...">
+          </div>
+          <div class="info-field" style="flex: 1;">
+            <span>เลขที่:</span>
+            <input type="text" class="info-input" placeholder="...">
+          </div>
+        </div>
+
+        <div id="assign-content">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  // === TAB NAVIGATION LOGIC ===
+  // A tab is fully initialized (fresh problem set + progress reset) only on its
+  // FIRST visit this session (or if localStorage restored saved progress for it —
+  // see the persistence section near the end of this script, which pre-populates
+  // initedTabs for any tab it hydrates). Revisiting later just redraws the shared
+  // canvas from the tab's current state — it does not reset progress.
+  let currentTab = 'divisor';
+  const initedTabs = new Set();
+
+  // Board and toolbox stay hidden only for tabs that are pure number-reasoning
+  // (no tiles needed). Concept now needs the toolbox too — students build the
+  // rectangle themselves there. Shared by the click-handler below AND the initial
+  // page load (which starts on 'divisor' without firing a click).
+  function updateBoardVisibility(t) {
+    const isBoardHidden = (t === 'assign' || t === 'divisor');
+    const isToolboxHidden = (t === 'assign' || t === 'divisor');
+    document.querySelector('.layout').classList.toggle('board-hidden', isBoardHidden);
+    document.querySelector('.layout').classList.toggle('toolbox-hidden', isToolboxHidden);
+  }
+
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const t = tab.dataset.tab;
+      saveWeek6State(); // persist the outgoing tab's state (defined in the persistence section)
+
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.add('hidden'));
+      tab.classList.add('active');
+      document.getElementById('tab-' + t).classList.remove('hidden');
+
+      updateBoardVisibility(t);
+
+      clearCanvas();
+      if (!initedTabs.has(t)) {
+        initedTabs.add(t);
+        if (t === 'concept') initConceptTab();
+        else if (t === 'divisor') initDivisorTab();
+        else if (t === 'factor') initFactorTab();
+        else if (t === 'practice') loadPracQuestion();
+      } else {
+        if (t === 'concept') renderConceptExample();
+        else if (t === 'factor') drawAreaModelGrid(1, factorState.p, 1, factorState.q, factorMode === 'auto');
+        else if (t === 'practice') loadPracQuestion();
+        // 'divisor' and 'assign' have no shared-canvas board to redraw
+      }
+
+      currentTab = t;
+    });
+  });
+
+  // Fullscreen button
+  document.getElementById('btn-fullscreen').addEventListener('click', () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+    } else if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+  });
+
+  // === CANVAS & ALGEBRA TILES ENGINE ===
+  const workspace = document.getElementById('canvas-area');
+  const eqOverlay = document.getElementById('eq-overlay');
+  let tiles = [];
+  let eraserMode = false;
+  
+  function clearCanvas() {
+    workspace.querySelectorAll('.tile, .area-tile, .area-label, .dimension-bracket-h, .dimension-bracket-v').forEach(t => t.remove());
+    tiles = [];
+    eqOverlay.style.display = 'none';
+    eqOverlay.innerHTML = '0';
+  }
+
+  // Create draggable tiles (Recap Tab & other sandbox modes)
+  function spawnTile(type, x, y) {
+    const tile = document.createElement('div');
+    tile.classList.add('tile');
+    
+    if(type === 'px2') { tile.classList.add('tile-x2', 't-p-x2'); tile.textContent = 'x²'; }
+    if(type === 'nx2') { tile.classList.add('tile-x2', 't-n-x2'); tile.textContent = '-x²'; }
+    if(type === 'px')  { tile.classList.add('tile-x', 't-p-x'); tile.textContent = 'x'; }
+    if(type === 'nx')  { tile.classList.add('tile-x', 't-n-x'); tile.textContent = '-x'; }
+    if(type === 'pxh') { tile.classList.add('tile-x-h', 't-p-x'); tile.textContent = 'x'; }
+    if(type === 'nxh') { tile.classList.add('tile-x-h', 't-n-x'); tile.textContent = '-x'; }
+    if(type === 'p1')  { tile.classList.add('tile-1', 't-p-1'); tile.textContent = '1'; }
+    if(type === 'n1')  { tile.classList.add('tile-1', 't-n-1'); tile.textContent = '-1'; }
+    
+    tile.dataset.type = type;
+    tile.dataset.x = x;
+    tile.dataset.y = y;
+    tile.style.transform = `translate(${x}px, ${y}px)`;
+    
+    workspace.appendChild(tile);
+    tiles.push(tile);
+    updateRecapEquation();
+    
+    // Drag & Drop event setup
+    let startX, startY, initX, initY;
+    tile.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      if (eraserMode) {
+        tile.remove();
+        tiles = tiles.filter(t => t !== tile);
+        updateRecapEquation();
+        return;
+      }
+      workspace.appendChild(tile); // Bring to front
+      startX = e.clientX;
+      startY = e.clientY;
+      initX = parseFloat(tile.dataset.x);
+      initY = parseFloat(tile.dataset.y);
+      tile.setPointerCapture(e.pointerId);
+    });
+    
+    tile.addEventListener('pointermove', (e) => {
+      if(tile.hasPointerCapture(e.pointerId)) {
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        let newX = initX + dx;
+        let newY = initY + dy;
+        
+        // Canvas Boundaries
+        newX = Math.max(0, Math.min(newX, workspace.clientWidth - tile.offsetWidth));
+        newY = Math.max(0, Math.min(newY, workspace.clientHeight - tile.offsetHeight));
+        
+        tile.dataset.x = newX;
+        tile.dataset.y = newY;
+        tile.style.transform = `translate(${newX}px, ${newY}px)`;
+      }
+    });
+    
+    tile.addEventListener('pointerup', (e) => {
+      tile.releasePointerCapture(e.pointerId);
+      updateRecapEquation();
+    });
+
+    return tile;
+  }
+
+  // Toolbox item clicks
+  document.querySelectorAll('.tool-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const type = item.dataset.type;
+      const x = workspace.clientWidth/2 - 30 + (Math.random()*40-20);
+      const y = workspace.clientHeight/2 - 30 + (Math.random()*40-20);
+      spawnTile(type, x, y);
+    });
+  });
+
+  document.getElementById('btn-clear-all').addEventListener('click', () => {
+    clearCanvas();
+    updateRecapEquation();
+    // Maintain guide brackets if in the Factoring board
+    const activeTab = document.querySelector('.tab.active').dataset.tab;
+    if (activeTab === 'factor') {
+      drawAreaModelGrid(1, factorState.p, 1, factorState.q, factorMode === 'auto');
+    }
+  });
+
+  // Eraser toggle
+  document.getElementById('btn-eraser').addEventListener('click', () => {
+    eraserMode = !eraserMode;
+    document.getElementById('btn-eraser').classList.toggle('eraser-active', eraserMode);
+    document.getElementById('canvas-area').classList.toggle('erasing', eraserMode);
+  });
+
+  // Zero-pair cancellation animation
+  document.getElementById('btn-cancel-pairs').addEventListener('click', () => {
+    let pairs = [];
+    const findPair = (pType, nType) => {
+      let pTiles = tiles.filter(t => t.dataset.type === pType && !t.classList.contains('removing'));
+      let nTiles = tiles.filter(t => t.dataset.type === nType && !t.classList.contains('removing'));
+      let count = Math.min(pTiles.length, nTiles.length);
+      for(let i=0; i<count; i++) {
+        pTiles[i].classList.add('removing');
+        nTiles[i].classList.add('removing');
+        pairs.push([pTiles[i], nTiles[i]]);
+      }
+    };
+    
+    findPair('px2', 'nx2');
+    findPair('px', 'nx');
+    findPair('pxh', 'nxh');
+    findPair('p1', 'n1');
+    
+    pairs.forEach(pair => {
+      let t1 = pair[0];
+      let t2 = pair[1];
+      t1.classList.add('animating');
+      t2.classList.add('animating');
+      
+      let x1 = parseFloat(t1.dataset.x); let y1 = parseFloat(t1.dataset.y);
+      let x2 = parseFloat(t2.dataset.x); let y2 = parseFloat(t2.dataset.y);
+      let mx = (x1+x2)/2; let my = (y1+y2)/2;
+      
+      t1.style.transform = `translate(${mx}px, ${my}px) scale(0)`;
+      t2.style.transform = `translate(${mx}px, ${my}px) scale(0)`;
+      t1.style.opacity = '0';
+      t2.style.opacity = '0';
+      
+      setTimeout(() => {
+        t1.remove(); t2.remove();
+        tiles = tiles.filter(t => t !== t1 && t !== t2);
+        updateRecapEquation();
+      }, 400);
+    });
+  });
+
+  // Get tile counts on recap board
+  function getRecapCounts() {
+    let counts = { px2:0, nx2:0, px:0, nx:0, pxh:0, nxh:0, p1:0, n1:0 };
+    tiles.forEach(t => {
+      if(!t.classList.contains('removing')) {
+        counts[t.dataset.type]++;
+      }
+    });
+    return counts;
+  }
+
+  function formatPolynomial(counts) {
+    let x2 = counts.px2 - counts.nx2;
+    let x = (counts.px + counts.pxh) - (counts.nx + counts.nxh);
+    let c = counts.p1 - counts.n1;
+    
+    if (x2 === 0 && x === 0 && c === 0) return "0";
+    
+    let terms = [];
+    if (x2 !== 0) {
+      if (x2 === 1) terms.push("x²");
+      else if (x2 === -1) terms.push("-x²");
+      else terms.push(`${x2}x²`);
+    }
+    
+    if (x !== 0) {
+      let absX = Math.abs(x);
+      let sign = x > 0 ? (terms.length > 0 ? " + " : "") : (terms.length > 0 ? " - " : "-");
+      let val = absX === 1 ? "x" : `${absX}x`;
+      terms.push(sign + val);
+    }
+    
+    if (c !== 0) {
+      let absC = Math.abs(c);
+      let sign = c > 0 ? (terms.length > 0 ? " + " : "") : (terms.length > 0 ? " - " : "-");
+      terms.push(sign + absC);
+    }
+    
+    return terms.join("");
+  }
+
+  updateRecapEquation();
+
+  function updateRecapEquation() {
+    const counts = getRecapCounts();
+    const eq = formatPolynomial(counts);
+    eqOverlay.style.display = 'block';
+    eqOverlay.innerHTML = eq;
+    
+    const symValEl = document.getElementById('recap-sym-val');
+    if (symValEl) symValEl.textContent = eq;
+  }
+
+  // === RENDER AREA MODEL GRID (SHAREABLE FOR MULTIPLY & FACTOR) ===
+  function drawAreaModelGrid(a, b, c, d, showGridTiles = true) {
+    // Clear elements first
+    workspace.querySelectorAll('.area-tile, .area-label, .dimension-bracket-h, .dimension-bracket-v').forEach(e => e.remove());
+    eqOverlay.style.display = 'none';
+
+    // Calculate dimensions with dynamic scaling to fit any large value on screen!
+    const clientW = workspace.clientWidth || 800;
+    const clientH = workspace.clientHeight || 500;
+    const maxW = clientW - 160;
+    const maxH = clientH - 120;
+    
+    const absA = Math.max(1, Math.abs(a));
+    const absB = Math.abs(b);
+    const absC = Math.max(1, Math.abs(c));
+    const absD = Math.abs(d);
+    
+    // Width units count: c columns of x (each 3 units) + d columns of 1 (each 1 unit)
+    const colsCount = absC * 3 + absD;
+    // Height units count: a rows of x (each 3 units) + b rows of 1 (each 1 unit)
+    const rowsCount = absA * 3 + absB;
+
+    const scaleW = maxW / (colsCount || 1);
+    const scaleH = maxH / (rowsCount || 1);
+    
+    // Choose unit size (minimum 6px, maximum 30px)
+    const unit = Math.max(6, Math.min(30, scaleW, scaleH));
+    const xSize = unit * 3;
+    
+    // Segment configs with positive and negative signs support for both coefficients and constants
+    let cols = [];
+    const cSign = c >= 0 ? 1 : -1;
+    const cLabel = c >= 0 ? 'x' : '-x';
+    for(let i=0; i<absC; i++) cols.push({ size: xSize, label: cLabel, type: 'x', sign: cSign });
+    const dSign = d >= 0 ? 1 : -1;
+    for(let i=0; i<absD; i++) cols.push({ size: unit, label: d >= 0 ? '1' : '-1', type: '1', sign: dSign });
+    
+    let rows = [];
+    const aSign = a >= 0 ? 1 : -1;
+    const aLabel = a >= 0 ? 'x' : '-x';
+    for(let i=0; i<absA; i++) rows.push({ size: xSize, label: aLabel, type: 'x', sign: aSign });
+    const bSign = b >= 0 ? 1 : -1;
+    for(let i=0; i<absB; i++) rows.push({ size: unit, label: b >= 0 ? '1' : '-1', type: '1', sign: bSign });
+
+    const totalW = cols.reduce((sum, col) => sum + col.size, 0);
+    const totalH = rows.reduce((sum, row) => sum + row.size, 0);
+
+    // Center starting positions inside workspace
+    const originX = Math.max(120, (clientW - totalW) / 2 + 30);
+    const originY = Math.max(90, (clientH - totalH) / 2 + 10);
+
+    // 1. Draw Grid Tiles (only in showGridTiles mode)
+    if (showGridTiles) {
+      let currentY = originY;
+      for(let i=0; i<rows.length; i++) {
+        let currentX = originX;
+        const rSize = rows[i].size;
+        const rType = rows[i].type;
+        
+        for(let j=0; j<cols.length; j++) {
+          const cSize = cols[j].size;
+          const cType = cols[j].type;
+          
+          // Product sign determines tile polarity (color red if negative)
+          const termSign = rows[i].sign * cols[j].sign;
+          
+          // Spawn area tile element
+          const tile = document.createElement('div');
+          tile.classList.add('area-tile');
+          tile.style.left = `${currentX}px`;
+          tile.style.top = `${currentY}px`;
+          tile.style.width = `${cSize}px`;
+          tile.style.height = `${rSize}px`;
+          
+          if (rType === 'x' && cType === 'x') {
+            tile.classList.add('area-x2');
+            if (termSign < 0) {
+              tile.classList.add('t-n-x2');
+              tile.textContent = '-x²';
+            } else {
+              tile.textContent = 'x²';
+            }
+            tile.style.fontSize = `${unit * 0.7}px`;
+          } else if (rType === 'x' && cType === '1') {
+            tile.classList.add('area-xv');
+            if (termSign < 0) {
+              tile.classList.add('t-n-x');
+              tile.textContent = '-x';
+            } else {
+              tile.textContent = 'x';
+            }
+            tile.style.fontSize = `${unit * 0.5}px`;
+          } else if (rType === '1' && cType === 'x') {
+            tile.classList.add('area-xh');
+            if (termSign < 0) {
+              tile.classList.add('t-n-x');
+              tile.textContent = '-x';
+            } else {
+              tile.textContent = 'x';
+            }
+            tile.style.fontSize = `${unit * 0.5}px`;
+          } else if (rType === '1' && cType === '1') {
+            tile.classList.add('area-1');
+            if (termSign < 0) {
+              tile.classList.add('t-n-1');
+              tile.textContent = '-1';
+            } else {
+              tile.textContent = '1';
+            }
+            tile.style.fontSize = `${unit * 0.45}px`;
+          }
+          
+          workspace.appendChild(tile);
+          currentX += cSize;
+        }
+        currentY += rSize;
+      }
+    }
+
+    // 2. Draw Row Labels (Left labels)
+    let tempY = originY;
+    for(let i=0; i<rows.length; i++) {
+      const rSize = rows[i].size;
+      const label = document.createElement('div');
+      label.classList.add('area-label', 'row-label');
+      if (rows[i].sign < 0) label.classList.add('negative');
+      label.style.left = `${originX - 35}px`;
+      label.style.top = `${tempY}px`;
+      label.style.width = '30px';
+      label.style.height = `${rSize}px`;
+      label.textContent = rows[i].label;
+      label.style.fontSize = `${Math.max(10, unit * 0.5)}px`;
+      workspace.appendChild(label);
+      tempY += rSize;
+    }
+
+    // 3. Draw Col Labels (Top labels)
+    let tempX = originX;
+    for(let j=0; j<cols.length; j++) {
+      const cSize = cols[j].size;
+      const label = document.createElement('div');
+      label.classList.add('area-label', 'col-label');
+      if (cols[j].sign < 0) label.classList.add('negative');
+      label.style.left = `${tempX}px`;
+      label.style.top = `${originY - 32}px`;
+      label.style.width = `${cSize}px`;
+      label.style.height = '24px';
+      label.textContent = cols[j].label;
+      label.style.fontSize = `${Math.max(10, unit * 0.5)}px`;
+      workspace.appendChild(label);
+      tempX += cSize;
+    }
+
+    // 4. Draw Dimension Brackets
+    // Top Horizontal Bracket
+    const hBracket = document.createElement('div');
+    hBracket.classList.add('dimension-bracket-h');
+    hBracket.style.left = `${originX}px`;
+    hBracket.style.top = `${originY - 60}px`;
+    hBracket.style.width = `${totalW}px`;
+    
+    let hTerm = "";
+    let termCStr = "";
+    if (c === 1) termCStr = "x";
+    else if (c === -1) termCStr = `<span style="color:var(--danger)">-x</span>`;
+    else if (c > 1) termCStr = `${c}x`;
+    else if (c < -1) termCStr = `<span style="color:var(--danger)">${c}x</span>`;
+
+    if (d > 0) {
+      hTerm = `${termCStr} + ${d}`;
+    } else if (d < 0) {
+      hTerm = `${termCStr} <span style="color:var(--danger)">- ${Math.abs(d)}</span>`;
+    } else {
+      hTerm = termCStr;
+    }
+    hBracket.innerHTML = `<span>(${hTerm})</span>`;
+    workspace.appendChild(hBracket);
+    hBracket.querySelector('span').style.fontSize = `${Math.max(12, unit * 0.55)}px`;
+    hBracket.querySelector('span').style.top = `-${Math.max(18, unit * 0.7)}px`;
+
+    // Left Vertical Bracket
+    const vBracket = document.createElement('div');
+    vBracket.classList.add('dimension-bracket-v');
+    vBracket.style.left = `${originX - 70}px`;
+    vBracket.style.top = `${originY}px`;
+    vBracket.style.height = `${totalH}px`;
+    
+    let vTerm = "";
+    let termAStr = "";
+    if (a === 1) termAStr = "x";
+    else if (a === -1) termAStr = `<span style="color:var(--danger)">-x</span>`;
+    else if (a > 1) termAStr = `${a}x`;
+    else if (a < -1) termAStr = `<span style="color:var(--danger)">${a}x</span>`;
+
+    if (b > 0) {
+      vTerm = `${termAStr} + ${b}`;
+    } else if (b < 0) {
+      vTerm = `${termAStr} <span style="color:var(--danger)">- ${Math.abs(b)}</span>`;
+    } else {
+      vTerm = termAStr;
+    }
+    vBracket.innerHTML = `<span>(${vTerm})</span>`;
+    workspace.appendChild(vBracket);
+    vBracket.querySelector('span').style.fontSize = `${Math.max(12, unit * 0.55)}px`;
+    vBracket.querySelector('span').style.left = `-${Math.max(50, unit * 2)}px`;
+  }
+
+  // Helper to insert x² in inputs
+  function insertX2(inputId) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    
+    const start = input.selectionStart;
+    const end = input.selectionEnd;
+    const text = input.value;
+    
+    const before = text.substring(0, start);
+    const after = text.substring(end, text.length);
+    input.value = before + "x²" + after;
+    
+    input.selectionStart = input.selectionEnd = start + 2;
+    input.focus();
+  }
+
+  // Helper to format expanded equations dynamically (supporting negative values)
+  function formatProductEq(x2, x, c_val) {
+    let terms = [];
+    if (x2 !== 0) {
+      if (x2 === 1) terms.push("x²");
+      else if (x2 === -1) terms.push("-x²");
+      else terms.push(`${x2}x²`);
+    }
+    if (x !== 0) {
+      let absX = Math.abs(x);
+      let sign = x > 0 ? (terms.length > 0 ? " + " : "") : (terms.length > 0 ? " - " : "-");
+      let val = absX === 1 ? "x" : `${absX}x`;
+      terms.push(sign + val);
+    }
+    if (c_val !== 0) {
+      let absC = Math.abs(c_val);
+      let sign = c_val > 0 ? (terms.length > 0 ? " + " : "") : (terms.length > 0 ? " - " : "-");
+      terms.push(sign + absC);
+    }
+    return terms.join("") || "0";
+  }
+
+  // Helper to randomize range
+  function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+  // Generate polynomial groups (Week 4 layout recap)
+  function makeGroup(maxA, maxB, maxC, allowNeg) {
+    const r = (m) => allowNeg ? rand(-m, m) : rand(0, m);
+    let g;
+    do { g = { a: r(maxA), b: r(maxB), c: r(maxC) }; } while (g.a === 0 && g.b === 0 && g.c === 0);
+    return g;
+  }
+
+  // === TAB 3: FACTORING CHALLENGE ===
+  const FACTOR_GUIDED = 5; // สเตจ 0-4 เปิดแผ่นเฉลยได้ · สเตจ 5 ขึ้นไปต้องฝึกแยกเองเท่านั้น
+  const FACTOR_BASE_STAGES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+  const FACTOR_MAX_EXTRA = 2; // เพิ่มได้ไม่เกิน 20% ของ 10 ข้อ
+  let factorPlan = [];
+  let factorGoal = 10;
+  let factorCorrect = 0;
+  let factorWrongStreak = 0;
+  let factorExtras = 0;
+  let factorNoticeShown = false;
+  let factorState = { p: 1, q: 2 };
+  let targetP = 0, targetQ = 0;
+  let factorMode = 'auto'; // 'auto' | 'manual'
+
+  function currentFactorStage() {
+    return factorPlan[Math.min(factorCorrect, factorPlan.length - 1)];
+  }
+
+  function setFactorMode(mode) {
+    if (mode === 'auto' && factorCorrect >= FACTOR_GUIDED) return; // ช่วงฝึกแยกเอง ห้ามเปิดแผ่นเฉลย
+    factorMode = mode;
+    document.getElementById('btn-factor-mode-auto').classList.toggle('active', mode === 'auto');
+    document.getElementById('btn-factor-mode-manual').classList.toggle('active', mode === 'manual');
+    document.getElementById('factor-manual-instructions').style.display = mode === 'manual' ? 'block' : 'none';
+    clearCanvas();
+    drawAreaModelGrid(1, factorState.p, 1, factorState.q, factorMode === 'auto');
+    if (factorMode === 'manual') {
+      updateRecapEquation();
+    }
+  }
+
+  function initFactorTab() {
+    factorCorrect = 0;
+    factorPlan = FACTOR_BASE_STAGES.slice();
+    factorGoal = factorPlan.length;
+    factorWrongStreak = 0;
+    factorExtras = 0;
+    factorNoticeShown = false;
+    updateFactoringProgress();
+    startFactoringChallenge();
+  }
+
+  // Lock/unlock the solution-tiles mode depending on the current question's position
+  // in the set (question 6 onward) — NOT the difficulty stage. Adaptive "extra practice"
+  // questions (inserted after 3 wrong answers in a row) repeat an earlier, easier stage,
+  // which would otherwise let auto-mode stay unlocked past question 6 whenever an extra
+  // lands before it. Gating on position keeps the "ข้อ 6-10 ไม่มีแผ่นเฉลย" promise exact.
+  function applyFactorPhaseUI() {
+    const manualOnly = factorCorrect >= FACTOR_GUIDED;
+    const btnAuto = document.getElementById('btn-factor-mode-auto');
+    if (manualOnly) factorMode = 'manual';
+    btnAuto.disabled = manualOnly;
+    btnAuto.style.opacity = manualOnly ? '0.45' : '';
+    btnAuto.textContent = manualOnly ? '🔒 แผ่นเฉลยถูกปิด' : '💻 แสดงแผ่นเฉลย';
+    btnAuto.classList.toggle('active', factorMode === 'auto');
+    document.getElementById('btn-factor-mode-manual').classList.toggle('active', factorMode === 'manual');
+    document.getElementById('factor-manual-instructions').style.display = factorMode === 'manual' ? 'block' : 'none';
+  }
+
+  function updateFactoringProgress() {
+    document.getElementById('factor-progress-text').textContent = `ความก้าวหน้า: ${factorCorrect} / ${factorGoal} ข้อ`;
+    const pct = Math.min(100, (factorCorrect / factorGoal) * 100);
+    document.getElementById('factor-progress-fill').style.width = pct + '%';
+  }
+
+  function generateFactorProblem(stage) {
+    let p, q;
+    // ช่วงมีแผ่นเฉลยช่วย (ข้อ 1-5) — บวกล้วน
+    if (stage <= 0)       { p = 1; q = 2; }
+    else if (stage === 1) { p = 1; q = rand(3, 4); }
+    else if (stage === 2) { p = 2; q = 3; }
+    else if (stage === 3) { p = rand(2, 3); q = 4; }
+    else if (stage === 4) { p = rand(2, 4); q = p; }  // กำลังสองสมบูรณ์
+    // ช่วงฝึกแยกเอง ไม่มีแผ่นเฉลย (ข้อ 6-10) — เริ่มมีค่าลบ
+    else if (stage === 5) { p = rand(1, 4); q = -rand(1, 3); }
+    else if (stage === 6) { p = rand(2, 5); q = -rand(1, 4); }
+    else if (stage === 7) { p = -rand(2, 6); q = rand(1, 5); }
+    else if (stage === 8) { p = -rand(2, 6); q = -rand(1, 6); }  // ทั้งคู่ลบ
+    else                  { p = rand(1, 9) * (Math.random() < 0.5 ? 1 : -1); q = rand(1, 9) * (Math.random() < 0.5 ? 1 : -1); }
+    targetP = p;
+    targetQ = q;
+    return { b: p+q, c: p*q };
+  }
+
+  // แสดงจำนวนแผ่นที่ต้องใช้ พร้อมสี/สัญลักษณ์ที่ถูกต้องเมื่อ B หรือ C เป็นลบ
+  function renderFactorReqLines(b, c) {
+    const xSym = b >= 0 ? 'x' : '-x';
+    const xIcon = b >= 0 ? '🟩' : '🟥';
+    document.getElementById('factor-req-x-line').innerHTML = `${xIcon} <b>${xSym}</b> = ${Math.abs(b)} แผ่น`;
+    const oneSym = c >= 0 ? '1' : '-1';
+    const oneIcon = c >= 0 ? '🟨' : '🟥';
+    document.getElementById('factor-req-1-line').innerHTML = `${oneIcon} <b>${oneSym}</b> = ${Math.abs(c)} แผ่น`;
+    document.getElementById('factor-guide-pq').innerHTML = `p × q = <b>${c}</b> และ p + q = <b>${b}</b>`;
+  }
+
+  function startFactoringChallenge() {
+    factorState = { p: 1, q: 1 };
+    document.getElementById('lbl-factor-p').textContent = factorState.p;
+    document.getElementById('lbl-factor-q').textContent = factorState.q;
+    document.getElementById('lbl-factor-p').classList.remove('negative');
+    document.getElementById('lbl-factor-q').classList.remove('negative');
+
+    const fb = document.getElementById('factor-feedback');
+    if (factorCorrect >= FACTOR_GUIDED && !factorNoticeShown) {
+      factorNoticeShown = true;
+      fb.innerHTML = "💪 <b>เข้าสู่ช่วงฝึกแยกเอง!</b> ตั้งแต่ข้อนี้ไปไม่มีแผ่นเฉลยแล้ว ลากแผ่นตามจำนวนที่ระบุ แล้วปรับด้านกว้าง × สูงด้วยตัวเอง";
+      fb.style.color = "var(--accent)";
+    } else {
+      fb.textContent = "";
+    }
+
+    applyFactorPhaseUI();
+
+    const targetVal = generateFactorProblem(currentFactorStage());
+
+    document.getElementById('factor-target').textContent = formatProductEq(1, targetVal.b, targetVal.c);
+    renderFactorReqLines(targetVal.b, targetVal.c);
+
+    clearCanvas();
+    drawAreaModelGrid(1, factorState.p, 1, factorState.q, factorMode === 'auto');
+    if (factorMode === 'manual') {
+      updateRecapEquation();
+    }
+  }
+
+  function adjustFactor(variable, amount) {
+    let val = factorState[variable] + amount;
+    // Clamp so the board stays readable
+    val = Math.max(-15, Math.min(15, val));
+
+    factorState[variable] = val;
+    const lbl = document.getElementById(`lbl-factor-${variable}`);
+    lbl.textContent = val;
+    lbl.classList.toggle('negative', val < 0);
+    
+    // Clear canvas when layout changes in manual mode so they redraw
+    if (factorMode === 'manual') {
+      clearCanvas();
+    }
+    drawAreaModelGrid(1, factorState.p, 1, factorState.q, factorMode === 'auto');
+    document.getElementById('factor-feedback').textContent = "";
+    if (factorMode === 'manual') {
+      updateRecapEquation();
+    }
+  }
+
+  function checkFactoringChallenge() {
+    if (factorCorrect >= factorGoal) return; // ชุดนี้สำเร็จแล้ว กด "เริ่มโจทย์ชุดใหม่" เพื่อฝึกต่อ
+    let p = factorState.p;
+    let q = factorState.q;
+
+    // If manual mode, let's also allow verifying the tiles placed on the board!
+    let isCorrect = false;
+    if (factorMode === 'manual') {
+      const counts = getRecapCounts();
+      const totalX2 = counts.px2 - counts.nx2;
+      const totalX = (counts.px + counts.pxh) - (counts.nx + counts.nxh);
+      const totalC = counts.p1 - counts.n1;
+      
+      const targetB = targetP + targetQ;
+      const targetC = targetP * targetQ;
+      
+      const valuesCorrect = totalX2 === 1 && totalX === targetB && totalC === targetC;
+      const dimsCorrect = (p === targetP && q === targetQ) || (p === targetQ && q === targetP);
+      isCorrect = valuesCorrect && dimsCorrect;
+    } else {
+      isCorrect = (p === targetP && q === targetQ) || (p === targetQ && q === targetP);
+    }
+    
+    const fb = document.getElementById('factor-feedback');
+
+    if (isCorrect) {
+      factorWrongStreak = 0;
+      factorCorrect++;
+      updateFactoringProgress();
+      fb.textContent = `🎉 ถูกต้อง! ${formatProductEq(1, targetP + targetQ, targetP * targetQ)} = ${factorFormStr(targetP, targetQ)}`;
+      fb.style.color = "var(--success)";
+
+      if (factorCorrect >= factorGoal) {
+        fb.innerHTML = "🏆 <b>ยอดเยี่ยมมาก!</b> คุณแยกตัวประกอบครบแล้ว! เก่งมาก!";
+      } else {
+        setTimeout(startFactoringChallenge, 1500);
+      }
+    } else {
+      // Adaptive: ผิดข้อเดิมติดกัน 3 ครั้ง → เพิ่มโจทย์ความยากเดิม 1 ข้อ (รวมไม่เกิน 20% ของชุด)
+      factorWrongStreak++;
+      let extraMsg = "";
+      if (factorWrongStreak >= 3 && factorExtras < FACTOR_MAX_EXTRA) {
+        factorPlan.splice(factorCorrect + 1, 0, currentFactorStage());
+        factorExtras++;
+        factorGoal = factorPlan.length;
+        factorWrongStreak = 0;
+        updateFactoringProgress();
+        extraMsg = " · ผิดติดกัน 3 ครั้ง เพิ่มโจทย์ความยากเดิมให้ฝึกอีก 1 ข้อ";
+      }
+      if (factorMode === 'manual') {
+        fb.textContent = "❌ จำนวนแผ่นบนบอร์ด หรือขนาดกว้าง×ยาวที่ปรับยังไม่สัมพันธ์กัน ลองปรับใหม่นะ" + extraMsg;
+      } else {
+        fb.textContent = "❌ ขนาดพื้นที่และตัวประกอบยังไม่สัมพันธ์กัน ลองปรับใหม่นะ" + extraMsg;
+      }
+      fb.style.color = "var(--danger)";
+    }
+  }
+
+
+  // === TAB: CONCEPT (worked-example guide — student builds it themselves with tiles) ===
+  // Five fixed worked examples. The first two arrive with tiles already spawned
+  // (scattered, not arranged) — the student just drags them into a rectangle.
+  // The last three start with an empty board — the student creates every tile
+  // themselves from the toolbox. No auto-animation; the by-hand guide is static.
+  const CONCEPT_EXAMPLES = [
+    { p: 2, q: 3, scattered: true },    // x² + 5x + 6  = (x+2)(x+3)   — positive, tiles given
+    { p: 2, q: -3, scattered: true },   // x² - x  - 6  = (x+2)(x-3)   — mixed-sign, tiles given
+    { p: 3, q: 4, scattered: false },   // x² + 7x + 12 = (x+3)(x+4)   — positive, build from scratch
+    { p: -2, q: 5, scattered: false },  // x² + 3x - 10 = (x-2)(x+5)   — mixed-sign, build from scratch
+    { p: -3, q: -2, scattered: false }  // x² - 5x + 6  = (x-3)(x-2)   — both negative, build from scratch
+  ];
+  let conceptExampleIdx = 0;
+
+  function conceptCurrent() {
+    return CONCEPT_EXAMPLES[conceptExampleIdx];
+  }
+
+  function initConceptTab() {
+    conceptExampleIdx = 0;
+    renderConceptExample();
+  }
+
+  function conceptNextExample() {
+    conceptExampleIdx = (conceptExampleIdx + 1) % CONCEPT_EXAMPLES.length;
+    renderConceptExample();
+  }
+
+  // กระจายแผ่นพีชคณิตที่ถูกต้องสำหรับสร้างสี่เหลี่ยม (x+p)(x+q) แบบสุ่มตำแหน่ง (ไม่เรียง)
+  // หนึ่งแผ่นต่อหนึ่งช่องตาราง: x² 1 แผ่น · x แนวตั้ง |q| แผ่น (แถวบน) · x แนวนอน |p| แผ่น (คอลัมน์ซ้าย) · หน่วย |p×q| แผ่น
+  function spawnScatteredRectangleTiles(p, q) {
+    const c = p * q;
+    const w = workspace.clientWidth || 800, h = workspace.clientHeight || 500;
+    const rx = () => 20 + Math.random() * Math.max(40, w - 120);
+    const ry = () => 20 + Math.random() * Math.max(40, h - 120);
+    spawnTile('px2', rx(), ry());
+    for (let i = 0; i < Math.abs(q); i++) spawnTile(q >= 0 ? 'px' : 'nx', rx(), ry());
+    for (let i = 0; i < Math.abs(p); i++) spawnTile(p >= 0 ? 'pxh' : 'nxh', rx(), ry());
+    for (let i = 0; i < Math.abs(c); i++) spawnTile(c >= 0 ? 'p1' : 'n1', rx(), ry());
+  }
+
+  // รายการคู่ตัวประกอบของค่า C (รองรับค่าลบ) พร้อมไฮไลต์คู่ที่ตรงกับ B
+  function byHandFactorPairsHtml(C, targetB) {
+    const absC = Math.abs(C);
+    let rows = [];
+    for (let d = 1; d * d <= absC; d++) {
+      if (absC % d === 0) {
+        const e = absC / d;
+        const combos = C >= 0 ? [[d, e], [-d, -e]] : [[d, -e], [-d, e]];
+        combos.forEach(([x, y]) => {
+          const sum = x + y;
+          const hit = sum === targetB;
+          rows.push(`<span style="${hit ? 'font-weight:800; color:var(--success);' : ''}">${x} × ${y} = ${C} → ผลบวก = ${sum}${hit ? ' ✓' : ''}</span>`);
+        });
+      }
+    }
+    return rows.join('<br>');
+  }
+
+  // Called after the shared canvas has already been cleared (by the tab click-handler,
+  // or explicitly here) — spawns scattered tiles for the first two examples, leaves
+  // the board empty for the rest.
+  function renderConceptExample() {
+    const { p, q, scattered } = conceptCurrent();
+    const b = p + q, c = p * q;
+    document.getElementById('concept-target').textContent = formatProductEq(1, b, c);
+    document.getElementById('concept-step-label').textContent = `ตัวอย่างที่ ${conceptExampleIdx + 1} / ${CONCEPT_EXAMPLES.length}`;
+    document.getElementById('concept-build-feedback').textContent = '';
+
+    clearCanvas();
+    if (scattered) {
+      spawnScatteredRectangleTiles(p, q);
+      document.getElementById('concept-mode-hint').textContent = '🧩 แผ่นถูกสร้างให้แล้ว (วางตำแหน่งไม่เป็นระเบียบ) — ลองลากมาจัดเรียงให้เป็นรูปสี่เหลี่ยมผืนผ้า!';
+    } else {
+      document.getElementById('concept-mode-hint').textContent = '✏️ ไม่มีแผ่นให้ — ลากแผ่นจากกล่องเครื่องมือด้านซ้ายมาวางแล้วจัดเป็นรูปสี่เหลี่ยมผืนผ้าด้วยตัวเอง!';
+    }
+
+    const pStr = `x ${p >= 0 ? '+' : '-'} ${Math.abs(p)}`;
+    const qStr = `x ${q >= 0 ? '+' : '-'} ${Math.abs(q)}`;
+    const pairsHtml = byHandFactorPairsHtml(c, b);
+    const lo = Math.min(p, q), hi = Math.max(p, q);
+    document.getElementById('concept-byhand-box').innerHTML = `<b>วิธีคิดด้วยมือ:</b><br>
+      1) แตกค่าคงที่ ${c} เป็นคู่ตัวประกอบ:<br>${pairsHtml}<br>
+      2) เลือกคู่ที่บวกกันได้ ${b} → <b>${lo} กับ ${hi}</b><br>
+      3) ด้านทั้งสองของสี่เหลี่ยมคือ (${pStr}) และ (${qStr})<br>
+      4) ตอบ: <b>${formatProductEq(1, b, c)} = (${pStr})(${qStr})</b>`;
+  }
+
+  // ตรวจว่าจำนวนแผ่นสุทธิ (บวก-ลบ) ที่วางบนกระดานตรงกับโจทย์ปัจจุบันหรือไม่
+  function checkConceptBuild() {
+    const { p, q } = conceptCurrent();
+    const b = p + q, c = p * q;
+    const counts = getRecapCounts();
+    const netX2 = counts.px2 - counts.nx2;
+    const netX = (counts.px + counts.pxh) - (counts.nx + counts.nxh);
+    const netC = counts.p1 - counts.n1;
+    const fb = document.getElementById('concept-build-feedback');
+    if (netX2 === 1 && netX === b && netC === c) {
+      fb.textContent = `🎉 ถูกต้อง เก่งมาก! นี่คือรูปสี่เหลี่ยมของ ${formatProductEq(1, b, c)}`;
+      fb.style.color = "var(--success)";
+    } else {
+      fb.textContent = "❌ ยังไม่ตรงกับโจทย์ ลองนับแผ่นบนกระดานอีกครั้ง (ดูตัวเลขที่แถบด้านล่างกระดาน)";
+      fb.style.color = "var(--danger)";
+    }
+  }
+
+
+  // === TAB: DIVISOR PRACTICE (คูณได้ C · บวกได้ B) — adapted from week5's pairsum, extended with negatives ===
+  const DV_BASE_STAGES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+  const DV_MAX_EXTRA = 2; // เพิ่มได้ไม่เกิน 20% ของ 10 ข้อ
+  let dvPlan = [];
+  let dvGoal = 10;
+  let dvCorrect = 0;
+  let dvWrongStreak = 0;
+  let dvExtras = 0;
+  let dvTarget = null; // {p, q, b, c}
+
+  function currentDvStage() {
+    return dvPlan[Math.min(dvCorrect, dvPlan.length - 1)];
+  }
+
+  function initDivisorTab() {
+    dvCorrect = 0;
+    dvPlan = DV_BASE_STAGES.slice();
+    dvGoal = dvPlan.length;
+    dvWrongStreak = 0;
+    dvExtras = 0;
+    updateDvProgress();
+    newDivisorQuestion();
+  }
+
+  function updateDvProgress() {
+    document.getElementById('dv-progress-text').textContent = `ความก้าวหน้า: ${dvCorrect} / ${dvGoal} ข้อ`;
+    const pct = Math.min(100, (dvCorrect / dvGoal) * 100);
+    document.getElementById('dv-progress-fill').style.width = pct + '%';
+  }
+
+  // สเตจ 0-4: ค่าบวกล้วน (เหมือนสัปดาห์ 5) · สเตจ 5-9: มีค่าลบ (ใหม่ ขนาดเล็กกว่าช่วงบวกล้วน)
+  function generateDivisorProblem(stage) {
+    let p, q;
+    if (stage <= 0)       { p = rand(1, 3); q = rand(1, 3); }
+    else if (stage === 1) { p = rand(1, 4); q = rand(2, 4); }
+    else if (stage === 2) { p = rand(2, 5); q = rand(2, 5); }
+    else if (stage === 3) { p = rand(2, 6); q = rand(3, 6); }
+    else if (stage === 4) { p = rand(3, 7); q = rand(3, 7); }
+    else if (stage === 5) { p = rand(1, 4); q = -rand(1, 4); }
+    else if (stage === 6) { p = rand(2, 5); q = -rand(1, 5); }
+    else if (stage === 7) { p = rand(2, 6); q = -rand(1, 6); }
+    else if (stage === 8) { p = rand(3, 7); q = -rand(1, 7); }
+    else                   { p = rand(3, 9); q = -rand(1, 9); }
+    return { p: p, q: q, b: p + q, c: p * q };
+  }
+
+  function newDivisorQuestion() {
+    dvTarget = generateDivisorProblem(currentDvStage());
+    dvWrongStreak = 0;
+    renderDivisorQuestion();
+  }
+
+  // Display-only refresh — does NOT call generateDivisorProblem, so it can also be used
+  // to redraw a restored dvTarget (from localStorage) without rerolling the question.
+  function renderDivisorQuestion() {
+    document.getElementById('dv-c').textContent = dvTarget.c;
+    document.getElementById('dv-b').textContent = dvTarget.b;
+    const inA = document.getElementById('dv-in-a');
+    const inB = document.getElementById('dv-in-b');
+    inA.value = ''; inB.value = '';
+    inA.classList.remove('correct', 'incorrect');
+    inB.classList.remove('correct', 'incorrect');
+    document.getElementById('dv-feedback').textContent = '';
+    const hint = document.getElementById('dv-hint-box');
+    hint.style.display = 'none';
+    hint.innerHTML = '';
+  }
+
+  // แสดงคู่ตัวประกอบของค่าท้าย (รองรับ C ติดลบ)
+  function showDivisorFactorPairs() {
+    if (!dvTarget) return;
+    const C = dvTarget.c;
+    const absC = Math.abs(C);
+    let rows = [];
+    for (let d = 1; d * d <= absC; d++) {
+      if (absC % d === 0) {
+        const e = absC / d;
+        if (C >= 0) {
+          rows.push(`${d} × ${e} = ${C} → ผลบวก = ${d + e}`);
+          if (d !== e) rows.push(`-${d} × -${e} = ${C} → ผลบวก = ${-(d + e)}`);
+        } else {
+          rows.push(`${d} × -${e} = ${C} → ผลบวก = ${d - e}`);
+          rows.push(`-${d} × ${e} = ${C} → ผลบวก = ${e - d}`);
+        }
+      }
+    }
+    const box = document.getElementById('dv-hint-box');
+    box.innerHTML = `<b>คู่ตัวประกอบของ ${C}:</b><br>${rows.join('<br>')}<br>เลือกคู่ที่ผลบวก = <b>${dvTarget.b}</b>`;
+    box.style.display = 'block';
+  }
+
+  function checkDivisorPair() {
+    if (!dvTarget) return;
+    if (dvCorrect >= dvGoal) return; // ชุดนี้สำเร็จแล้ว กด "เริ่มโจทย์ชุดใหม่" เพื่อฝึกต่อ
+    const inA = document.getElementById('dv-in-a');
+    const inB = document.getElementById('dv-in-b');
+    const fb = document.getElementById('dv-feedback');
+    const a = parseInt(inA.value, 10);
+    const b = parseInt(inB.value, 10);
+
+    if (isNaN(a) || isNaN(b)) {
+      fb.textContent = "✏️ กรอกจำนวนทั้งสองช่องก่อนนะ";
+      fb.style.color = "var(--accent)";
+      return;
+    }
+
+    const ok = (a * b === dvTarget.c) && (a + b === dvTarget.b);
+    inA.classList.toggle('correct', ok); inA.classList.toggle('incorrect', !ok);
+    inB.classList.toggle('correct', ok); inB.classList.toggle('incorrect', !ok);
+
+    if (ok) {
+      dvWrongStreak = 0;
+      dvCorrect++;
+      updateDvProgress();
+      if (dvCorrect >= dvGoal) {
+        fb.innerHTML = "🏆 <b>ยอดเยี่ยมมาก!</b> หาคู่จำนวนครบแล้ว พร้อมลุยการแยกตัวประกอบ!";
+        fb.style.color = "var(--success)";
+      } else {
+        fb.textContent = `🎉 ถูกต้อง! ${a} × ${b} = ${dvTarget.c} และ ${a} + ${b} = ${dvTarget.b}`;
+        fb.style.color = "var(--success)";
+        setTimeout(newDivisorQuestion, 1500);
+      }
+    } else {
+      dvWrongStreak++;
+      let extraMsg = "";
+      if (dvWrongStreak >= 3 && dvExtras < DV_MAX_EXTRA) {
+        dvPlan.splice(dvCorrect + 1, 0, currentDvStage());
+        dvExtras++;
+        dvGoal = dvPlan.length;
+        dvWrongStreak = 0;
+        updateDvProgress();
+        extraMsg = " · ผิดติดกัน 3 ครั้ง เพิ่มโจทย์ความยากเดิมให้ฝึกอีก 1 ข้อ";
+      }
+      let why = "";
+      if (a * b === dvTarget.c) why = " (คูณได้ถูกแล้ว แต่ผลบวกยังไม่ใช่)";
+      else if (a + b === dvTarget.b) why = " (บวกได้ถูกแล้ว แต่ผลคูณยังไม่ใช่)";
+      fb.textContent = "❌ ยังไม่ถูก" + why + " ลองกด 'ดูตัวประกอบของค่าท้าย' ช่วยคิด" + extraMsg;
+      fb.style.color = "var(--danger)";
+    }
+  }
+
+  ['dv-in-a', 'dv-in-b'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') checkDivisorPair();
+    });
+  });
+
+
+  // === TAB 5: PRACTICE LOGIC ===
+  const PRAC_START = 10; // จำนวนโจทย์เริ่มต้น
+  const PRAC_MAX = 12;   // เพิ่มได้ไม่เกิน 20% ของโจทย์เริ่มต้น (10 + 2)
+  let practiceData = [];
+  let pracIdx = 0;
+  let pracAnswered = []; // null | true | false
+  let pracWrongStreak = 0; // จำนวนครั้งที่ตอบผิดติดกันในข้อปัจจุบัน
+  let pracStreakIdx = -1;  // ข้อที่กำลังนับสตรีคผิด
+
+  // คืนสตริงมาตรฐาน "(x±p)(x±q)" เรียงจากค่าน้อยไปมาก (ใช้ทั้งแสดงเฉลยและตรวจคำตอบ)
+  function factorFormStr(p, q) {
+    const lo = Math.min(p, q), hi = Math.max(p, q);
+    const t = (v) => `(x ${v >= 0 ? '+' : '-'} ${Math.abs(v)})`;
+    return t(lo) + t(hi);
+  }
+
+  // mixedSign=false: p,q บวกล้วน (1-4) · mixedSign=true: หนึ่งในสองเป็นลบเสมอ (ขนาดถึง 9)
+  function makePracticeQuestion(type, mixedSign) {
+    let p, q;
+    if (mixedSign) {
+      const pattern = rand(1, 3); // 1: p บวก q ลบ · 2: p ลบ q บวก · 3: ทั้งคู่ลบ
+      if (pattern === 1)      { p = rand(1, 9); q = -rand(1, 9); }
+      else if (pattern === 2) { p = -rand(1, 9); q = rand(1, 9); }
+      else                     { p = -rand(1, 9); q = -rand(1, 9); }
+    } else {
+      p = rand(1, 4);
+      q = rand(1, 4);
+    }
+    const b = p + q;
+    const c = p * q;
+    if (type === 'multiplication') {
+      return {
+        type: 'multiplication',
+        text: factorFormStr(p, q),
+        ans: { x2: 1, x: b, c: c },
+        aStr: formatProductEq(1, b, c),
+        p: p,
+        q: q
+      };
+    }
+    return {
+      type: 'factoring',
+      text: formatProductEq(1, b, c),
+      ans: [Math.min(p, q), Math.max(p, q)],
+      aStr: factorFormStr(p, q),
+      p: p,
+      q: q
+    };
+  }
+
+  function generatePracticeQuestions() {
+    practiceData = [];
+    for(let i=0; i<PRAC_START; i++) {
+      const mixedSign = i >= 6; // ข้อ 1-6 บวกล้วน · ข้อ 7-10 มีค่าลบ
+      practiceData.push(makePracticeQuestion('factoring', mixedSign));
+    }
+    pracAnswered = new Array(PRAC_START).fill(null);
+  }
+
+  function updatePracScore() {
+    const correct = pracAnswered.filter(s => s === true).length;
+    document.getElementById('prac-score').innerText = `คะแนน: ${correct} / ${practiceData.length}`;
+    document.getElementById('prac-total').innerText = practiceData.length;
+  }
+
+  function loadPracQuestion() {
+    document.getElementById('prac-current').innerText = pracIdx + 1;
+    const qData = practiceData[pracIdx];
+    
+    document.getElementById('prac-question').innerText = qData.text;
+    const input = document.getElementById('prac-input');
+    input.value = "";
+    input.classList.remove('correct', 'incorrect');
+    document.getElementById('prac-sol-box').style.display = 'none';
+    document.getElementById('prac-feedback').textContent = "";
+
+    if (qData.type === 'multiplication') {
+      document.getElementById('prac-type-title').innerText = "จงหาผลคูณของพหุนามต่อไปนี้";
+      input.placeholder = "เช่น x^2 + 5x + 6";
+    } else {
+      document.getElementById('prac-type-title').innerText = "จงแยกตัวประกอบของพหุนามกำลังสอง";
+      input.placeholder = "เช่น (x+2)(x+3)";
+    }
+
+    // Draw the bracket guide only for multiplication questions —
+    // for factoring questions the bracket labels would reveal the answer!
+    clearCanvas();
+    if (qData.type === 'multiplication') {
+      drawAreaModelGrid(1, qData.p, 1, qData.q, false);
+    }
+    updateRecapEquation();
+  }
+
+  function parseFactoredForm(raw) {
+    if (!raw) return null;
+    let s = String(raw).toLowerCase().replace(/\s+/g, '').replace(/\*/g, '').replace(/−/g, '-');
+
+    const match = s.match(/^\(x([+-]\d+)\)\(x([+-]\d+)\)$/);
+    if (match) {
+      const p = parseInt(match[1]);
+      const q = parseInt(match[2]);
+      return [Math.min(p, q), Math.max(p, q)];
+    }
+    return null;
+  }
+
+  function parsePoly(raw) {
+    if (!raw) return null;
+    let s = String(raw).toLowerCase()
+      .replace(/\s+/g, '')
+      .replace(/−/g, '-')
+      .replace(/\*/g, '')
+      .replace(/x\^2/g, 'x²')
+      .replace(/x2/g, 'x²');
+      
+    if (s === '') return null;
+    if (s[0] !== '+' && s[0] !== '-') s = '+' + s;
+    
+    let x2 = 0, x1 = 0, c = 0, pos = 0, m;
+    const re = /([+-])(\d*\.?\d*)(x²|x)?/g;
+    while ((m = re.exec(s)) !== null) {
+      if (m.index !== pos) return null;
+      pos = re.lastIndex;
+      if (m[2] === '' && !m[3]) return null;
+      
+      const num = m[2] === '' ? 1 : parseFloat(m[2]);
+      if (isNaN(num)) return null;
+      
+      const sign = m[1] === '-' ? -1 : 1;
+      if (m[3] === 'x²') x2 += sign * num;
+      else if (m[3] === 'x') x1 += sign * num;
+      else c += sign * num;
+    }
+    if (pos !== s.length) return null;
+    return { x2: x2, x: x1, c: c };
+  }
+
+  document.getElementById('btn-prac-check').addEventListener('click', () => {
+    const input = document.getElementById('prac-input');
+    const qData = practiceData[pracIdx];
+    const fb = document.getElementById('prac-feedback');
+
+    if (input.value.trim() === '') {
+      fb.textContent = "✏️ พิมพ์คำตอบก่อนกดตรวจนะ";
+      fb.style.color = "var(--accent)";
+      return;
+    }
+
+    const guess = qData.type === 'multiplication' ? parsePoly(input.value) : parseFactoredForm(input.value);
+    if (!guess) {
+      fb.textContent = qData.type === 'multiplication'
+        ? "⚠️ รูปแบบคำตอบยังไม่ถูกต้อง ลองพิมพ์แบบ x^2 + 5x + 6"
+        : "⚠️ รูปแบบคำตอบยังไม่ถูกต้อง ลองพิมพ์แบบ (x+2)(x+3)";
+      fb.style.color = "var(--accent)";
+      return;
+    }
+
+    let textOk;
+    if (qData.type === 'multiplication') {
+      textOk = guess.x2 === qData.ans.x2 && guess.x === qData.ans.x && guess.c === qData.ans.c;
+    } else {
+      textOk = guess[0] === qData.ans[0] && guess[1] === qData.ans[1];
+    }
+
+    // Also require the tiles actually built on the shared board to match the
+    // question's rectangle (net x², x, 1 counts) — typing the right answer alone
+    // isn't enough, the student must construct it with tiles too.
+    const targetB = qData.p + qData.q;
+    const targetC = qData.p * qData.q;
+    const counts = getRecapCounts();
+    const netX2 = counts.px2 - counts.nx2;
+    const netX = (counts.px + counts.pxh) - (counts.nx + counts.nxh);
+    const netC = counts.p1 - counts.n1;
+    const tilesOk = netX2 === 1 && netX === targetB && netC === targetC;
+
+    const ok = textOk && tilesOk;
+
+    input.classList.toggle('correct', ok);
+    input.classList.toggle('incorrect', !ok);
+    pracAnswered[pracIdx] = ok;
+
+    if (ok) {
+      pracWrongStreak = 0;
+      pracStreakIdx = -1;
+      fb.textContent = "🎉 ถูกต้อง เก่งมาก! กด 'ถัดไป ▶' เพื่อทำข้อต่อไป";
+      fb.style.color = "var(--success)";
+    } else {
+      if (pracStreakIdx === pracIdx) pracWrongStreak++;
+      else { pracStreakIdx = pracIdx; pracWrongStreak = 1; }
+
+      let msg;
+      if (textOk && !tilesOk) {
+        msg = "📝 คำตอบที่พิมพ์ถูกต้องแล้ว! แต่ยังต้องสร้างแผ่นพีชคณิตบนกระดานให้ตรงกับโจทย์ด้วยนะ (ดูตัวเลขที่แถบใต้กระดาน)";
+      } else {
+        msg = "❌ ยังไม่ถูก ลองวางแผ่นบนกระดานช่วยคิด หรือกด 'ดูเฉลย'";
+      }
+      // Adaptive: ผิดข้อเดิมติดกัน 3 ครั้ง → เพิ่มโจทย์แบบเดียวกัน 1 ข้อ (รวมไม่เกิน 20% ของชุด)
+      if (pracWrongStreak >= 3 && practiceData.length < PRAC_MAX) {
+        const isMixed = qData.p < 0 || qData.q < 0;
+        practiceData.push(makePracticeQuestion(qData.type, isMixed));
+        pracAnswered.push(null);
+        pracWrongStreak = 0;
+        msg += ` · ผิดติดกัน 3 ครั้ง เพิ่มโจทย์แบบเดียวกันให้ฝึกอีก 1 ข้อ (รวม ${practiceData.length} ข้อ)`;
+      }
+      fb.textContent = msg;
+      fb.style.color = "var(--danger)";
+    }
+    updatePracScore();
+  });
+
+  document.getElementById('btn-prac-sol').addEventListener('click', () => {
+    const box = document.getElementById('prac-sol-box');
+    box.style.display = 'block';
+    box.innerText = `เฉลยคือ: ${practiceData[pracIdx].aStr}`;
+    // Show correct tiles answer visually
+    drawAreaModelGrid(1, practiceData[pracIdx].p, 1, practiceData[pracIdx].q, true);
+  });
+
+  document.getElementById('btn-prac-next').addEventListener('click', () => {
+    if (pracIdx < practiceData.length - 1) { pracIdx++; loadPracQuestion(); }
+  });
+  document.getElementById('btn-prac-prev').addEventListener('click', () => {
+    if (pracIdx > 0) { pracIdx--; loadPracQuestion(); }
+  });
+
+  // Enter key submits the answer
+  document.getElementById('prac-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('btn-prac-check').click();
+  });
+
+
+  // === TAB 6: PRINTABLE WORKSHEET (ASSIGNMENT) ===
+  let assignAnswers = [];
+
+  // Drawable tile area per worksheet question (same tiles as the main toolbox, positive only)
+  const WS_TILE_KINDS = {
+    x2:  { cls: 'ws-tile-x2 t-p-x2', label: 'x²' },
+    xv:  { cls: 'ws-tile-xv t-p-x',  label: 'x' },
+    xh:  { cls: 'ws-tile-xh t-p-x',  label: 'x' },
+    '1': { cls: 'ws-tile-1 t-p-1',   label: '1' },
+    nxv: { cls: 'ws-tile-xv t-n-x',  label: '-x' },
+    nxh: { cls: 'ws-tile-xh t-n-x',  label: '-x' },
+    n1:  { cls: 'ws-tile-1 t-n-1',   label: '-1' }
+  };
+
+  function wsPlotHtml(i) {
+    return `
+            <div class="ws-tools no-print">
+              <span>เพิ่มแผ่น:</span>
+              <button type="button" class="ws-tool-btn ws-tb-x2" onclick="addWsTile(${i}, 'x2')">x²</button>
+              <button type="button" class="ws-tool-btn ws-tb-x" onclick="addWsTile(${i}, 'xv')">x ตั้ง</button>
+              <button type="button" class="ws-tool-btn ws-tb-x" onclick="addWsTile(${i}, 'xh')">x นอน</button>
+              <button type="button" class="ws-tool-btn ws-tb-1" onclick="addWsTile(${i}, '1')">1</button>
+              <button type="button" class="ws-tool-btn ws-tb-n" onclick="addWsTile(${i}, 'nxv')">-x ตั้ง</button>
+              <button type="button" class="ws-tool-btn ws-tb-n" onclick="addWsTile(${i}, 'nxh')">-x นอน</button>
+              <button type="button" class="ws-tool-btn ws-tb-n" onclick="addWsTile(${i}, 'n1')">-1</button>
+              <button type="button" class="ws-tool-btn ws-tb-clear" onclick="clearWsTiles(${i})">🗑️ ล้าง</button>
+              <span>· ลากเพื่อจัดเรียง · ดับเบิลคลิกเพื่อลบ</span>
+            </div>
+            <div class="ws-plot-area" id="ws-plot-${i}"><span class="ws-plot-hint">พื้นที่วาดแผ่นพีชคณิต (Draw tiles here)</span></div>`;
+  }
+
+  function addWsTile(qNum, kind) {
+    const area = document.getElementById('ws-plot-' + qNum);
+    const spec = WS_TILE_KINDS[kind];
+    if (!area || !spec) return;
+
+    const tile = document.createElement('div');
+    tile.className = 'tile ' + spec.cls;
+    tile.textContent = spec.label;
+    tile.dataset.kind = kind;
+    // Cascade spawn positions so new tiles don't stack exactly on top of each other
+    const n = area.querySelectorAll('.tile').length;
+    tile.style.left = (8 + (n % 8) * 14) + 'px';
+    tile.style.top = (8 + (n % 5) * 12) + 'px';
+    area.appendChild(tile);
+    area.classList.add('has-tiles');
+
+    let startX, startY, initL, initT;
+    tile.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      area.appendChild(tile); // bring to front
+      startX = e.clientX;
+      startY = e.clientY;
+      initL = parseFloat(tile.style.left);
+      initT = parseFloat(tile.style.top);
+      tile.setPointerCapture(e.pointerId);
+    });
+    tile.addEventListener('pointermove', (e) => {
+      if (!tile.hasPointerCapture(e.pointerId)) return;
+      let L = initL + e.clientX - startX;
+      let T = initT + e.clientY - startY;
+      L = Math.max(0, Math.min(L, area.clientWidth - tile.offsetWidth));
+      T = Math.max(0, Math.min(T, area.clientHeight - tile.offsetHeight));
+      tile.style.left = L + 'px';
+      tile.style.top = T + 'px';
+    });
+    tile.addEventListener('dblclick', () => {
+      tile.remove();
+      if (!area.querySelector('.tile')) area.classList.remove('has-tiles');
+    });
+  }
+
+  function clearWsTiles(qNum) {
+    const area = document.getElementById('ws-plot-' + qNum);
+    if (!area) return;
+    area.querySelectorAll('.tile').forEach(t => t.remove());
+    area.classList.remove('has-tiles');
+  }
+
+  // Net x², x, 1 tile counts drawn in a worksheet question's tile area (x always
+  // positive-only here since a=1 for every worksheet polynomial).
+  function getWsTileNet(qNum) {
+    const area = document.getElementById('ws-plot-' + qNum);
+    const counts = { x2: 0, xv: 0, xh: 0, '1': 0, nxv: 0, nxh: 0, n1: 0 };
+    if (area) {
+      area.querySelectorAll('.tile').forEach(t => {
+        const k = t.dataset.kind;
+        if (k in counts) counts[k]++;
+      });
+    }
+    return {
+      x2: counts.x2,
+      x: (counts.xv + counts.xh) - (counts.nxv + counts.nxh),
+      c: counts['1'] - counts.n1
+    };
+  }
+
+  function wsDivisorItem(i, b, c) {
+    return `
+      <div class="ws-item">
+        <div class="ws-q-title">ข้อ ${i}. หาสองจำนวนที่ คูณกันได้ ${c} และ บวกกันได้ ${b}</div>
+        <div class="ws-q-expr">คูณกันได้ ${c}  ·  บวกกันได้ ${b}</div>
+        <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-top:8px;">
+          <b>ตอบ:</b>
+          <input type="number" class="as-input" id="as-ans-${i}-a" style="width:120px;" placeholder="จำนวนที่ 1">
+          <span style="font-weight:800;">และ</span>
+          <input type="number" class="as-input" id="as-ans-${i}-b" style="width:120px;" placeholder="จำนวนที่ 2">
+        </div>
+      </div>`;
+  }
+
+  function wsFactorItem(i, p, q) {
+    const b = p + q, c = p * q;
+    return `
+      <div class="ws-item">
+        <div class="ws-q-title">ข้อ ${i}. จงแยกตัวประกอบของพหุนามต่อไปนี้ (หารูปสี่เหลี่ยมด้านกว้างและยาว)</div>
+        <div class="ws-q-expr">${formatProductEq(1, b, c)}</div>
+        ${wsPlotHtml(i)}
+        <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
+          <b>ตอบ:</b>
+          <input type="text" class="as-input" id="as-ans-${i}" placeholder="พิมพ์คำตอบ เช่น (x+${p})(x+${q})">
+          <button type="button" class="btn-x2-helper no-print" style="padding: 4px 8px; font-size:12px; margin-left:4px;" onclick="insertX2('as-ans-${i}')">x²</button>
+        </div>
+      </div>`;
+  }
+
+  function buildAssignment() {
+    assignAnswers = [];
+    let html = `<div style="font-weight:800; font-size:14.5px; margin:4px 0 14px; color:var(--success);">ส่วนที่ 1: หาคู่จำนวน (ข้อ 1-4) · ส่วนที่ 2: แยกตัวประกอบ (ข้อ 5-8)</div>`;
+
+    for (let i = 1; i <= 8; i++) {
+      if (i <= 2) {
+        // ข้อ 1-2: หาคู่จำนวน บวกล้วน
+        const p = rand(1, 6), q = rand(1, 6);
+        assignAnswers[i] = { type: 'divisor', ans: [Math.min(p, q), Math.max(p, q)] };
+        html += wsDivisorItem(i, p + q, p * q);
+      } else if (i <= 4) {
+        // ข้อ 3-4: หาคู่จำนวน มีค่าลบ
+        const p = rand(1, 6), q = -rand(1, 6);
+        assignAnswers[i] = { type: 'divisor', ans: [Math.min(p, q), Math.max(p, q)] };
+        html += wsDivisorItem(i, p + q, p * q);
+      } else if (i <= 6) {
+        // ข้อ 5-6: แยกตัวประกอบ บวกล้วน
+        const p = rand(1, 4), q = rand(1, 4);
+        assignAnswers[i] = { type: 'factor', ans: [Math.min(p, q), Math.max(p, q)] };
+        html += wsFactorItem(i, p, q);
+      } else {
+        // ข้อ 7-8: แยกตัวประกอบ มีค่าลบ
+        const p = rand(1, 6), q = -rand(1, 6);
+        assignAnswers[i] = { type: 'factor', ans: [Math.min(p, q), Math.max(p, q)] };
+        html += wsFactorItem(i, p, q);
+      }
+    }
+
+    document.getElementById('assign-content').innerHTML = html;
+  }
+
+  function gradeAssignment() {
+    let correct = 0, total = 0;
+    assignAnswers.forEach((data, i) => {
+      if (!data) return;
+      let ok = false;
+
+      if (data.type === 'divisor') {
+        const elA = document.getElementById('as-ans-' + i + '-a');
+        const elB = document.getElementById('as-ans-' + i + '-b');
+        if (!elA || !elB) return;
+        total++;
+        const a = parseInt(elA.value, 10), b = parseInt(elB.value, 10);
+        ok = !isNaN(a) && !isNaN(b) && Math.min(a, b) === data.ans[0] && Math.max(a, b) === data.ans[1];
+        const filled = elA.value.trim() !== '' || elB.value.trim() !== '';
+        [elA, elB].forEach(el => {
+          el.classList.toggle('correct', ok);
+          el.classList.toggle('incorrect', !ok && filled);
+        });
+      } else {
+        const el = document.getElementById('as-ans-' + i);
+        if (!el) return;
+        total++;
+        const g = parseFactoredForm(el.value);
+        const textOk = !!g && g[0] === data.ans[0] && g[1] === data.ans[1];
+
+        // Also require the tiles drawn in this question's tile area to match
+        // the target rectangle — a typed answer alone isn't enough.
+        const targetB = data.ans[0] + data.ans[1];
+        const targetC = data.ans[0] * data.ans[1];
+        const net = getWsTileNet(i);
+        const tilesOk = net.x2 === 1 && net.x === targetB && net.c === targetC;
+
+        ok = textOk && tilesOk;
+        el.classList.toggle('correct', ok);
+        el.classList.toggle('incorrect', !ok && el.value.trim() !== '');
+
+        const plotArea = document.getElementById('ws-plot-' + i);
+        if (plotArea) {
+          plotArea.classList.toggle('tiles-correct', ok);
+          plotArea.classList.toggle('tiles-incorrect', !ok && textOk);
+        }
+      }
+
+      if (ok) correct++;
+    });
+
+    document.getElementById('as-score').textContent = `ตรวจแล้วได้: ${correct} / ${total} ข้อ`;
+  }
+
+  // === PERSISTENCE (localStorage) ===
+  // Survives tab switches (saved before every switch) and accidental close
+  // (saved on beforeunload). Deliberately does NOT persist hand-placed tile
+  // positions on the shared canvas — those are ephemeral and regenerate fine
+  // from the saved question state.
+  const W6_STORAGE_KEY = 'week6_factoring_state';
+
+  function collectWeek6State() {
+    const infos = document.querySelectorAll('.info-input');
+    return {
+      student: {
+        name: infos[0] ? infos[0].value : '',
+        klass: infos[1] ? infos[1].value : '',
+        number: infos[2] ? infos[2].value : ''
+      },
+      divisor: { dvPlan, dvGoal, dvCorrect, dvExtras, dvTarget },
+      factor: { factorPlan, factorGoal, factorCorrect, factorExtras, factorNoticeShown, targetP, targetQ, factorState, factorMode },
+      practice: { practiceData, pracAnswered, pracIdx },
+      assign: {
+        assignAnswers,
+        inputs: assignAnswers.map((data, i) => {
+          if (!data) return null;
+          if (data.type === 'divisor') {
+            const elA = document.getElementById('as-ans-' + i + '-a');
+            const elB = document.getElementById('as-ans-' + i + '-b');
+            return { a: elA ? elA.value : '', b: elB ? elB.value : '' };
+          }
+          const el = document.getElementById('as-ans-' + i);
+          return { v: el ? el.value : '' };
+        })
+      }
+    };
+  }
+
+  function saveWeek6State() {
+    try {
+      localStorage.setItem(W6_STORAGE_KEY, JSON.stringify(collectWeek6State()));
+    } catch (e) {
+      // localStorage unavailable (private browsing, quota) — fail silently, no persistence this session
+    }
+  }
+
+  function buildAssignmentFromRestored(saved) {
+    assignAnswers = saved.assignAnswers;
+    let html = `<div style="font-weight:800; font-size:14.5px; margin:4px 0 14px; color:var(--success);">ส่วนที่ 1: หาคู่จำนวน (ข้อ 1-4) · ส่วนที่ 2: แยกตัวประกอบ (ข้อ 5-8)</div>`;
+    for (let i = 1; i <= 8; i++) {
+      const data = assignAnswers[i];
+      if (!data) continue;
+      const lo = data.ans[0], hi = data.ans[1];
+      html += data.type === 'divisor' ? wsDivisorItem(i, lo + hi, lo * hi) : wsFactorItem(i, lo, hi);
+    }
+    document.getElementById('assign-content').innerHTML = html;
+
+    (saved.inputs || []).forEach((val, i) => {
+      if (!val) return;
+      const data = assignAnswers[i];
+      if (!data) return;
+      if (data.type === 'divisor') {
+        const elA = document.getElementById('as-ans-' + i + '-a');
+        const elB = document.getElementById('as-ans-' + i + '-b');
+        if (elA) elA.value = val.a || '';
+        if (elB) elB.value = val.b || '';
+      } else {
+        const el = document.getElementById('as-ans-' + i);
+        if (el) el.value = val.v || '';
+      }
+    });
+  }
+
+  // Returns true if a saved state was found and hydrated. Also pre-populates
+  // initedTabs for any tab whose progress was restored, so the click-handler's
+  // "already inited" branch (not the fresh-reset branch) fires on first visit.
+  function restoreWeek6State() {
+    let raw;
+    try { raw = localStorage.getItem(W6_STORAGE_KEY); } catch (e) { return false; }
+    if (!raw) return false;
+    let s;
+    try { s = JSON.parse(raw); } catch (e) { return false; }
+
+    const infos = document.querySelectorAll('.info-input');
+    if (infos[0]) infos[0].value = (s.student && s.student.name) || '';
+    if (infos[1]) infos[1].value = (s.student && s.student.klass) || '';
+    if (infos[2]) infos[2].value = (s.student && s.student.number) || '';
+
+    if (s.divisor && s.divisor.dvTarget) {
+      dvPlan = s.divisor.dvPlan; dvGoal = s.divisor.dvGoal; dvCorrect = s.divisor.dvCorrect;
+      dvExtras = s.divisor.dvExtras; dvTarget = s.divisor.dvTarget;
+      initedTabs.add('divisor');
+      updateDvProgress();
+      renderDivisorQuestion();
+    }
+    if (s.factor && s.factor.factorState) {
+      factorPlan = s.factor.factorPlan; factorGoal = s.factor.factorGoal; factorCorrect = s.factor.factorCorrect;
+      factorExtras = s.factor.factorExtras; factorNoticeShown = s.factor.factorNoticeShown;
+      targetP = s.factor.targetP; targetQ = s.factor.targetQ;
+      factorState = s.factor.factorState; factorMode = s.factor.factorMode;
+      initedTabs.add('factor');
+      updateFactoringProgress();
+      applyFactorPhaseUI();
+      document.getElementById('lbl-factor-p').textContent = factorState.p;
+      document.getElementById('lbl-factor-q').textContent = factorState.q;
+      document.getElementById('lbl-factor-p').classList.toggle('negative', factorState.p < 0);
+      document.getElementById('lbl-factor-q').classList.toggle('negative', factorState.q < 0);
+      document.getElementById('factor-target').textContent = formatProductEq(1, targetP + targetQ, targetP * targetQ);
+      renderFactorReqLines(targetP + targetQ, targetP * targetQ);
+    }
+    if (s.practice && s.practice.practiceData && s.practice.practiceData.length) {
+      practiceData = s.practice.practiceData;
+      pracAnswered = s.practice.pracAnswered;
+      pracIdx = s.practice.pracIdx;
+    }
+    window.__w6RestoredAssign = s.assign || null;
+    return true;
+  }
+
+
+  // === ONLOAD INITIALIZATION ===
+  window.addEventListener('DOMContentLoaded', () => {
+    updateBoardVisibility(currentTab); // 'divisor' loads active by default — hide the tile board/toolbox to match
+
+    const restored = restoreWeek6State();
+
+    if (!restored || !practiceData || !practiceData.length) {
+      generatePracticeQuestions();
+    }
+    loadPracQuestion();
+    initedTabs.add('practice');
+
+    if (restored && window.__w6RestoredAssign) {
+      buildAssignmentFromRestored(window.__w6RestoredAssign);
+    } else {
+      buildAssignment();
+    }
+
+    // Default open the Divisor-practice tab. Skip re-init if restoreWeek6State()
+    // already hydrated and marked it inited above — that would wipe the restored question.
+    if (!initedTabs.has('divisor')) {
+      initDivisorTab();
+      initedTabs.add('divisor');
+    }
+
+    window.addEventListener('beforeunload', saveWeek6State);
+  });
+</script>
+</body>
+</html>
