@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Launch Lab — สัปดาห์ที่ 8 (คณิตศาสตร์ในวิถีการเคลื่อนที่)</title>
+<style>
+  :root {
+    --brand-h: 245;
+    --brand-c: 0.18;
+    --brand-l: 0.58;
+    --bg: oklch(0.98 0.01 var(--brand-h));
+    --surface: oklch(1 0 0);
+    --surface-sunken: oklch(0.96 0.02 var(--brand-h));
+    --ink: oklch(0.2 0.05 var(--brand-h));
+    --ink-muted: oklch(0.5 0.05 var(--brand-h));
+
+    --primary: oklch(var(--brand-l) var(--brand-c) var(--brand-h));
+    --primary-hover: oklch(0.48 0.18 var(--brand-h));
+    --primary-soft: oklch(0.92 0.05 var(--brand-h));
+
+    --accent: oklch(0.68 0.18 42);
+    --accent-soft: oklch(0.96 0.04 45);
+
+    --success: oklch(0.62 0.16 142);
+    --success-soft: oklch(0.95 0.04 142);
+    --danger: oklch(0.62 0.18 28);
+    --danger-soft: oklch(0.96 0.04 28);
+
+    --shadow-sm: 0 2px 8px oklch(0 0 0 / 0.04);
+    --shadow-md: 0 8px 24px oklch(0 0 0 / 0.08);
+    --shadow-lg: 0 24px 48px oklch(0 0 0 / 0.12);
+
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-sm: 8px;
+    --border: oklch(0.9 0.02 var(--brand-h));
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+
+  body {
+    font-family: 'Noto Sans Thai', 'Sarabun', system-ui, -apple-system, sans-serif;
+    background: var(--bg); color: var(--ink); line-height: 1.5;
+    display: flex; flex-direction: column;
+  }
+
+  header {
+    background: linear-gradient(135deg, var(--primary), oklch(0.5 0.22 290));
+    color: white; padding: 14px 24px; box-shadow: var(--shadow-md);
+    flex: 0 0 auto; z-index: 10;
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  }
+  header h1 { font-size: 21px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 2px; }
+  header p { font-size: 13px; opacity: 0.9; font-weight: 500; }
+  .hdr-right { display: flex; align-items: center; gap: 10px; }
+  .star-count { font-size: 15px; font-weight: 800; background: rgba(255,255,255,0.16);
+    border: 1px solid rgba(255,255,255,0.3); padding: 6px 14px; border-radius: 999px; white-space: nowrap; }
+
+  .btn-ghost-light {
+    background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+    color: white; padding: 8px 14px; border-radius: var(--radius-md);
+    font-weight: 700; font-size: 13px; cursor: pointer; transition: 0.2s;
+  }
+  .btn-ghost-light:hover { background: rgba(255,255,255,0.25); transform: translateY(-1px); }
+
+  .wrap {
+    max-width: 1400px; width: 100%; margin: 0 auto; padding: 14px 24px 20px;
+    flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column;
+  }
+
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; flex: 0 0 auto; }
+  .tab {
+    padding: 10px 18px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 999px; font-size: 14px; font-weight: 700; color: var(--ink-muted);
+    cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: var(--shadow-sm);
+  }
+  .tab:hover { border-color: var(--primary); color: var(--primary); transform: translateY(-1px); }
+  .tab.active { background: var(--primary); color: white; border-color: var(--primary);
+    box-shadow: 0 4px 12px oklch(var(--brand-l) var(--brand-c) var(--brand-h) / 0.3); }
+  .tab.tab-solve { border-color: var(--accent); color: var(--accent); }
+  .tab.tab-solve.active { background: var(--accent); color: white; border-color: var(--accent); }
+  .tab.tab-assign { border-color: var(--success); color: var(--success); }
+  .tab.tab-assign.active { background: var(--success); color: white; border-color: var(--success); }
+
+  .layout { display: flex; gap: 18px; align-items: stretch; flex: 1 1 auto; min-height: 0; }
+  .main-content {
+    flex: 1 1 auto; display: flex; flex-direction: column; gap: 12px; min-height: 0;
+    border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow-md);
+    border: 1px solid var(--border); overflow: hidden; padding: 14px;
+  }
+  .side {
+    flex: 0 0 34%; min-width: 320px; max-width: 440px; display: flex; flex-direction: column; gap: 14px;
+    overflow-y: auto; min-height: 0; padding-right: 4px;
+    scrollbar-width: thin; scrollbar-color: var(--primary-soft) transparent;
+  }
+
+  @media (max-width: 1000px) {
+    html, body { height: auto; overflow: auto; }
+    .layout { flex-direction: column; }
+    .side { flex: 1 1 auto; width: 100%; max-width: none; overflow: visible; }
+  }
+
+  .panel {
+    background: var(--surface); border-radius: var(--radius-lg); padding: 16px;
+    box-shadow: var(--shadow-sm); border: 1px solid var(--border);
+    animation: fadeIn 0.3s ease-out;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+  .hidden { display: none !important; }
+
+  .panel h3 { font-size: 15px; font-weight: 800; margin-bottom: 10px; display: flex; align-items: center; gap: 7px; }
+  .panel .hint { font-size: 12.5px; color: var(--ink-muted); }
+
+  /* Canvas */
+  .stage { position: relative; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+  canvas.world {
+    width: 100%; height: auto; display: block; border-radius: var(--radius-md);
+    border: 1px solid var(--border); background: #dbeafe; touch-action: none;
+  }
+  canvas.strip {
+    width: 100%; height: auto; display: block; border-radius: var(--radius-sm);
+    border: 1px solid var(--border); background: var(--surface-sunken);
+  }
+
+  /* Algebra-tile helper (Week 5 area model) */
+  .tile-wrap {
+    border: 1px solid var(--border); border-radius: var(--radius-md);
+    background: var(--surface-sunken); padding: 10px 12px 12px; flex: 0 0 auto;
+  }
+  .tile-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+  .tile-head b { font-size: 14px; }
+  .tile-head span {
+    font-family: 'Cambria Math', Georgia, serif; font-size: 15px; font-weight: 700;
+    color: var(--primary); margin-right: auto;
+  }
+  #cvTiles { width: 100%; height: auto; display: block; background: var(--surface);
+    border-radius: var(--radius-sm); border: 1px solid var(--border); }
+
+  /* Controls */
+  .ctl { margin-bottom: 12px; }
+  .ctl:last-child { margin-bottom: 0; }
+  .ctl label { display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 13px; font-weight: 700; margin-bottom: 5px; }
+  .ctl label .val { font-variant-numeric: tabular-nums; color: var(--primary); font-size: 14px; }
+  input[type=range] { width: 100%; accent-color: var(--primary); }
+  select, input[type=text], input[type=number] {
+    width: 100%; padding: 9px 11px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+    font-family: inherit; font-size: 14px; color: var(--ink); background: var(--surface);
+  }
+  select:focus, input:focus { outline: 2px solid var(--primary-soft); border-color: var(--primary); }
+
+  .btn {
+    padding: 11px 18px; border: none; border-radius: var(--radius-md); font-family: inherit;
+    font-weight: 800; font-size: 14px; cursor: pointer; transition: 0.18s; background: var(--primary); color: white;
+  }
+  .btn:hover:not(:disabled) { background: var(--primary-hover); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn-accent { background: var(--accent); }
+  .btn-accent:hover:not(:disabled) { background: oklch(0.6 0.18 42); }
+  .btn-success { background: var(--success); }
+  .btn-success:hover:not(:disabled) { background: oklch(0.55 0.16 142); }
+  .btn-soft { background: var(--surface-sunken); color: var(--ink); border: 1px solid var(--border); }
+  .btn-soft:hover:not(:disabled) { background: var(--primary-soft); }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn-row .btn { flex: 1 1 auto; }
+
+  /* Equation display */
+  .eq {
+    font-family: 'Cambria Math', Georgia, serif; font-size: 20px; font-weight: 600;
+    text-align: center; padding: 12px; background: var(--surface-sunken);
+    border-radius: var(--radius-md); border: 1px solid var(--border); letter-spacing: 0.3px;
+  }
+  .eq small { display: block; font-family: inherit; font-size: 12px; font-weight: 700;
+    color: var(--ink-muted); letter-spacing: 0; margin-top: 4px; }
+  .eq .hl-a { color: oklch(0.55 0.2 300); }
+  .eq .hl-b { color: oklch(0.55 0.18 30); }
+  .eq .hl-c { color: oklch(0.5 0.16 200); }
+
+  .readout { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 10px; }
+  .readout div {
+    background: var(--surface-sunken); border-radius: var(--radius-sm); padding: 8px 10px;
+    font-size: 12.5px; border: 1px solid var(--border);
+  }
+  .readout b { display: block; font-size: 16px; font-variant-numeric: tabular-nums; color: var(--ink); }
+  .readout span { color: var(--ink-muted); font-weight: 700; }
+
+  .toggle-row { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; font-weight: 700; }
+  .toggle-row label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+  .toggle-row input { accent-color: var(--primary); width: 16px; height: 16px; }
+
+  /* Missions */
+  .mission-list { display: flex; flex-direction: column; gap: 8px; }
+  .mission-btn {
+    display: flex; align-items: center; gap: 10px; text-align: left; width: 100%;
+    padding: 11px 13px; border-radius: var(--radius-md); border: 1px solid var(--border);
+    background: var(--surface); cursor: pointer; font-family: inherit; transition: 0.18s;
+  }
+  .mission-btn:hover { border-color: var(--accent); transform: translateX(2px); }
+  .mission-btn.active { border-color: var(--accent); background: var(--accent-soft); }
+  .mission-btn .mi { font-size: 20px; }
+  .mission-btn .mt { flex: 1 1 auto; font-size: 13px; font-weight: 800; }
+  .mission-btn .mw { display: block; font-size: 11.5px; font-weight: 700; color: var(--ink-muted); }
+  .mission-btn .ms { font-size: 13px; letter-spacing: -1px; }
+
+  .prompt {
+    background: var(--accent-soft); border: 1px solid oklch(0.85 0.08 45);
+    border-radius: var(--radius-md); padding: 13px; font-size: 14px; margin-bottom: 12px;
+  }
+  .prompt b { font-weight: 800; }
+  .prompt .q { margin-top: 8px; font-weight: 800; }
+
+  .answer-grid { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+  .answer-grid .field { flex: 1 1 90px; min-width: 78px; }
+  .answer-grid .field label { display: block; font-size: 12px; font-weight: 800; margin-bottom: 4px; color: var(--ink-muted); }
+  .answer-grid input { text-align: center; font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  .verdict { margin-top: 11px; padding: 11px 13px; border-radius: var(--radius-md); font-size: 13.5px; font-weight: 700; }
+  .verdict.ok { background: var(--success-soft); color: oklch(0.38 0.14 142); border: 1px solid oklch(0.8 0.1 142); }
+  .verdict.bad { background: var(--danger-soft); color: oklch(0.42 0.16 28); border: 1px solid oklch(0.85 0.09 28); }
+  .verdict.info { background: var(--primary-soft); color: oklch(0.38 0.14 var(--brand-h)); border: 1px solid oklch(0.85 0.07 var(--brand-h)); }
+
+  .steps { margin-top: 9px; font-size: 13px; line-height: 1.7; }
+  .steps code { font-family: 'Cambria Math', Georgia, serif; font-size: 15px; background: rgba(255,255,255,0.6);
+    padding: 1px 5px; border-radius: 4px; }
+
+  /* Build tab */
+  .target-list { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+  .target-list .row {
+    display: flex; align-items: center; gap: 8px; background: var(--surface-sunken);
+    border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 7px 10px; font-weight: 700;
+  }
+  .target-list .row .rm { margin-left: auto; background: none; border: none; cursor: pointer;
+    color: var(--danger); font-size: 15px; font-weight: 800; }
+
+  /* Report */
+  .report-sheet {
+    background: white; padding: 26px 30px; border-radius: var(--radius-lg);
+    border: 1px solid var(--border); box-shadow: var(--shadow-sm); max-width: 820px; margin: 0 auto;
+  }
+  .report-sheet h2 { font-size: 21px; font-weight: 800; text-align: center; margin-bottom: 4px; }
+  .report-sheet .sub { text-align: center; font-size: 13px; color: var(--ink-muted); margin-bottom: 18px; }
+  .name-row { display: flex; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+  .name-row .field { flex: 1 1 200px; }
+  .name-row label { font-size: 12px; font-weight: 800; color: var(--ink-muted); display: block; margin-bottom: 4px; }
+  table.report { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-bottom: 16px; }
+  table.report th, table.report td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; }
+  table.report th { background: var(--surface-sunken); font-weight: 800; font-size: 12.5px; }
+  table.report td.c { text-align: center; font-variant-numeric: tabular-nums; }
+  .snap { width: 100%; border-radius: var(--radius-md); border: 1px solid var(--border); margin-top: 6px; }
+  .written { margin-top: 8px; }
+  .written .wq { margin-bottom: 12px; font-size: 13.5px; }
+  .written .wq b { font-weight: 800; }
+  .written .wq input { margin-top: 5px; }
+
+  @media print {
+    @page { size: A4; margin: 12mm; }
+    html, body { height: auto; overflow: visible; background: white; }
+    header, .tabs, .no-print { display: none !important; }
+    .wrap { padding: 0; max-width: none; }
+    .main-content { box-shadow: none; border: none; padding: 0; overflow: visible; }
+    .report-sheet { box-shadow: none; border: none; padding: 0; max-width: none; }
+    input, select { border: none !important; border-bottom: 1px solid #999 !important; border-radius: 0 !important; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>🚀 Launch Lab — สัปดาห์ที่ 8</h1>
+    <p>คณิตศาสตร์ทั้ง 6 สัปดาห์ ทำงานจริงในวิถีการเคลื่อนที่ · Projectile Motion</p>
+  </div>
+  <div class="hdr-right">
+    <span class="star-count" id="starCount">⭐ 0 / 24</span>
+    <button class="btn-ghost-light" id="btnReset">↺ เริ่มใหม่</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="tabs no-print">
+    <button class="tab active" data-tab="launch">🚀 ยิง / Launch</button>
+    <button class="tab tab-solve" data-tab="solve">🧮 คำนวณ / Solve</button>
+    <button class="tab" data-tab="build">🛠️ สร้างด่าน / Build</button>
+    <button class="tab tab-assign" data-tab="report">📝 ใบงาน / Report</button>
+  </div>
+
+  <!-- ============ TAB: LAUNCH ============ -->
+  <div id="tab-launch" class="layout">
+    <div class="main-content">
+      <div class="stage">
+        <canvas class="world" id="cvLaunch" width="1000" height="520"></canvas>
+        <canvas class="strip" id="cvStrip" width="1000" height="130"></canvas>
+      </div>
+    </div>
+    <div class="side">
+      <div class="panel">
+        <h3>🎛️ ตัวควบคุมการยิง</h3>
+        <div class="ctl">
+          <label>มุมยิง θ (angle) <span class="val" id="vAngle">45°</span></label>
+          <input type="range" id="sAngle" min="10" max="80" step="1" value="45" />
+        </div>
+        <div class="ctl">
+          <label>ความเร็วต้น v₀ (power) <span class="val" id="vPower">18 m/s</span></label>
+          <input type="range" id="sPower" min="8" max="30" step="0.5" value="18" />
+        </div>
+        <div class="ctl">
+          <label>ความสูงฐานยิง c <span class="val" id="vHeight">2 m</span></label>
+          <input type="range" id="sHeight" min="0" max="8" step="0.5" value="2" />
+        </div>
+        <div class="ctl">
+          <label>แรงโน้มถ่วง g</label>
+          <select id="selGravity">
+            <option value="9.8" selected>🌍 โลก — 9.8 m/s²</option>
+            <option value="1.6">🌙 ดวงจันทร์ — 1.6 m/s²</option>
+            <option value="24.8">🪐 ดาวพฤหัส — 24.8 m/s²</option>
+          </select>
+        </div>
+        <div class="btn-row" style="margin-top:14px">
+          <button class="btn" id="btnFire">🔥 ยิง!</button>
+          <button class="btn btn-soft" id="btnClearGhost">ล้างรอย</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>📐 สมการวิถี (Week 2)</h3>
+        <div class="eq" id="eqLaunch">y = ax² + bx + c</div>
+        <div class="readout">
+          <div><span>จุดยอด · vertex</span><b id="rVertex">–</b></div>
+          <div><span>ระยะตก · root</span><b id="rRoot">–</b></div>
+          <div><span>ความชันตอนยิง m</span><b id="rSlope">–</b></div>
+          <div><span>สถิติไกลสุด</span><b id="rBest">0.0 m</b></div>
+        </div>
+        <p class="hint" style="margin-top:10px">
+          ⓘ <b>a</b> มาจากแรงโน้มถ่วง · <b>b</b> คือความชันตอนยิง = tan θ (Week 1) ·
+          <b>c</b> คือความสูงฐานยิง = จุดตัดแกน y
+        </p>
+      </div>
+
+      <div class="panel">
+        <h3>👁️ ชั้นคณิตศาสตร์</h3>
+        <div class="toggle-row">
+          <label><input type="checkbox" id="ckMath" checked /> เส้นกราฟ + แกน</label>
+          <label><input type="checkbox" id="ckVertex" checked /> จุดยอด</label>
+          <label><input type="checkbox" id="ckRoots" checked /> ราก (จุดตก)</label>
+          <label><input type="checkbox" id="ckTangent" checked /> เส้นความชัน</label>
+          <label><input type="checkbox" id="ckGhost" checked /> รอยยิงเก่า</label>
+        </div>
+        <p class="hint" style="margin-top:10px">
+          กราฟด้านล่างคือ <b>ระยะทาง–เวลา แนวราบ</b> — เป็น <b>เส้นตรง</b> เสมอ เพราะแนวราบความเร็วคงที่ (Week 1)
+          ส่วนแนวสูงเป็น <b>พาราโบลา</b> (Week 2)
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: SOLVE ============ -->
+  <div id="tab-solve" class="layout hidden">
+    <div class="main-content" style="overflow-y:auto">
+      <div class="stage">
+        <canvas class="world" id="cvSolve" width="1000" height="440"></canvas>
+        <div id="tileWrap" class="tile-wrap hidden">
+          <div class="tile-head">
+            <b>🧩 แผ่นพีชคณิต — ตัวช่วยนับ</b>
+            <span id="tileCaption"></span>
+            <button class="btn btn-soft" id="btnTileToggle" style="padding:5px 12px;font-size:12.5px">ซ่อน</button>
+          </div>
+          <canvas id="cvTiles" width="1000" height="430"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="side">
+      <div class="panel">
+        <h3>🎯 ภารกิจ · 8 ด่าน</h3>
+        <div class="mission-list" id="missionList"></div>
+      </div>
+      <div class="panel" id="missionPanel">
+        <h3 id="mTitle">เลือกภารกิจ</h3>
+        <div class="prompt" id="mPrompt">เลือกภารกิจจากรายการด้านบนเพื่อเริ่ม</div>
+        <div class="answer-grid" id="mInputs"></div>
+        <div class="btn-row" style="margin-top:12px">
+          <button class="btn btn-accent" id="btnCheck" disabled>✓ ตรวจคำตอบ</button>
+          <button class="btn btn-soft" id="btnFireSolve" disabled>🔥 ยิงพิสูจน์</button>
+        </div>
+        <div id="mVerdict"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: BUILD ============ -->
+  <div id="tab-build" class="layout hidden">
+    <div class="main-content">
+      <div class="stage">
+        <canvas class="world" id="cvBuild" width="1000" height="520"></canvas>
+      </div>
+    </div>
+    <div class="side">
+      <div class="panel">
+        <h3>🛠️ สร้างด่านของคุณเอง</h3>
+        <p class="hint" style="margin-bottom:10px">
+          <b>คลิกบนภาพ</b> เพื่อวางเป้า (ได้ 2 จุด) แล้วโปรแกรมจะหาสมการพาราโบลาที่ผ่านฐานยิงและเป้าทั้งสอง —
+          นั่นคือ "เฉลย" ของด่านคุณ
+        </p>
+        <div class="ctl">
+          <label>ความสูงฐานยิง c <span class="val" id="vbHeight">2 m</span></label>
+          <input type="range" id="sbHeight" min="0" max="8" step="0.5" value="2" />
+        </div>
+        <div class="target-list" id="targetList"></div>
+        <div class="btn-row" style="margin-top:12px">
+          <button class="btn" id="btnTestLevel" disabled>▶ ทดสอบยิง</button>
+          <button class="btn btn-soft" id="btnClearTargets">ล้างเป้า</button>
+        </div>
+        <p class="hint" style="margin-top:10px" id="autoSaveNote">
+          💾 ด่านของคุณจะถูก<b>บันทึกลงใบงานอัตโนมัติ</b>
+        </p>
+      </div>
+
+      <div class="panel">
+        <h3>📐 เฉลยของด่านคุณ</h3>
+        <div class="eq" id="eqBuild">วางเป้า 2 จุดก่อน</div>
+        <div id="buildNote" class="hint" style="margin-top:10px"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============ TAB: REPORT ============ -->
+  <div id="tab-report" class="main-content hidden" style="overflow:auto">
+    <div class="report-sheet">
+      <h2>📝 ใบงานสรุป — สัปดาห์ที่ 8 · Launch Lab</h2>
+      <p class="sub">คณิตศาสตร์ในวิถีการเคลื่อนที่ (Projectile Motion) — สัปดาห์สุดท้ายของภาคเรียน</p>
+
+      <div class="name-row">
+        <div class="field"><label>ชื่อ–สกุล</label><input type="text" id="inpName" placeholder="กรอกชื่อของคุณ" /></div>
+        <div class="field"><label>ชั้น / เลขที่</label><input type="text" id="inpClass" placeholder="ม.2/_ เลขที่ __" /></div>
+        <div class="field"><label>วันที่</label><input type="text" id="inpDate" placeholder="__ / __ / ____" /></div>
+      </div>
+
+      <h3 style="font-size:15px;font-weight:800;margin-bottom:8px">ส่วนที่ 1 · ผลการทำภารกิจ (อัตโนมัติ)</h3>
+      <table class="report">
+        <thead><tr><th>ภารกิจ</th><th>คณิตที่ใช้</th><th class="c">ดาว</th><th class="c">ครั้งที่ตอบถูก</th></tr></thead>
+        <tbody id="reportBody"></tbody>
+        <tfoot><tr><th colspan="2">รวม</th><th class="c" id="reportStars">0 / 24</th><th class="c"></th></tr></tfoot>
+      </table>
+
+      <h3 style="font-size:15px;font-weight:800;margin:16px 0 8px">ส่วนที่ 2 · ด่านที่ออกแบบเอง</h3>
+      <table class="report">
+        <tbody>
+          <tr><th style="width:34%">สมการเฉลย</th><td id="repLevelEq">—</td></tr>
+          <tr><th>จุดยอด · จุดตก</th><td id="repLevelPts">—</td></tr>
+          <tr><th>ยิงได้ไกลสุด (แท็บ Launch)</th><td id="repBest">0.0 m</td></tr>
+        </tbody>
+      </table>
+      <img class="snap hidden" id="repSnap" alt="ภาพด่านที่ออกแบบเอง" />
+
+      <h3 style="font-size:15px;font-weight:800;margin:16px 0 8px">ส่วนที่ 3 · อธิบายคณิตเบื้องหลัง (เขียนเอง)</h3>
+      <div class="written">
+        <div class="wq"><b>1.</b> ในสมการ y = ax² + bx + c ของวิถีลูกบอล — <b>a</b> มาจากอะไร และถ้าไปยิงบนดวงจันทร์ a จะเปลี่ยนอย่างไร เพราะเหตุใด
+          <input type="text" id="w1" /></div>
+        <div class="wq"><b>2.</b> เหตุใดกราฟ "ระยะแนวราบ–เวลา" จึงเป็น<b>เส้นตรง</b> แต่กราฟ "ความสูง–เวลา" เป็น<b>พาราโบลา</b>
+          <input type="text" id="w2" /></div>
+        <div class="wq"><b>3.</b> การ<b>แยกตัวประกอบ</b> ช่วยหาอะไรในวิถีการเคลื่อนที่ ยกตัวอย่างจากภารกิจที่ทำ
+          <input type="text" id="w3" /></div>
+        <div class="wq"><b>4.</b> การ<b>ลบพหุนาม</b> y(x) − h(x) บอกอะไรเราเกี่ยวกับเนินเขา และค่าที่ได้ต้องเป็นบวกหรือลบจึงจะข้ามพ้น
+          <input type="text" id="w4" /></div>
+        <div class="wq"><b>5.</b> เล่าด่านที่คุณออกแบบ — ทำไมจึงวางเป้าตรงนั้น และต้องใช้คณิตเรื่องใดจึงจะยิงผ่าน
+          <input type="text" id="w5" /></div>
+      </div>
+
+      <div class="btn-row no-print" style="margin-top:18px">
+        <button class="btn btn-success" id="btnPrint">🖨️ บันทึกเป็น PDF / พิมพ์</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   MODEL — world units: x 0..30 m, y 0..18 m
+   Trajectory as a function of x:
+     y(x) = c + b·x + a·x²      where b = tanθ,  a = −g / (2·v₀²·cos²θ)
+   Ground/hill is a LINE  h(x) = hm·x + hk  (Week 1), flat when hm = hk = 0.
+   ============================================================ */
+const W = { xMax: 30, yMax: 18 };
+const STORE_KEY = 'week8-launch-lab';
+
+function trajFromLauncher(angleDeg, v0, c, g) {
+  const th = angleDeg * Math.PI / 180;
+  const b = Math.tan(th);
+  const a = -g / (2 * v0 * v0 * Math.cos(th) * Math.cos(th));
+  return { a, b, c };
+}
+const yAt = (p, x) => p.a * x * x + p.b * x + p.c;
+const vertexOf = p => { const vx = -p.b / (2 * p.a); return { x: vx, y: yAt(p, vx) }; };
+/** Roots of a·x²+b·x+c = 0, ascending. Empty if none. */
+function rootsOf(a, b, c) {
+  const d = b * b - 4 * a * c;
+  if (d < 0) return [];
+  const s = Math.sqrt(d);
+  return [(-b - s) / (2 * a), (-b + s) / (2 * a)].sort((u, v) => u - v);
+}
+/** Where the path meets the hill line: solve y(x) − h(x) = 0. */
+function impactX(p, hill, xMax = W.xMax) {
+  const r = rootsOf(p.a, p.b - hill.m, p.c - hill.k).filter(x => x > 0.05);
+  return r.length ? Math.min(...r) : xMax;
+}
+const hillAt = (hill, x) => hill.m * x + hill.k;
+
+/* ---- polynomial rendering ---- */
+function num(n) {
+  const r = Math.round(n * 100) / 100;
+  const s = Number.isInteger(r) ? String(r) : r.toFixed(2).replace(/0$/, '');
+  return s.replace(/^-/, '−');   // typographic minus, matches the worksheet text
+}
+function polyStr(a, b, c, colored) {
+  const wrap = (s, cls) => colored ? `<span class="hl-${cls}">${s}</span>` : s;
+  a = Math.round(a * 100) / 100; b = Math.round(b * 100) / 100; c = Math.round(c * 100) / 100;
+  let out = '';
+  out += wrap(`${a === 1 ? '' : a === -1 ? '−' : num(a)}x²`, 'a');
+  if (Math.abs(b) > 1e-9) out += ` ${b < 0 ? '−' : '+'} ${wrap(`${Math.abs(b) === 1 ? '' : num(Math.abs(b))}x`, 'b')}`;
+  if (Math.abs(c) > 1e-9) out += ` ${c < 0 ? '−' : '+'} ${wrap(num(Math.abs(c)), 'c')}`;
+  return out;
+}
+function factoredStr(a, r1, r2) {
+  const t = r => r === 0 ? 'x' : `(x ${r > 0 ? '−' : '+'} ${num(Math.abs(r))})`;
+  const lead = a === 1 ? '' : a === -1 ? '−' : num(a);
+  return `${lead}${t(r1)}${t(r2)}`;
+}
+
+/* ============================================================
+   PERSISTENT STATE
+   ============================================================ */
+const state = {
+  best: 0,
+  missions: {},              // id -> { stars, tries, solved }
+  level: null,               // { name, c, targets:[{x,y}], code, eq }
+  fields: {},                // report text inputs
+};
+function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {} }
+function load() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) Object.assign(state, JSON.parse(raw));
+  } catch (e) {}
+}
+load();
+
+/* ============================================================
+   CANVAS PAINTER — shared by all three tabs
+   ============================================================ */
+function makeView(canvas, xMax = W.xMax, yMax = W.yMax) {
+  const PAD = { l: 46, r: 18, t: 16, b: 40 };
+  const v = { canvas, ctx: canvas.getContext('2d'), PAD, xMax, yMax };
+  v.sx = x => PAD.l + (x / v.xMax) * (canvas.width - PAD.l - PAD.r);
+  v.sy = y => canvas.height - PAD.b - (y / v.yMax) * (canvas.height - PAD.t - PAD.b);
+  v.ux = px => ((px - PAD.l) / (canvas.width - PAD.l - PAD.r)) * v.xMax;
+  v.uy = py => ((canvas.height - PAD.b - py) / (canvas.height - PAD.t - PAD.b)) * v.yMax;
+  return v;
+}
+
+function paintSky(v) {
+  const { ctx, canvas } = v;
+  const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  g.addColorStop(0, '#bfdbfe'); g.addColorStop(0.65, '#dbeafe'); g.addColorStop(1, '#eff6ff');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  // parallax hills (decor only)
+  const base = v.sy(0);
+  ctx.fillStyle = 'rgba(148,163,184,0.30)';
+  ctx.beginPath(); ctx.moveTo(0, base);
+  for (let px = 0; px <= canvas.width; px += 12)
+    ctx.lineTo(px, base - 62 - 34 * Math.sin(px / 190) - 16 * Math.sin(px / 63));
+  ctx.lineTo(canvas.width, base); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(100,116,139,0.26)';
+  ctx.beginPath(); ctx.moveTo(0, base);
+  for (let px = 0; px <= canvas.width; px += 12)
+    ctx.lineTo(px, base - 30 - 22 * Math.sin(px / 120 + 2) - 10 * Math.sin(px / 41));
+  ctx.lineTo(canvas.width, base); ctx.closePath(); ctx.fill();
+  // sun
+  ctx.fillStyle = 'rgba(253,224,71,0.75)';
+  ctx.beginPath(); ctx.arc(canvas.width - 92, 62, 26, 0, 7); ctx.fill();
+}
+
+function paintGrid(v) {
+  const { ctx } = v;
+  ctx.strokeStyle = 'rgba(71,85,105,0.16)'; ctx.lineWidth = 1;
+  ctx.fillStyle = '#475569'; ctx.font = '600 11px system-ui'; ctx.textAlign = 'center';
+  const step = v.xMax <= 12 ? 1 : v.xMax <= 24 ? 2 : v.xMax <= 60 ? 5 : 10;
+  for (let x = 0; x <= v.xMax; x += step) {
+    ctx.beginPath(); ctx.moveTo(v.sx(x), v.sy(0)); ctx.lineTo(v.sx(x), v.sy(v.yMax)); ctx.stroke();
+  }
+  ctx.textAlign = 'right';
+  const ystep = v.yMax <= 12 ? 2 : v.yMax <= 24 ? 3 : 10;
+  for (let y = 0; y <= v.yMax; y += ystep) {
+    ctx.beginPath(); ctx.moveTo(v.sx(0), v.sy(y)); ctx.lineTo(v.sx(v.xMax), v.sy(y)); ctx.stroke();
+    ctx.fillText(String(y), v.sx(0) - 7, v.sy(y) + 4);
+  }
+  ctx.strokeStyle = 'rgba(30,41,59,0.55)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(v.sx(0), v.sy(0)); ctx.lineTo(v.sx(v.xMax), v.sy(0)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(v.sx(0), v.sy(0)); ctx.lineTo(v.sx(0), v.sy(v.yMax)); ctx.stroke();
+  ctx.fillStyle = '#334155'; ctx.font = '700 12px system-ui'; ctx.textAlign = 'left';
+  ctx.fillText('y (m)', v.sx(0) - 40, v.sy(v.yMax) + 4);
+}
+
+/** X-axis ticks sit on top of the ground, so they must be painted after it. */
+function paintAxisLabels(v) {
+  const { ctx } = v;
+  ctx.font = '700 11px system-ui'; ctx.textAlign = 'center';
+  const step = v.xMax <= 12 ? 1 : v.xMax <= 24 ? 2 : v.xMax <= 60 ? 5 : 10;
+  for (let x = 0; x <= v.xMax; x += step) {
+    ctx.fillStyle = 'rgba(15,23,42,0.55)';
+    ctx.fillRect(v.sx(x) - 11, v.sy(0) + 6, 22, 15);
+    ctx.fillStyle = '#fff';
+    ctx.fillText(String(x), v.sx(x), v.sy(0) + 17);
+  }
+  ctx.fillStyle = '#1e293b'; ctx.textAlign = 'right'; ctx.font = '700 12px system-ui';
+  ctx.fillText('x (เมตร)', v.sx(v.xMax), v.sy(0) + 34);
+}
+
+function paintGround(v, hill) {
+  const { ctx } = v;
+  ctx.fillStyle = '#4ade80';
+  ctx.beginPath();
+  ctx.moveTo(v.sx(0), v.sy(hillAt(hill, 0)));
+  for (let x = 0; x <= v.xMax; x += 0.5) ctx.lineTo(v.sx(x), v.sy(Math.max(0, hillAt(hill, x))));
+  ctx.lineTo(v.sx(v.xMax), v.canvas.height); ctx.lineTo(v.sx(0), v.canvas.height);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = '#15803d'; ctx.lineWidth = 3;
+  ctx.beginPath();
+  for (let x = 0; x <= v.xMax; x += 0.5) {
+    const py = v.sy(Math.max(0, hillAt(hill, x)));
+    x === 0 ? ctx.moveTo(v.sx(x), py) : ctx.lineTo(v.sx(x), py);
+  }
+  ctx.stroke();
+  if (hill.m !== 0 || hill.k !== 0) {
+    ctx.fillStyle = '#166534'; ctx.font = '800 13px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText(`h(x) = ${hill.m === 1 ? '' : num(hill.m)}x${hill.k ? (hill.k > 0 ? ' + ' : ' − ') + num(Math.abs(hill.k)) : ''}`,
+      v.sx(v.xMax) - 150, v.sy(hillAt(hill, v.xMax - 2)) - 12);
+  }
+}
+
+function paintLauncher(v, x0, y0, angleDeg) {
+  const { ctx } = v;
+  const bx = v.sx(x0), by = v.sy(y0);
+  ctx.fillStyle = '#64748b';
+  ctx.fillRect(bx - 9, by, 20, v.sy(0) - by + 2);
+  ctx.save();
+  ctx.translate(bx, by);
+  ctx.rotate(-angleDeg * Math.PI / 180);
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(-4, -7, 46, 14);
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillRect(36, -7, 8, 14);
+  ctx.restore();
+  ctx.fillStyle = '#334155';
+  ctx.beginPath(); ctx.arc(bx, by, 10, 0, 7); ctx.fill();
+}
+
+function paintPath(v, p, hill, opts) {
+  const { ctx } = v;
+  const xs = opts.xStart || 0;
+  const xEnd = opts.xEnd != null ? opts.xEnd : impactX(p, hill, v.xMax);
+  ctx.strokeStyle = 'rgba(37,99,235,0.85)'; ctx.lineWidth = 3; ctx.setLineDash([7, 6]);
+  ctx.beginPath();
+  for (let x = xs; x <= xEnd; x += 0.15) {
+    const py = v.sy(yAt(p, x));
+    x === xs ? ctx.moveTo(v.sx(x), py) : ctx.lineTo(v.sx(x), py);
+  }
+  ctx.stroke(); ctx.setLineDash([]);
+
+  if (opts.tangent) {
+    const m0 = 2 * p.a * xs + p.b, y0 = yAt(p, xs);
+    const tx = Math.min(v.xMax * 0.28, (xEnd - xs) * 0.7);
+    ctx.strokeStyle = 'rgba(234,88,12,0.9)'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(v.sx(xs), v.sy(y0));
+    ctx.lineTo(v.sx(xs + tx), v.sy(y0 + m0 * tx)); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = '#c2410c'; ctx.font = '800 13px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText(`m = ${num(m0)}`, v.sx(xs + tx) + 6, v.sy(y0 + m0 * tx) - 6);
+  }
+  if (opts.vertex) {
+    const vx = vertexOf(p);
+    if (vx.x > 0 && vx.x < xEnd + 1) {
+      ctx.fillStyle = '#7c3aed';
+      ctx.beginPath(); ctx.arc(v.sx(vx.x), v.sy(vx.y), 7, 0, 7); ctx.fill();
+      ctx.strokeStyle = 'rgba(124,58,237,0.5)'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 4]);
+      ctx.beginPath(); ctx.moveTo(v.sx(vx.x), v.sy(vx.y)); ctx.lineTo(v.sx(vx.x), v.sy(0)); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = '#6d28d9'; ctx.font = '800 13px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(`จุดยอด (${num(vx.x)}, ${num(vx.y)})`, v.sx(vx.x), v.sy(vx.y) - 13);
+    }
+  }
+  if (opts.roots) {
+    const mark = (rx, label) => {
+      const px = v.sx(rx), py = v.sy(hillAt(hill, rx));
+      ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 3.5;
+      ctx.beginPath(); ctx.moveTo(px - 8, py - 8); ctx.lineTo(px + 8, py + 8);
+      ctx.moveTo(px + 8, py - 8); ctx.lineTo(px - 8, py + 8); ctx.stroke();
+      ctx.fillStyle = '#b91c1c'; ctx.font = '800 13px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(label, px, py + 26);
+    };
+    if (xs > 0.01) mark(xs, `ราก x = ${num(xs)} (ออกตัว)`);
+    mark(xEnd, `ราก x = ${num(xEnd)}${xs > 0.01 ? ' (ตก)' : ''}`);
+  }
+}
+
+function paintTargets(v, targets) {
+  const { ctx } = v;
+  targets.forEach((t, i) => {
+    const px = v.sx(t.x), py = v.sy(t.y);
+    ctx.strokeStyle = t.hit ? '#16a34a' : '#ea580c';
+    ctx.fillStyle = t.hit ? 'rgba(22,163,74,0.22)' : 'rgba(234,88,12,0.14)';
+    ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.ellipse(px, py, 9, 20, 0, 0, 7); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = t.hit ? '#15803d' : '#c2410c';
+    ctx.font = '800 12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(t.hit ? '✓' : `(${num(t.x)}, ${num(t.y)})`, px, py - 27);
+    if (!t.hit) { ctx.fillStyle = '#9a3412'; ctx.fillText(`เป้า ${i + 1}`, px, py + 36); }
+  });
+}
+
+function paintBall(v, x, y, trail) {
+  const { ctx } = v;
+  ctx.strokeStyle = 'rgba(220,38,38,0.35)'; ctx.lineWidth = 3;
+  ctx.beginPath();
+  trail.forEach((pt, i) => i === 0 ? ctx.moveTo(v.sx(pt.x), v.sy(pt.y)) : ctx.lineTo(v.sx(pt.x), v.sy(pt.y)));
+  ctx.stroke();
+  const px = v.sx(x), py = v.sy(y);
+  ctx.fillStyle = 'rgba(0,0,0,0.14)';
+  ctx.beginPath(); ctx.ellipse(px, v.sy(0), 10, 3.5, 0, 0, 7); ctx.fill();
+  const g = ctx.createRadialGradient(px - 3, py - 3, 1, px, py, 10);
+  g.addColorStop(0, '#fca5a5'); g.addColorStop(1, '#dc2626');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(px, py, 10, 0, 7); ctx.fill();
+  ctx.strokeStyle = '#991b1b'; ctx.lineWidth = 2; ctx.stroke();
+}
+
+function paintGhosts(v, ghosts) {
+  const { ctx } = v;
+  ctx.lineWidth = 2;
+  ghosts.forEach((gt, i) => {
+    ctx.strokeStyle = `rgba(100,116,139,${0.14 + 0.1 * i / Math.max(1, ghosts.length)})`;
+    ctx.beginPath();
+    gt.forEach((pt, j) => j === 0 ? ctx.moveTo(v.sx(pt.x), v.sy(pt.y)) : ctx.lineTo(v.sx(pt.x), v.sy(pt.y)));
+    ctx.stroke();
+  });
+}
+
+function paintParticles(v, parts) {
+  const { ctx } = v;
+  parts.forEach(p => {
+    ctx.fillStyle = `rgba(251,146,60,${Math.max(0, p.life)})`;
+    ctx.beginPath(); ctx.arc(v.sx(p.x), v.sy(Math.max(0, p.y)), 3.4 * Math.max(0.2, p.life), 0, 7); ctx.fill();
+  });
+}
+
+/* ============================================================
+   FLIGHT ANIMATION (shared)
+   ============================================================ */
+function makeFlight() {
+  let raf = null;
+  return function fly(cfg, onFrame, onDone) {
+    if (raf) cancelAnimationFrame(raf);
+    const { p, hill, g } = cfg;
+    const xLimit = cfg.xMax || W.xMax;
+    const xs = cfg.xStart || 0;
+    const th = Math.atan(p.b);
+    const v0 = Math.sqrt(-g / (2 * p.a * Math.cos(th) * Math.cos(th)));
+    const vx = v0 * Math.cos(th);
+    const xEnd = cfg.xEnd != null ? cfg.xEnd : impactX(p, hill, xLimit);
+    let t = 0, trail = [], parts = [];
+    let last = performance.now();
+
+    (function step(now) {
+      let dt = Math.min(0.05, (now - last) / 1000); last = now;
+      const x = xs + vx * t, y = yAt(p, x);
+      const nearApex = Math.abs(x - vertexOf(p).x) < 1.6;
+      t += dt * (nearApex ? 0.35 : 1) * 1.05;      // slow-mo through the vertex
+
+      if (x < xEnd) {
+        trail.push({ x, y });
+        if (trail.length > 90) trail.shift();
+        onFrame(x, y, trail, parts);
+        raf = requestAnimationFrame(step);
+      } else {
+        if (!parts.length)
+          for (let i = 0; i < 22; i++)
+            parts.push({ x: xEnd, y: hillAt(hill, xEnd), vx: (Math.random() - 0.5) * 9,
+              vy: Math.random() * 7, life: 1 });
+        parts.forEach(pt => { pt.x += pt.vx * dt; pt.y += pt.vy * dt; pt.vy -= 14 * dt; pt.life -= dt * 1.5; });
+        parts = parts.filter(pt => pt.life > 0);
+        onFrame(xEnd, hillAt(hill, xEnd), trail, parts);
+        if (parts.length) raf = requestAnimationFrame(step);
+        else { raf = null; onDone && onDone(xEnd, trail); }
+      }
+    })(performance.now());
+  };
+}
+
+/* ============================================================
+   TAB 1 — LAUNCH
+   ============================================================ */
+const vL = makeView(document.getElementById('cvLaunch'));
+const vStrip = makeView(document.getElementById('cvStrip'));
+const flatHill = { m: 0, k: 0 };
+const L = {
+  angle: 45, power: 18, height: 2, g: 9.8,
+  ghosts: [], flying: null, stripPts: [], flightT: 0,
+};
+const $ = id => document.getElementById(id);
+
+function launchTraj() { return trajFromLauncher(L.angle, L.power, L.height, L.g); }
+
+function drawLaunch(ballX, ballY, trail, parts) {
+  const p = launchTraj();
+  paintSky(vL);
+  if ($('ckMath').checked) paintGrid(vL);
+  paintGround(vL, flatHill); paintAxisLabels(vL);
+  if ($('ckGhost').checked) paintGhosts(vL, L.ghosts);
+  if ($('ckMath').checked) paintPath(vL, p, flatHill, {
+    vertex: $('ckVertex').checked, roots: $('ckRoots').checked, tangent: $('ckTangent').checked
+  });
+  paintLauncher(vL, 0, L.height, L.angle);
+  if (ballX != null) paintBall(vL, ballX, ballY, trail || []);
+  if (parts && parts.length) paintParticles(vL, parts);
+  drawStrip();
+}
+
+function drawStrip() {
+  const { ctx, canvas } = vStrip;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#f8fafc'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const PAD = { l: 46, r: 18, t: 14, b: 26 };
+  const p = launchTraj();
+  const vx = L.power * Math.cos(L.angle * Math.PI / 180);
+  const tEnd = Math.max(0.4, impactX(p, flatHill) / vx);
+  const X = t => PAD.l + (t / tEnd) * (canvas.width - PAD.l - PAD.r);
+  const Y = d => canvas.height - PAD.b - (d / vL.xMax) * (canvas.height - PAD.t - PAD.b);
+
+  ctx.strokeStyle = 'rgba(71,85,105,0.18)'; ctx.lineWidth = 1;
+  for (let d = 0; d <= vL.xMax; d += Math.max(5, Math.round(vL.xMax / 6 / 5) * 5)) { ctx.beginPath(); ctx.moveTo(X(0), Y(d)); ctx.lineTo(X(tEnd), Y(d)); ctx.stroke(); }
+  ctx.strokeStyle = 'rgba(30,41,59,0.5)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(tEnd), Y(0)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(0), Y(vL.xMax)); ctx.stroke();
+  ctx.fillStyle = '#475569'; ctx.font = '700 11px system-ui'; ctx.textAlign = 'left';
+  ctx.fillText('ระยะแนวราบ (m)', 4, 12);
+  ctx.textAlign = 'right'; ctx.fillText('เวลา (s)', canvas.width - 6, canvas.height - 8);
+
+  ctx.strokeStyle = 'rgba(37,99,235,0.35)'; ctx.setLineDash([5, 5]); ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(tEnd), Y(vx * tEnd)); ctx.stroke(); ctx.setLineDash([]);
+  if (L.stripPts.length) {
+    ctx.strokeStyle = '#2563eb'; ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    L.stripPts.forEach((pt, i) => i === 0 ? ctx.moveTo(X(pt.t), Y(pt.d)) : ctx.lineTo(X(pt.t), Y(pt.d)));
+    ctx.stroke();
+    const lastPt = L.stripPts[L.stripPts.length - 1];
+    ctx.fillStyle = '#1d4ed8';
+    ctx.beginPath(); ctx.arc(X(lastPt.t), Y(lastPt.d), 5, 0, 7); ctx.fill();
+  }
+  ctx.fillStyle = '#1e40af'; ctx.font = '800 12px system-ui'; ctx.textAlign = 'left';
+  ctx.textAlign = 'right';
+  ctx.fillText(`เส้นตรง — ความชัน = ความเร็วแนวราบ = ${num(vx)} m/s`, canvas.width - 14, PAD.t - 2);
+}
+
+function updateLaunchPanel() {
+  const p = launchTraj();
+  // frame the field around the current shot so it never runs off the canvas
+  const land = impactX(p, flatHill, 500), top = vertexOf(p).y;
+  vL.xMax = Math.min(120, Math.max(12, Math.ceil(land * 1.12 / 5) * 5));
+  vL.yMax = Math.min(70, Math.max(8, Math.ceil(top * 1.3 / 3) * 3));
+  $('vAngle').textContent = L.angle + '°';
+  $('vPower').textContent = num(L.power) + ' m/s';
+  $('vHeight').textContent = num(L.height) + ' m';
+  $('eqLaunch').innerHTML = `y = ${polyStr(p.a, p.b, p.c, true)}<small>a จากแรงโน้มถ่วง · b = tan θ · c = ความสูงฐานยิง</small>`;
+  const vx = vertexOf(p);
+  $('rVertex').textContent = `(${num(vx.x)}, ${num(vx.y)})`;
+  $('rRoot').textContent = num(impactX(p, flatHill)) + ' m';
+  $('rSlope').textContent = num(p.b);
+  $('rBest').textContent = num(state.best) + ' m';
+}
+
+const flyLaunch = makeFlight();
+$('btnFire').onclick = () => {
+  const p = launchTraj();
+  const th = Math.atan(p.b), v0 = Math.sqrt(-L.g / (2 * p.a * Math.cos(th) ** 2));
+  const vx = v0 * Math.cos(th);
+  L.stripPts = [];
+  flyLaunch({ p, hill: flatHill, g: L.g, xMax: vL.xMax },
+    (x, y, trail, parts) => {
+      L.stripPts.push({ t: x / vx, d: x });
+      drawLaunch(x, y, trail, parts);
+    },
+    (xEnd, trail) => {
+      L.ghosts.push(trail.slice()); if (L.ghosts.length > 5) L.ghosts.shift();
+      if (xEnd > state.best) { state.best = xEnd; save(); }
+      updateLaunchPanel(); drawLaunch();
+    });
+};
+$('btnClearGhost').onclick = () => { L.ghosts = []; L.stripPts = []; drawLaunch(); };
+['sAngle', 'sPower', 'sHeight'].forEach(id => {
+  $(id).oninput = e => {
+    L[{ sAngle: 'angle', sPower: 'power', sHeight: 'height' }[id]] = parseFloat(e.target.value);
+    updateLaunchPanel(); drawLaunch();
+  };
+});
+$('selGravity').onchange = e => { L.g = parseFloat(e.target.value); updateLaunchPanel(); drawLaunch(); };
+['ckMath', 'ckVertex', 'ckRoots', 'ckTangent', 'ckGhost'].forEach(id => $(id).onchange = () => drawLaunch());
+
+/* ============================================================
+   TAB 2 — SOLVE  (6 missions across Weeks 1–6)
+   ============================================================ */
+/* Product-form missions: the ball's path is y = −(x − p)(x − q).
+   Multiplying by −1 flips the parabola but KEEPS the roots, so p and q are
+   literally where the ball leaves the ground and where it lands. */
+function trajFromRoots(p, q) { return { a: -1, b: p + q, c: -p * q }; }
+
+const MISSIONS = [
+  {
+    id: 'm1', icon: '🧩', title: 'กระจายด้วยแผ่น 1', week: 'Week 5 · คูณพหุนาม', mode: 'shot',
+    roots: [1, 5], tiles: { p: 1, q: 5, neg: true },
+    ask: 'ปืนตั้งอยู่ที่ <b>x = 1</b> และต้องยิงให้ตกที่ <b>x = 5</b> · วิถีคือ <b>y = −(x − 1)(x − 5)</b>' +
+         '<div class="q">ใช้แผ่นด้านล่างกระจาย (x − 1)(x − 5) = x² + ⬜x + ⬜</div>',
+    fields: [{ key: 'b', label: 'พจน์ x =' }, { key: 'c', label: 'พจน์คงที่ =' }],
+    check: a => Math.abs(a.b + 6) < 0.01 && Math.abs(a.c - 5) < 0.01,
+    steps: 'นับแผ่น: <b>6 แท่ง −x สีแดง</b> · <b>5 หน่วยบวก</b> → <code>x² − 6x + 5</code><br>' +
+           'วิถีลูกบอลคือรูปนี้<b>คว่ำลง</b>: <code>−(x − 1)(x − 5) = −x² + 6x − 5</code><br>' +
+           '⭐ คูณด้วย −1 ทำให้กราฟคว่ำ แต่<b>รากไม่เปลี่ยน</b> — ยังเป็น 1 กับ 5 คือจุดออกตัวและจุดตกพอดี',
+  },
+  {
+    id: 'm2', icon: '🌱', title: 'สวนสี่เหลี่ยม', week: 'Week 5 · คูณพหุนาม', mode: 'area',
+    area: { p: 3, q: 4, reveal: false },
+    tiles: { p: 3, q: 4, neg: false },
+    ask: 'แปลงผักเป็นสี่เหลี่ยมผืนผ้า กว้าง <b>(x + 3)</b> เมตร ยาว <b>(x + 4)</b> เมตร' +
+         '<div class="q">หาพื้นที่ = x² + ⬜x + ⬜ (ตารางเมตร)</div>',
+    fields: [{ key: 'b', label: 'พจน์ x =' }, { key: 'c', label: 'พจน์คงที่ =' }],
+    check: a => Math.abs(a.b - 7) < 0.01 && Math.abs(a.c - 12) < 0.01,
+    steps: 'แผ่นด้านล่างคือ<b>พื้นที่จริง</b>ของแปลง — นับได้ <b>7 แท่ง x</b> · <b>12 หน่วย</b><br>' +
+           '<code>(x + 3)(x + 4) = x² + 7x + 12</code> ตารางเมตร<br>' +
+           '⭐ ที่นี่เลข<b>บวกล้วน</b>ได้ เพราะความยาวด้านเป็นลบไม่ได้ — ต่างจากวิถีลูกบอล',
+  },
+  {
+    id: 'm3', icon: '🧩', title: 'กระจายด้วยแผ่น 2', week: 'Week 5 · คูณพหุนาม', mode: 'shot',
+    roots: [1, 7], tiles: { p: 1, q: 7, neg: true },
+    ask: 'ยิงไกลขึ้น — จาก <b>x = 1</b> ไป <b>x = 7</b>' +
+         '<div class="q">กระจาย (x − 1)(x − 7) = x² + ⬜x + ⬜</div>',
+    fields: [{ key: 'b', label: 'พจน์ x =' }, { key: 'c', label: 'พจน์คงที่ =' }],
+    check: a => Math.abs(a.b + 8) < 0.01 && Math.abs(a.c - 7) < 0.01,
+    steps: 'นับแผ่น: <b>8 แท่ง −x</b> · <b>7 หน่วยบวก</b> → <code>x² − 8x + 7</code><br>' +
+           'วิถี <code>−x² + 8x − 7</code> · ยอดสูงสุดอยู่กึ่งกลางรากเสมอ: <code>(1 + 7)/2 = 4</code> → สูง 9 m',
+  },
+  {
+    id: 'm4', icon: '🎯', title: 'แยกตัวประกอบ หาจุดตก', week: 'Week 6 · แยกตัวประกอบ', mode: 'shot',
+    roots: [1, 9],
+    ask: 'วิถีลูกบอลคือ <b>y = −(x² − 10x + 9)</b> — ยังไม่รู้ว่าออกตัวและตกที่ไหน' +
+         '<div class="q">แยกตัวประกอบ x² − 10x + 9 แล้วบอกรากทั้งสอง</div>',
+    fields: [{ key: 'r1', label: 'ออกตัวที่ x =' }, { key: 'r2', label: 'ตกที่ x =' }],
+    check: a => Math.abs(a.r1 - 1) < 0.01 && Math.abs(a.r2 - 9) < 0.01,
+    steps: 'หาสองจำนวนที่<b>คูณกันได้ 9</b> และ<b>บวกกันได้ −10</b> → −1 กับ −9<br>' +
+           '<code>x² − 10x + 9 = (x − 1)(x − 9)</code> → ราก <b>x = 1</b> และ <b>x = 9</b><br>' +
+           'กดยิงพิสูจน์ได้เลย ลูกบอลจะออกตัวที่ 1 และตกที่ 9 พอดี',
+  },
+  {
+    id: 'm5', icon: '🌱', title: 'หาด้านของสวน', week: 'Week 6 · แยกตัวประกอบ', mode: 'area',
+    area: { p: 3, q: 6, reveal: false, unknown: true },
+    ask: 'แปลงผักอีกแปลงมีพื้นที่ <b>x² + 9x + 18</b> ตารางเมตร และเป็นสี่เหลี่ยมผืนผ้า' +
+         '<div class="q">แยกตัวประกอบเพื่อหาว่าด้านทั้งสองยาวเท่าใด</div>',
+    fields: [{ key: 'p', label: 'ด้านสั้น x +' }, { key: 'q', label: 'ด้านยาว x +' }],
+    check: a => (Math.abs(a.p - 3) < 0.01 && Math.abs(a.q - 6) < 0.01) ||
+                (Math.abs(a.p - 6) < 0.01 && Math.abs(a.q - 3) < 0.01),
+    steps: 'หาสองจำนวนที่<b>คูณกันได้ 18</b> และ<b>บวกกันได้ 9</b> → 3 กับ 6<br>' +
+           '<code>x² + 9x + 18 = (x + 3)(x + 6)</code><br>' +
+           'ด้านยาว <b>(x + 6)</b> เมตร ด้านกว้าง <b>(x + 3)</b> เมตร',
+  },
+  {
+    id: 'm6', icon: '🪂', title: 'โยนขึ้นฟ้า', week: 'Week 6 · แยกตัวประกอบ', mode: 'fall',
+    fall: { a: -5, b: 20, c: 0 },
+    ask: 'โยนลูกบอลขึ้นตรงๆ · ความสูงตามเวลาคือ <b>h = −5t² + 20t</b> (t = วินาที)' +
+         '<div class="q">ดึงตัวร่วมออก แล้วบอกว่าตกถึงพื้นเมื่อ t เท่าใด และขึ้นสูงสุดกี่เมตร</div>',
+    fields: [{ key: 't', label: 'ถึงพื้นที่ t =' }, { key: 'h', label: 'สูงสุด h =' }],
+    check: a => Math.abs(a.t - 4) < 0.01 && Math.abs(a.h - 20) < 0.05,
+    steps: '<code>−5t² + 20t = −5t(t − 4)</code> → เท่ากับศูนย์เมื่อ <b>t = 0</b> (ตอนโยน) หรือ <b>t = 4</b> (ตกถึงพื้น)<br>' +
+           'จุดสูงสุดอยู่กึ่งกลาง: <code>t = 2</code> → <code>h = −20 + 40 = 20</code> เมตร<br>' +
+           '⭐ คราวนี้แกนนอนคือ<b>เวลา</b> ไม่ใช่ระยะ — แต่คณิตชุดเดิมใช้ได้เลย',
+  },
+  {
+    id: 'm7', icon: '⛰️', title: 'ข้ามเนินลาด', week: 'Week 4 · ลบพหุนาม', mode: 'shot',
+    traj: { a: -1, b: 8, c: 1 }, hill: { m: 1, k: 1 }, view: { x: 10, y: 18 },
+    ask: 'วิถีลูกบอล <b>y = −x² + 8x + 1</b> · เนินเขาเป็นเส้นตรง <b>h(x) = x + 1</b>' +
+         '<div class="q">หา y(x) − h(x) แล้วบอกว่าลูกบอลกลับมาแตะเนินที่ x เท่าใด</div>',
+    fields: [{ key: 'b', label: 'ผลลบ: พจน์ x =' }, { key: 'c', label: 'พจน์คงที่ =' }, { key: 'r', label: 'แตะเนินที่ x =' }],
+    check: a => Math.abs(a.b - 7) < 0.01 && Math.abs(a.c) < 0.01 && Math.abs(a.r - 7) < 0.01,
+    steps: '<code>(−x² + 8x + 1) − (x + 1) = −x² + 7x + 0</code> — พจน์คงที่หักกันหมด<br>' +
+           '<code>−x² + 7x = −x(x − 7)</code> → แตะเนินที่ <b>x = 7</b><br>' +
+           'ช่วง 0 ถึง 7 ผลลบเป็น<b>บวก</b> แปลว่าลูกบอลอยู่<b>เหนือ</b>เนิน = ข้ามพ้น',
+  },
+  {
+    id: 'm8', icon: '📈', title: 'อ่านค่าจากสมการ', week: 'Week 1–2 · ความชันและจุดยอด', mode: 'shot',
+    roots: [2, 8],
+    ask: 'วิถีลูกบอล <b>y = −(x − 2)(x − 8)</b>' +
+         '<div class="q">บอกจุดยอด (จุดสูงสุด) และความสูงที่จุดนั้น โดยไม่ต้องกระจาย</div>',
+    fields: [{ key: 'vx', label: 'จุดยอด x =' }, { key: 'vy', label: 'สูงสุด y =' }],
+    check: a => Math.abs(a.vx - 5) < 0.01 && Math.abs(a.vy - 9) < 0.05,
+    steps: 'จุดยอดอยู่<b>กึ่งกลางระหว่างรากสองตัว</b>เสมอ: <code>x = (2 + 8)/2 = 5</code><br>' +
+           'แทนค่ากลับ: <code>y = −(5 − 2)(5 − 8) = −(3)(−3) = 9</code> → สูงสุด <b>9 m</b>',
+  },
+];
+
+const vS = makeView(document.getElementById('cvSolve'), 16, 18);
+const flySolve = makeFlight();
+let curMission = null, curTraj = null;
+
+function missionState(id) {
+  if (!state.missions[id]) state.missions[id] = { stars: 0, tries: 0, solved: false };
+  return state.missions[id];
+}
+function starStr(n) { return '★'.repeat(n) + '☆'.repeat(3 - n); }
+function totalStars() { return MISSIONS.reduce((s, m) => s + missionState(m.id).stars, 0); }
+function refreshStars() {
+  const t = totalStars();
+  $('starCount').textContent = `⭐ ${t} / 24`;
+}
+
+function renderMissionList() {
+  $('missionList').innerHTML = '';
+  MISSIONS.forEach(m => {
+    const st = missionState(m.id);
+    const b = document.createElement('button');
+    b.className = 'mission-btn' + (curMission && curMission.id === m.id ? ' active' : '');
+    b.innerHTML = `<span class="mi">${m.icon}</span>
+      <span class="mt">${m.title}<span class="mw">${m.week}</span></span>
+      <span class="ms" style="color:${st.stars ? '#f59e0b' : '#cbd5e1'}">${starStr(st.stars)}</span>`;
+    b.onclick = () => selectMission(m);
+    $('missionList').appendChild(b);
+  });
+  refreshStars();
+}
+
+function selectMission(m) {
+  curMission = m;
+  curTraj = m.traj ? { ...m.traj } : (m.roots ? trajFromRoots(m.roots[0], m.roots[1]) : null);
+  if (m.area) m.area.reveal = missionState(m.id).solved;
+  // frame the view around whatever this mission actually shows
+  if (m.mode === 'area') {
+    vS.xMax = 4 + m.area.p + 1.4; vS.yMax = 4 + m.area.q + 1.6;
+  } else if (m.mode === 'fall') {
+    const tEnd = rootsOf(m.fall.a, m.fall.b, m.fall.c).filter(x => x > 0)[0];
+    vS.xMax = tEnd * 1.15; vS.yMax = vertexOf(m.fall).y * 1.35;
+  } else if (m.view) { vS.xMax = m.view.x; vS.yMax = m.view.y; }
+  else if (m.roots) {
+    const [p, q] = m.roots;
+    vS.xMax = q + 2;
+    vS.yMax = Math.max(6, Math.ceil(((q - p) / 2) ** 2) + 3);
+  } else { vS.xMax = 16; vS.yMax = 18; }
+  $('mTitle').textContent = `${m.icon} ${m.title}`;
+  $('mPrompt').innerHTML = m.ask;
+  $('mInputs').innerHTML = m.fields.map(f =>
+    `<div class="field"><label>${f.label}</label><input type="number" step="any" data-k="${f.key}" /></div>`).join('');
+  $('mVerdict').innerHTML = '';
+  $('btnCheck').disabled = false;
+  const fire = $('btnFireSolve');
+  fire.textContent = m.mode === 'fall' ? '🪂 ปล่อยลูกบอล' : m.mode === 'area' ? '🌱 ดูการแบ่งแปลง' : '🔥 ยิงพิสูจน์';
+  fire.disabled = m.mode === 'area' ? !missionState(m.id).solved : !curTraj;
+  refreshTiles(m);
+  renderMissionList();
+  drawSolve();
+}
+
+/* ---- Algebra-tile area model: (x + p)(x + q) laid out as a rectangle ---- */
+const TILE = { x2: '#0ea5e9', x2b: '#0284c7', xn: '#ef4444', xnb: '#b91c1c',
+               xp: '#22c55e', xpb: '#16a34a', u: '#eab308', ub: '#ca8a04' };
+const tileCv = document.getElementById('cvTiles');
+const tileCtx = tileCv.getContext('2d');
+
+function drawTiles(p, q, neg = true) {
+  const ctx = tileCtx, Wc = tileCv.width, Hc = tileCv.height;
+  ctx.clearRect(0, 0, Wc, Hc);
+  const XL = 4;                                  // an x-tile is 4 unit-lengths long
+  const cols = XL + p, rows = XL + q;
+  const M = { l: 78, t: 62, r: 26, b: 26 };
+  const s = Math.min((Wc - M.l - M.r) / cols, (Hc - M.t - M.b) / rows);
+  const ox = M.l + Math.max(0, (Wc - M.l - M.r - cols * s) / 2);   // centre the rectangle
+  const X = c => ox + c * s, Y = r => M.t + r * s;
+
+  const cell = (c0, r0, w, h, fill, stroke, label) => {
+    ctx.fillStyle = fill; ctx.strokeStyle = stroke; ctx.lineWidth = 2;
+    ctx.fillRect(X(c0), Y(r0), w * s, h * s);
+    ctx.strokeRect(X(c0), Y(r0), w * s, h * s);
+    if (label) {
+      ctx.fillStyle = '#fff'; ctx.font = `800 ${Math.min(22, s * Math.min(w, h) * 0.6)}px system-ui`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(label, X(c0) + w * s / 2, Y(r0) + h * s / 2);
+    }
+  };
+
+  const XC = neg ? TILE.xn : TILE.xp, XB = neg ? TILE.xnb : TILE.xpb, XLb = neg ? '−x' : 'x';
+  cell(0, 0, XL, XL, TILE.x2, TILE.x2b, 'x²');
+  for (let i = 0; i < p; i++) cell(XL + i, 0, 1, XL, XC, XB, XLb);
+  for (let j = 0; j < q; j++) cell(0, XL + j, XL, 1, XC, XB, XLb);
+  for (let i = 0; i < p; i++) for (let j = 0; j < q; j++) cell(XL + i, XL + j, 1, 1, TILE.u, TILE.ub, '1');
+
+  // edge labels — the two factors
+  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = '#1e293b'; ctx.font = '800 19px system-ui';
+  ctx.fillText(`x ${neg ? '−' : '+'} ${p}`, X(cols / 2), M.t - 26);
+  ctx.strokeStyle = '#64748b'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(X(0), M.t - 14); ctx.lineTo(X(cols), M.t - 14); ctx.stroke();
+  ctx.save();
+  ctx.translate(X(0) - 30, Y(rows / 2)); ctx.rotate(-Math.PI / 2);
+  ctx.fillText(`x ${neg ? '−' : '+'} ${q}`, 0, 0); ctx.restore();
+  ctx.beginPath(); ctx.moveTo(X(0) - 16, Y(0)); ctx.lineTo(X(0) - 16, Y(rows)); ctx.stroke();
+
+  // legend
+  ctx.textAlign = 'left'; ctx.font = '700 13px system-ui'; ctx.fillStyle = '#334155';
+  const leg = [[TILE.x2, 'แผ่น x²'], [XC, neg ? 'แท่ง −x สีแดง → พจน์ x' : 'แท่ง x สีเขียว → พจน์ x'],
+               [TILE.u, 'หน่วย → พจน์คงที่']];
+  let lx = X(0);
+  leg.forEach(([col, txt]) => {
+    ctx.fillStyle = col; ctx.fillRect(lx, Hc - 20, 14, 14);
+    ctx.fillStyle = '#334155'; ctx.fillText(txt, lx + 20, Hc - 8);
+    lx += ctx.measureText(txt).width + 46;
+  });
+}
+
+function refreshTiles(m) {
+  const wrap = document.getElementById('tileWrap');
+  if (!m || !m.tiles) { wrap.classList.add('hidden'); return; }
+  wrap.classList.remove('hidden');
+  const { p, q, neg = true } = m.tiles;
+  const sg = neg ? '−' : '+';
+  document.getElementById('tileCaption').innerHTML =
+    `(x ${sg} ${p})(x ${sg} ${q}) = x² + ⬜x + ⬜ &nbsp;— ` +
+    (neg ? 'แท่งแดงคือพจน์ลบ · หน่วยเหลืองคือพจน์บวก' : 'นับแท่งเขียวกับหน่วยเหลืองในรูป');
+  drawTiles(p, q, neg);
+}
+document.getElementById('btnTileToggle').onclick = e => {
+  const cv = document.getElementById('cvTiles');
+  const hidden = cv.classList.toggle('hidden');
+  e.target.textContent = hidden ? 'แสดง' : 'ซ่อน';
+};
+
+function solveHoops(m) {
+  return (m.hoops || []).map(h => ({ x: h.x, y: h.y, hit: false }));
+}
+
+/* A rectangular vegetable plot, (x+p) by (x+q). The tile grid below is literally
+   this plot cut into four pieces, so the algebra and the picture are one object. */
+function drawGarden(v, p, q, reveal, unknown) {
+  const { ctx, canvas } = v;
+  const XN = 4;                                   // x drawn as 4 m so the plot is legible
+  const w = XN + p, h = XN + q;
+  ctx.fillStyle = '#e0f2fe'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#a16207'; ctx.fillRect(0, v.sy(0), canvas.width, canvas.height - v.sy(0));
+
+  const gx = v.sx(0), gy = v.sy(h), gw = v.sx(w) - gx, gh = v.sy(0) - gy;
+  ctx.fillStyle = '#86efac'; ctx.fillRect(gx, gy, gw, gh);
+  if (reveal) {                                    // the four tile regions
+    const mx = v.sx(XN) - gx, my = v.sy(XN) - gy;   // screen y grows downward
+    ctx.fillStyle = 'rgba(14,165,233,0.55)'; ctx.fillRect(gx, gy + my, mx, gh - my);
+    ctx.fillStyle = 'rgba(34,197,94,0.75)';
+    ctx.fillRect(gx + mx, gy + my, gw - mx, gh - my);
+    ctx.fillRect(gx, gy, mx, my);
+    ctx.fillStyle = 'rgba(234,179,8,0.85)'; ctx.fillRect(gx + mx, gy, gw - mx, my);
+    ctx.strokeStyle = '#166534'; ctx.setLineDash([6, 5]); ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(gx + mx, gy); ctx.lineTo(gx + mx, gy + gh);
+    ctx.moveTo(gx, gy + my); ctx.lineTo(gx + gw, gy + my); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = '#0c4a6e'; ctx.font = '800 20px system-ui'; ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('x²', gx + mx / 2, gy + my + (gh - my) / 2);
+    ctx.fillText(`${q}x`, gx + mx / 2, gy + my / 2);
+    ctx.fillText(`${p}x`, gx + mx + (gw - mx) / 2, gy + my + (gh - my) / 2);
+    ctx.fillText(`${p * q}`, gx + mx + (gw - mx) / 2, gy + my / 2);
+    ctx.textBaseline = 'alphabetic';
+  }
+  ctx.strokeStyle = '#78350f'; ctx.lineWidth = 5; ctx.strokeRect(gx, gy, gw, gh);
+  for (let i = 0; i <= w; i++) {                   // fence posts
+    ctx.fillStyle = '#92400e';
+    ctx.fillRect(v.sx(i) - 3, gy + gh - 6, 6, 12);
+    ctx.fillRect(v.sx(i) - 3, gy - 6, 6, 12);
+  }
+  // dimension labels
+  ctx.fillStyle = '#1e293b'; ctx.font = '800 19px system-ui'; ctx.textAlign = 'center';
+  ctx.fillText(unknown && !reveal ? 'x + ?' : `x + ${p}`, gx + gw / 2, gy + gh + 30);
+  ctx.save(); ctx.translate(gx - 26, gy + gh / 2); ctx.rotate(-Math.PI / 2);
+  ctx.fillText(unknown && !reveal ? 'x + ?' : `x + ${q}`, 0, 0); ctx.restore();
+  ctx.font = '800 16px system-ui'; ctx.fillStyle = '#14532d';
+  ctx.fillText(unknown ? `พื้นที่ = x² + ${p + q}x + ${p * q} ตร.ม.` : 'พื้นที่ = ?',
+    gx + gw / 2, gy - 16);
+}
+
+/* Height against TIME — same parabola maths, different independent variable. */
+function drawFall(v, f, t) {
+  const { ctx, canvas } = v;
+  const tEnd = rootsOf(f.a, f.b, f.c).filter(x => x > 0)[0];
+  const peak = vertexOf(f);
+  ctx.fillStyle = '#eef2ff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  paintGrid(v);
+  // graph of h(t)
+  ctx.strokeStyle = 'rgba(37,99,235,0.9)'; ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  for (let u = 0; u <= tEnd; u += 0.02) {
+    const py = v.sy(yAt(f, u));
+    u === 0 ? ctx.moveTo(v.sx(u), py) : ctx.lineTo(v.sx(u), py);
+  }
+  ctx.stroke();
+  // roots
+  [[0, 't = 0 (โยน)'], [tEnd, `t = ${num(tEnd)} (ถึงพื้น)`]].forEach(([rt, lb]) => {
+    ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 3.5;
+    const px = v.sx(rt), py = v.sy(0);
+    ctx.beginPath(); ctx.moveTo(px - 8, py - 8); ctx.lineTo(px + 8, py + 8);
+    ctx.moveTo(px + 8, py - 8); ctx.lineTo(px - 8, py + 8); ctx.stroke();
+    ctx.fillStyle = '#b91c1c'; ctx.font = '800 13px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(lb, px, py + 26);
+  });
+  ctx.fillStyle = '#7c3aed';
+  ctx.beginPath(); ctx.arc(v.sx(peak.x), v.sy(peak.y), 7, 0, 7); ctx.fill();
+  ctx.font = '800 13px system-ui'; ctx.textAlign = 'center'; ctx.fillStyle = '#6d28d9';
+  ctx.fillText(`สูงสุด (${num(peak.x)}, ${num(peak.y)})`, v.sx(peak.x), v.sy(peak.y) - 14);
+  ctx.fillStyle = '#334155'; ctx.font = '700 13px system-ui'; ctx.textAlign = 'left';
+  ctx.fillText('แกนนอน = เวลา t (วินาที) · แกนตั้ง = ความสูง h (เมตร)', v.PAD.l + 6, v.PAD.t + 12);
+
+  if (t != null) {   // the real ball, moving vertically, tied to the graph by dashed lines
+    const hNow = yAt(f, t);
+    const bx = v.sx(t), by = v.sy(hNow);
+    ctx.strokeStyle = 'rgba(100,116,139,0.6)'; ctx.setLineDash([4, 4]); ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx, v.sy(0));
+    ctx.moveTo(bx, by); ctx.lineTo(v.sx(0), by); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = '#dc2626';
+    ctx.beginPath(); ctx.arc(bx, by, 8, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(v.sx(0), by, 11, 0, 7); ctx.fill();   // ball on the height axis
+    ctx.fillStyle = '#7f1d1d'; ctx.font = '800 13px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText(`h = ${num(hNow)} m`, v.sx(0) + 16, by - 12);
+  }
+}
+
+function drawSolve(ballX, ballY, trail, parts) {
+  if (!curMission) {
+    paintSky(vS); paintGrid(vS); paintGround(vS, flatHill); paintAxisLabels(vS);
+    vS.ctx.fillStyle = '#334155'; vS.ctx.font = '800 18px system-ui'; vS.ctx.textAlign = 'center';
+    vS.ctx.fillText('เลือกภารกิจจากรายการทางขวา', vS.canvas.width / 2, vS.canvas.height / 2);
+    return;
+  }
+  if (curMission.mode === 'area') {
+    const A = curMission.area;
+    drawGarden(vS, A.p, A.q, A.reveal, A.unknown);
+    return;
+  }
+  if (curMission.mode === 'fall') {
+    drawFall(vS, curMission.fall, ballX);
+    return;
+  }
+  const hill = curMission.hill || flatHill;
+  const r = curMission.roots;
+  const xs = r ? r[0] : 0, xe = r ? r[1] : null;
+  paintSky(vS); paintGrid(vS); paintGround(vS, hill); paintAxisLabels(vS);
+  if (curTraj) paintPath(vS, curTraj, hill,
+    { vertex: true, roots: true, tangent: true, xStart: xs, xEnd: xe });
+  const hoops = solveHoops(curMission);
+  if (hoops.length) paintTargets(vS, hoops);
+  if (curTraj) {
+    const m0 = 2 * curTraj.a * xs + curTraj.b;
+    paintLauncher(vS, xs, yAt(curTraj, xs), Math.atan(m0) * 180 / Math.PI);
+  } else paintLauncher(vS, 0, 2, 45);
+  if (ballX != null) paintBall(vS, ballX, ballY, trail || []);
+  if (parts && parts.length) paintParticles(vS, parts);
+}
+
+function readAnswers() {
+  const out = {};
+  $('mInputs').querySelectorAll('input').forEach(i => { out[i.dataset.k] = parseFloat(i.value); });
+  return out;
+}
+
+$('btnCheck').onclick = () => {
+  if (!curMission) return;
+  const a = readAnswers();
+  if (Object.values(a).some(v => Number.isNaN(v))) {
+    $('mVerdict').innerHTML = `<div class="verdict info">กรอกให้ครบทุกช่องก่อนนะ</div>`;
+    return;
+  }
+  const st = missionState(curMission.id);
+  st.tries++;
+  if (curMission.check(a)) {
+    if (!st.solved) { st.stars = st.tries === 1 ? 3 : st.tries === 2 ? 2 : 1; st.solved = true; }
+    if (curMission.mode === 'area') { curMission.area.reveal = true; $('btnFireSolve').disabled = false; }
+    $('mVerdict').innerHTML = `<div class="verdict ok">✅ ถูกต้อง! ได้ ${starStr(st.stars)}
+      <div class="steps">${curMission.steps}</div></div>
+      <p class="hint" style="margin-top:8px">กด <b>🔥 ยิงพิสูจน์</b> เพื่อดูว่าลูกบอลไปตามที่คำนวณจริงไหม</p>`;
+  } else {
+    if (curMission.trajFrom) curTraj = curMission.trajFrom(a);
+    $('btnFireSolve').disabled = !curTraj;
+    $('mVerdict').innerHTML = `<div class="verdict bad">❌ ยังไม่ถูก — ลองอีกครั้ง (ครั้งที่ ${st.tries})
+      ${curMission.trajFrom ? '<div class="steps">กด <b>🔥 ยิงพิสูจน์</b> ดูสิ ลูกบอลจะบินตามตัวเลขที่คุณกรอก — แล้วดูว่าพลาดตรงไหน</div>' : ''}</div>`;
+  }
+  save(); renderMissionList(); drawSolve();
+};
+
+$('btnFireSolve').onclick = () => {
+  if (curMission.mode === 'area') { curMission.area.reveal = true; drawSolve(); return; }
+  if (curMission.mode === 'fall') {
+    const f = curMission.fall;
+    const tEnd = rootsOf(f.a, f.b, f.c).filter(x => x > 0)[0];
+    const t0 = performance.now();
+    (function step(now) {
+      const t = Math.min(tEnd, (now - t0) / 1000 * 1.1);
+      drawFall(vS, f, t);
+      if (t < tEnd) requestAnimationFrame(step);
+    })(t0);
+    return;
+  }
+  if (!curTraj || curTraj.a >= 0) return;
+  const hill = curMission.hill || flatHill;
+  const hoops = solveHoops(curMission);
+  const r = curMission.roots;
+  const xs = r ? r[0] : 0, xe = r ? r[1] : null;
+  const m0 = 2 * curTraj.a * xs + curTraj.b;
+  flySolve({ p: curTraj, hill, g: 9.8, xMax: vS.xMax, xStart: xs, xEnd: xe },
+    (x, y, trail, parts) => {
+      hoops.forEach(h => { if (Math.abs(x - h.x) < 0.35 && Math.abs(y - h.y) < 1.6) h.hit = true; });
+      paintSky(vS); paintGrid(vS); paintGround(vS, hill); paintAxisLabels(vS);
+      paintPath(vS, curTraj, hill, { vertex: true, roots: true, tangent: true, xStart: xs, xEnd: xe });
+      if (hoops.length) paintTargets(vS, hoops);
+      paintLauncher(vS, xs, yAt(curTraj, xs), Math.atan(m0) * 180 / Math.PI);
+      paintBall(vS, x, y, trail); paintParticles(vS, parts);
+    },
+    () => {
+      if (hoops.length && hoops.every(h => h.hit))
+        $('mVerdict').innerHTML += `<div class="verdict ok" style="margin-top:8px">🎉 ผ่านห่วงครบทุกวง — คณิตของคุณคุมลูกบอลได้จริง</div>`;
+    });
+};
+
+/* ============================================================
+   TAB 3 — BUILD
+   ============================================================ */
+const vB = makeView(document.getElementById('cvBuild'), 20, 18);
+const flyBuild = makeFlight();
+const B = { c: 2, targets: [], traj: null };
+
+/** Parabola through (0, c) and the two placed targets. */
+function fitParabola(c, t1, t2) {
+  const A1 = t1.x * t1.x, B1 = t1.x, C1 = t1.y - c;
+  const A2 = t2.x * t2.x, B2 = t2.x, C2 = t2.y - c;
+  const det = A1 * B2 - A2 * B1;
+  if (Math.abs(det) < 1e-9) return null;
+  return { a: (C1 * B2 - C2 * B1) / det, b: (A1 * C2 - A2 * C1) / det, c };
+}
+
+function drawBuild(ballX, ballY, trail, parts) {
+  paintSky(vB); paintGrid(vB); paintGround(vB, flatHill); paintAxisLabels(vB);
+  if (B.traj && B.traj.a < 0) paintPath(vB, B.traj, flatHill, { vertex: true, roots: true, tangent: true });
+  paintTargets(vB, B.targets);
+  paintLauncher(vB, 0, B.c, B.traj ? Math.atan(B.traj.b) * 180 / Math.PI : 45);
+  if (ballX != null) paintBall(vB, ballX, ballY, trail || []);
+  if (parts && parts.length) paintParticles(vB, parts);
+}
+
+function recomputeBuild() {
+  $('targetList').innerHTML = B.targets.map((t, i) =>
+    `<div class="row">🎯 เป้า ${i + 1} — (${num(t.x)}, ${num(t.y)})
+       <button class="rm" data-i="${i}">✕</button></div>`).join('') ||
+    '<p class="hint">ยังไม่มีเป้า — คลิกบนภาพเพื่อวาง</p>';
+  $('targetList').querySelectorAll('.rm').forEach(btn =>
+    btn.onclick = () => { B.targets.splice(+btn.dataset.i, 1); recomputeBuild(); drawBuild(); });
+
+  const ok2 = B.targets.length === 2;
+  B.traj = ok2 ? fitParabola(B.c, B.targets[0], B.targets[1]) : null;
+  const good = B.traj && B.traj.a < 0;
+  $('btnTestLevel').disabled = !good;
+
+
+  if (good) autoSaveLevel();
+  if (!ok2) {
+    $('eqBuild').textContent = `วางเป้าอีก ${2 - B.targets.length} จุด`;
+    $('buildNote').textContent = '';
+  } else if (!good) {
+    $('eqBuild').textContent = 'ยิงแบบนี้ไม่ได้ 😅';
+    $('buildNote').innerHTML = 'พาราโบลาที่ผ่านจุดเหล่านี้<b>หงายขึ้น</b> (a ≥ 0) ซึ่งลูกบอลจริงทำไม่ได้ — ' +
+      'ลองวางเป้าที่สองให้<b>ต่ำกว่า</b>เป้าแรก หรือให้อยู่ห่างออกไป';
+  } else {
+    const r = rootsOf(B.traj.a, B.traj.b, B.traj.c).filter(x => x > 0);
+    $('eqBuild').innerHTML = `y = ${polyStr(B.traj.a, B.traj.b, B.traj.c, true)}` +
+      `<small>a = ${num(B.traj.a)} · b = ${num(B.traj.b)} · c = ${num(B.traj.c)}</small>`;
+    const vx = vertexOf(B.traj);
+    $('buildNote').innerHTML = `จุดยอด (${num(vx.x)}, ${num(vx.y)}) · ตกที่ x = ${r.length ? num(r[0]) : '—'}` +
+      (r.length ? `<br>รูปแยกตัวประกอบโดยประมาณ: <b>${factoredStr(B.traj.a, ...rootsOf(B.traj.a, B.traj.b, B.traj.c).map(x => Math.round(x * 100) / 100))}</b>` : '');
+  }
+}
+
+vB.canvas.onclick = e => {
+  if (B.targets.length >= 2) return;
+  const rect = vB.canvas.getBoundingClientRect();
+  const px = (e.clientX - rect.left) * vB.canvas.width / rect.width;
+  const py = (e.clientY - rect.top) * vB.canvas.height / rect.height;
+  const x = Math.round(vB.ux(px) * 2) / 2, y = Math.round(vB.uy(py) * 2) / 2;
+  if (x <= 0.5 || x > vB.xMax - 0.5 || y < 0 || y > vB.yMax) return;
+  B.targets.push({ x, y, hit: false });
+  recomputeBuild(); drawBuild();
+};
+$('sbHeight').oninput = e => { B.c = parseFloat(e.target.value); $('vbHeight').textContent = num(B.c) + ' m'; recomputeBuild(); drawBuild(); };
+$('btnClearTargets').onclick = () => { B.targets = []; recomputeBuild(); drawBuild(); };
+$('btnTestLevel').onclick = () => {
+  if (!B.traj || B.traj.a >= 0) return;
+  B.targets.forEach(t => t.hit = false);
+  flyBuild({ p: B.traj, hill: flatHill, g: 9.8, xMax: vB.xMax },
+    (x, y, trail, parts) => {
+      B.targets.forEach(t => { if (Math.abs(x - t.x) < 0.4 && Math.abs(y - t.y) < 0.8) t.hit = true; });
+      drawBuild(x, y, trail, parts);
+    }, () => drawBuild());
+};
+
+/* ---- the student's level saves itself into the printable report ---- */
+let saveTimer = null;
+function autoSaveLevel() {
+  if (!B.traj || B.traj.a >= 0) return;
+  const vx = vertexOf(B.traj);
+  const land = rootsOf(B.traj.a, B.traj.b, B.traj.c).filter(x => x > 0)[0];
+  state.level = {
+    eq: `y = ${polyStr(B.traj.a, B.traj.b, B.traj.c, false)}`,
+    pts: `จุดยอด (${num(vx.x)}, ${num(vx.y)}) · ตกที่ x = ${land != null ? num(land) : '—'}`,
+    snap: state.level && state.level.snap,
+  };
+  clearTimeout(saveTimer);            // sliders fire continuously — write at most a few times a second
+  saveTimer = setTimeout(save, 400);
+}
+
+/* The snapshot is heavy (a JPEG data URI), so grab it only when the report is shown. */
+function captureLevelSnap() {
+  if (!state.level || !B.traj || B.traj.a >= 0) return;
+  drawBuild();
+  state.level.snap = vB.canvas.toDataURL('image/jpeg', 0.5);
+  save();
+}
+
+/* ============================================================
+   TAB 4 — REPORT
+   ============================================================ */
+const REPORT_FIELDS = ['inpName', 'inpClass', 'inpDate', 'w1', 'w2', 'w3', 'w4', 'w5'];
+function refreshReport() {
+  $('reportBody').innerHTML = MISSIONS.map(m => {
+    const st = missionState(m.id);
+    return `<tr><td>${m.icon} ${m.title}</td><td>${m.week}</td>
+      <td class="c" style="color:#f59e0b;font-weight:800">${starStr(st.stars)}</td>
+      <td class="c">${st.solved ? st.tries : '—'}</td></tr>`;
+  }).join('');
+  $('reportStars').textContent = `${totalStars()} / 24`;
+  $('repBest').textContent = num(state.best) + ' m';
+  captureLevelSnap();
+  if (state.level) {
+    $('repLevelEq').textContent = state.level.eq;
+    $('repLevelPts').textContent = state.level.pts || '—';
+    if (state.level.snap) { $('repSnap').src = state.level.snap; $('repSnap').classList.remove('hidden'); }
+  }
+  refreshStars();
+}
+REPORT_FIELDS.forEach(id => {
+  const el = $(id);
+  el.value = state.fields[id] || '';
+  el.oninput = () => {
+    state.fields[id] = el.value; save();
+  };
+});
+$('btnPrint').onclick = () => window.print();
+
+/* ============================================================
+   TABS + RESET
+   ============================================================ */
+document.querySelectorAll('.tab').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    ['launch', 'solve', 'build', 'report'].forEach(t =>
+      $('tab-' + t).classList.toggle('hidden', t !== btn.dataset.tab));
+    if (btn.dataset.tab === 'launch') drawLaunch();
+    if (btn.dataset.tab === 'solve') drawSolve();
+    if (btn.dataset.tab === 'build') drawBuild();
+    if (btn.dataset.tab === 'report') refreshReport();
+  };
+});
+$('btnReset').onclick = () => {
+  if (!confirm('ล้างดาว ด่านที่สร้าง และคำตอบทั้งหมด?')) return;
+  localStorage.removeItem(STORE_KEY);
+  location.reload();
+};
+
+/* ---- boot ---- */
+updateLaunchPanel(); drawLaunch();
+renderMissionList(); drawSolve();
+recomputeBuild(); drawBuild();
+refreshReport();
+</script>
+</body>
+</html>
