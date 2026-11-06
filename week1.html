@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Fluids &amp; Optics Lab — แรงลอยตัวและความหนาแน่นใน Algodoo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet" />
+<style>
+@font-face { font-family: 'SarabunLocal'; font-weight: 400; src: local('Sarabun'), url('fonts/Sarabun-Regular.ttf'); }
+@font-face { font-family: 'SarabunLocal'; font-weight: 600 800; src: local('Sarabun Bold'), url('fonts/Sarabun-Bold.ttf'); }
+@font-face { font-family: 'SarabunLocal'; font-weight: 400; font-style: italic; src: url('fonts/Sarabun-Italic.ttf'); }
+
+:root {
+  --brand-h: 245;
+  --bg: oklch(0.98 0.01 var(--brand-h));
+  --surface: oklch(1 0 0);
+  --sunken: oklch(0.96 0.02 var(--brand-h));
+  --ink: oklch(0.2 0.05 var(--brand-h));
+  --muted: oklch(0.45 0.05 var(--brand-h));
+  --primary: oklch(0.58 0.18 var(--brand-h));
+  --primary-soft: oklch(0.93 0.04 var(--brand-h));
+  --accent: oklch(0.66 0.17 42);
+  --accent-soft: oklch(0.96 0.04 45);
+  --success: oklch(0.55 0.15 142);
+  --success-soft: oklch(0.95 0.04 142);
+  --danger: oklch(0.55 0.18 28);
+  --border: oklch(0.89 0.02 var(--brand-h));
+  --shadow: 0 6px 20px oklch(0 0 0 / 0.07);
+  --r: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'SarabunLocal', 'Sarabun', 'Noto Sans Thai', system-ui, sans-serif;
+  /* = --bg / --ink in hex: html2canvas (PDF export) reads body styles and cannot parse oklch */
+  background: #f3f9ff; color: #00182b; line-height: 1.6; font-size: 16px;
+}
+header {
+  background: linear-gradient(135deg, var(--primary), oklch(0.5 0.2 290));
+  color: #fff; padding: 18px 28px; box-shadow: var(--shadow);
+}
+header h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.01em; }
+header p { font-size: 14px; opacity: .92; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 18px 24px 48px; }
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.tab {
+  font: inherit; font-weight: 700; font-size: 14.5px; padding: 9px 18px; border-radius: 999px;
+  background: var(--surface); border: 1px solid var(--border); color: var(--muted); cursor: pointer;
+}
+.tab:hover { border-color: var(--primary); color: var(--primary); }
+.tab.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.panel { display: none; }
+.panel.active { display: block; }
+
+section.card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+  padding: 20px 24px; margin-bottom: 18px; box-shadow: var(--shadow);
+}
+h2 { font-size: 21px; font-weight: 800; margin-bottom: 10px; color: var(--primary); }
+h3 { font-size: 17px; font-weight: 800; margin: 14px 0 6px; }
+h4 { font-size: 15px; font-weight: 800; margin: 10px 0 4px; }
+p { margin-bottom: 8px; }
+ul, ol { margin: 4px 0 10px 22px; }
+li { margin-bottom: 3px; }
+.muted { color: var(--muted); font-size: 14px; }
+.eq {
+  font-family: 'Cambria Math', 'DejaVu Serif', Georgia, serif; font-size: 19px; font-weight: 600;
+  text-align: center; background: var(--sunken); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 10px 14px; margin: 10px 0;
+}
+.eq small { display: block; font-family: inherit; font-size: 13px; color: var(--muted); font-weight: 600; margin-top: 2px; }
+.callout { border-radius: var(--r); padding: 10px 14px; margin: 10px 0; font-size: 15px; border: 1px solid; }
+.callout.key { background: var(--primary-soft); border-color: oklch(0.85 0.07 var(--brand-h)); }
+.callout.warn { background: var(--accent-soft); border-color: oklch(0.85 0.08 45); }
+.callout.ok { background: var(--success-soft); border-color: oklch(0.8 0.1 142); }
+.callout b.t { display: block; margin-bottom: 2px; }
+
+table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; font-size: 15px; }
+th, td { border: 1px solid var(--border); padding: 7px 10px; text-align: left; vertical-align: top; }
+th { background: var(--sunken); font-weight: 800; }
+td.c, th.c { text-align: center; }
+td.fill { height: 34px; }
+
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+@media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
+
+/* interactive widgets */
+.widget { background: var(--sunken); border: 1px solid var(--border); border-radius: var(--r); padding: 12px 14px; }
+.ctl { margin-bottom: 8px; }
+.ctl label { display: flex; justify-content: space-between; font-size: 14px; font-weight: 700; }
+.ctl label span { color: var(--primary); font-variant-numeric: tabular-nums; }
+.ctl input[type=range] { width: 100%; accent-color: var(--primary); }
+select { font: inherit; padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; width: 100%; }
+.readout { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 8px; }
+.readout div { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 6px 9px; font-size: 13.5px; color: var(--muted); font-weight: 700; }
+.readout b { display: block; font-size: 17px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.verdict { margin-top: 8px; padding: 8px 12px; border-radius: 8px; font-weight: 800; font-size: 15px; text-align: center; }
+.verdict.ok { background: var(--success-soft); color: oklch(0.36 0.13 142); }
+.verdict.bad { background: oklch(0.96 0.04 28); color: oklch(0.42 0.16 28); }
+svg.diagram { width: 100%; height: auto; display: block; background: #fff; border: 1px solid var(--border); border-radius: var(--r); }
+
+/* steps */
+ol.steps { list-style: none; margin-left: 0; counter-reset: s; }
+ol.steps > li {
+  counter-increment: s; position: relative; padding: 6px 0 6px 40px; margin-bottom: 4px;
+}
+ol.steps > li::before {
+  content: counter(s); position: absolute; left: 0; top: 6px; width: 28px; height: 28px; border-radius: 50%;
+  background: var(--primary); color: #fff; font-weight: 800; font-size: 14px; display: grid; place-items: center;
+}
+.station { border-left: 5px solid var(--accent); }
+.tag { display: inline-block; font-size: 12.5px; font-weight: 800; padding: 2px 10px; border-radius: 999px; background: var(--accent-soft); color: oklch(0.45 0.14 42); margin-left: 6px; vertical-align: middle; }
+
+/* screenshot slot */
+figure.shot { margin: 10px 0 14px; break-inside: avoid; }
+figure.shot img { width: 100%; height: auto; display: block; border: 1px solid var(--border); border-radius: var(--r); }
+figure.shot .ph {
+  display: none; min-height: 210px; border: 2px dashed oklch(0.75 0.06 var(--brand-h)); border-radius: var(--r);
+  background: repeating-linear-gradient(45deg, var(--sunken), var(--sunken) 12px, #fff 12px, #fff 24px);
+  align-items: center; justify-content: center; text-align: center; padding: 18px; color: var(--muted); font-size: 14px;
+}
+figure.shot.missing img { display: none; }
+figure.shot.missing .ph { display: flex; }
+figure.shot .ph b { display: block; color: var(--ink); font-size: 15px; margin-bottom: 4px; }
+figure.shot .ph code { background: #fff; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--border); font-size: 13px; }
+figcaption { font-size: 13.5px; color: var(--muted); margin-top: 5px; }
+figcaption b { color: var(--ink); }
+
+/* worksheet */
+.ws-id { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 10px; }
+.ws-id div { flex: 1 1 200px; border-bottom: 1.5px solid var(--ink); padding-bottom: 2px; font-size: 14px; font-weight: 700; min-height: 28px; }
+.line { border-bottom: 1px solid #94a3b8; height: 28px; }
+.drawbox { border: 1.5px solid var(--ink); border-radius: 6px; min-height: 190px; margin: 6px 0 12px; position: relative; }
+.drawbox.small { min-height: 130px; }
+.drawbox span { position: absolute; top: 5px; left: 9px; font-size: 13px; color: var(--muted); font-weight: 700; }
+.q { margin: 8px 0 4px; font-weight: 700; break-inside: avoid; }
+.ans { margin-bottom: 10px; }
+.checkbox { display: inline-block; width: 13px; height: 13px; border: 1.5px solid var(--ink); border-radius: 2px; vertical-align: -2px; margin-right: 4px; }
+.sheet-title { text-align: center; margin-bottom: 8px; }
+.sheet-title h2 { color: var(--ink); margin: 0; }
+
+footer { text-align: center; color: var(--muted); font-size: 13px; padding: 10px; }
+
+/* ---------- submission: student details + submit buttons (ส่งงาน tab) ---------- */
+.subbar { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: end; }
+.subbar label { display: flex; flex-direction: column; font-size: 12.5px; font-weight: 700; color: var(--muted); flex: 1 1 160px; }
+.subbar input { font: inherit; font-size: 15px; padding: 6px 9px; border: 1px solid var(--border); border-radius: 8px; color: var(--ink); }
+.submit-acts { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 8px 0 12px; }
+.submit-acts .status { font-size: 13px; color: var(--muted); margin-right: auto; }
+.submit-acts .status b { color: var(--ink); }
+.btn {
+  font: inherit; font-weight: 700; font-size: 14px; padding: 8px 14px; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--ink); cursor: pointer; white-space: nowrap;
+}
+.btn:hover { border-color: var(--primary); color: var(--primary); }
+.btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.btn.primary:hover { filter: brightness(1.08); color: #fff; }
+.btn.danger:hover { border-color: var(--danger); color: var(--danger); }
+.btn.on { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); }
+.btn:disabled { opacity: .6; cursor: wait; }
+
+/* ---------- submission: screenshot slots ---------- */
+.shotpair { margin: 10px 0 14px; }
+.shotpair figure.shot { margin: 0; }
+.slot { border: 2px dashed oklch(0.72 0.1 var(--brand-h)); border-radius: var(--r); padding: 10px; background: var(--primary-soft); outline: none; }
+.slot:focus-within, .slot.drag { border-style: solid; border-color: var(--primary); }
+.slot.done { border-style: solid; border-color: var(--success); background: var(--success-soft); }
+.slot-head { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; margin-bottom: 6px; }
+.slot-status { font-weight: 800; color: var(--muted); white-space: nowrap; }
+.slot.done .slot-status { color: oklch(0.4 0.13 142); }
+.slot-view {
+  min-height: 170px; display: grid; place-items: center; background: #fff; border-radius: 8px; border: 1px solid var(--border);
+  text-align: center; color: var(--muted); font-size: 13.5px; padding: 8px; cursor: pointer; outline: none;
+}
+.slot-view:focus { box-shadow: 0 0 0 3px oklch(0.8 0.1 var(--brand-h)); }
+.slot-view img { max-width: 100%; max-height: 340px; display: block; border-radius: 4px; }
+.slot-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.slot-actions .btn { font-size: 13px; padding: 6px 10px; }
+kbd { font: inherit; font-size: 12px; background: #fff; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; }
+
+/* ---------- submission: fillable worksheet ---------- */
+.ws td input, .ws td select {
+  width: 100%; font: inherit; color: var(--ink); border: 0; border-bottom: 1px dashed var(--border);
+  background: transparent; padding: 3px 2px;
+}
+.ws td input:focus, .ws td select:focus, input.blank:focus, textarea.ta:focus { outline: 2px solid oklch(0.8 0.1 var(--brand-h)); outline-offset: 1px; }
+input.blank {
+  font: inherit; width: 7em; border: 0; border-bottom: 1.5px solid var(--ink); background: var(--sunken);
+  padding: 0 4px; text-align: center; color: var(--ink);
+}
+textarea.ta {
+  display: block; width: 100%; font: inherit; color: var(--ink); border: 1px solid var(--border); border-radius: 8px;
+  padding: 6px 9px; min-height: 66px; resize: vertical; margin-bottom: 10px; background: #fff;
+}
+.choice { font-weight: 400; }
+.choice label { margin-right: 18px; cursor: pointer; }
+.choice input, td.c input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--primary); vertical-align: -3px; margin-right: 4px; }
+
+dialog#dlg { border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; max-width: 460px; width: calc(100% - 32px); box-shadow: var(--shadow); color: var(--ink); }
+dialog#dlg::backdrop { background: oklch(0.2 0.05 var(--brand-h) / 0.4); }
+dialog#dlg ul { margin: 8px 0 14px 20px; font-size: 14.5px; max-height: 50vh; overflow: auto; }
+dialog#dlg .dlg-acts { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+
+/* ---------- submission: PDF render (built off-screen, rasterised by html2pdf) ---------- */
+/* html2canvas cannot parse oklch(), so everything inside the PDF uses hex equivalents of the palette */
+.pdf-root {
+  --bg: #f3f9ff; --surface: #ffffff; --sunken: #e7f4ff; --ink: #00182b; --muted: #3d586f;
+  --primary: #007fdc; --primary-soft: #d3ebff; --accent: #e56731; --accent-soft: #ffeadc;
+  --success: #33862c; --success-soft: #e0f6dd; --danger: #c5372f; --border: #d0dce7; --answer: #03379a;
+  width: 190mm; font-size: 12.5px; line-height: 1.5; color: var(--ink); background: #fff;
+}
+.pdf-root section.card { box-shadow: none; padding: 8px 12px; margin-bottom: 8px; border-radius: 10px; }
+.pdf-root h2 { font-size: 17px; margin-bottom: 6px; }
+.pdf-root h3 { font-size: 14.5px; margin: 8px 0 4px; }
+.pdf-root table { font-size: 12.5px; margin: 4px 0 8px; }
+.pdf-root th, .pdf-root td { padding: 4px 7px; }
+.pdf-head { background: linear-gradient(135deg, #007fdc, #6741ca); color: #fff; padding: 12px 16px; border-radius: 10px; margin-bottom: 8px; }
+.pdf-head h1 { font-size: 19px; font-weight: 800; }
+.pdf-head p { font-size: 12.5px; margin: 0; }
+.pdf-warn { border: 1.5px solid var(--danger); background: #ffeeea; color: #861210; border-radius: 8px; padding: 6px 10px; margin-bottom: 8px; }
+.pdf-warn ul { margin: 2px 0 0 18px; }
+.pdf-shot { margin-bottom: 10px; }
+.pdf-shot h4 { margin: 0 0 4px; }
+.pdf-shot img { display: block; max-width: 100%; max-height: 112mm; width: auto; height: auto; margin: 0 auto; border: 1px solid var(--border); border-radius: 6px; }
+.pdf-none { border: 2px dashed var(--danger); color: var(--danger); padding: 16px; text-align: center; border-radius: 8px; font-weight: 700; }
+.pdf-root .v { display: inline-block; min-width: 1.5em; color: var(--answer); font-weight: 600; }
+.pdf-root .v.empty, .pdf-root .va.empty { color: var(--danger); font-weight: 400; }
+.pdf-root .va { white-space: pre-wrap; border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; min-height: 2.1em; margin-bottom: 8px; color: var(--answer); font-weight: 600; }
+.pdf-root .cbx { display: inline-block; width: 14px; height: 14px; border: 1.5px solid var(--ink); border-radius: 3px; vertical-align: -2px; margin-right: 4px; text-align: center; line-height: 11px; font-size: 12px; font-weight: 800; color: var(--answer); }
+
+@media print {
+  @page { size: A4; margin: 13mm 12mm; }
+  body { background: #fff; font-size: 11.5pt; line-height: 1.5; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  header { box-shadow: none; padding: 12px 18px; border-radius: 10px; margin-bottom: 8px; }
+  header h1 { font-size: 19pt; }
+  .wrap { padding: 0; max-width: none; }
+  .tabs, .no-print, .widget .ctl input, footer { display: none !important; }
+  .panel { display: block !important; }
+  section.card { box-shadow: none; padding: 12px 16px; margin-bottom: 10px; }
+  .callout, .widget, table, figure.shot, .station li, tr { break-inside: avoid; }
+  h2, h3, h4 { break-after: avoid; }
+  .pb { break-before: page; }
+  h2 { font-size: 15.5pt; }
+  .widget .ctl { display: none; }
+  .line { height: 23px; }
+  td.fill { height: 27px; }
+  .drawbox.small { min-height: 96px; }
+  .q { margin: 5px 0 3px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Fluids &amp; Optics Lab</h1>
+  <p>Dynamic Software · Algodoo · แรงลอยตัว (Buoyancy) และความหนาแน่น (Density) · 2 ชั่วโมง 30 นาที</p>
+</header>
+
+<div class="wrap">
+
+<div class="tabs no-print">
+  <button class="tab active" data-tab="learn">เรียนรู้ (Learn)</button>
+  <button class="tab" data-tab="t1">งาน 1 · สร้างถังน้ำ</button>
+  <button class="tab" data-tab="t2">งาน 2 · ความหนาแน่น</button>
+  <button class="tab" data-tab="t3">งาน 3 · วิศวกรเรือ</button>
+  <button class="tab" data-tab="submit">ส่งงาน</button>
+</div>
+
+<!-- ================================================================ LEARN -->
+<div id="learn" class="panel active">
+
+<section class="card">
+  <h2>เป้าหมายของคาบนี้</h2>
+  <ol>
+    <li>บอกได้ว่าวัตถุลอยหรือจมจากการเทียบ <b>ความหนาแน่นเฉลี่ย</b> ของวัตถุกับของน้ำ</li>
+    <li>อธิบายว่าเรือเหล็กลอยได้อย่างไร และสังเกตใน Algodoo ว่า <b>ระดับที่เรือจมลงในน้ำ (draft)</b> เปลี่ยนตามน้ำหนักสินค้าอย่างไร</li>
+  </ol>
+  <div class="callout key"><b class="t">คณิตศาสตร์ที่ใช้ในคาบนี้</b>
+    สมการเชิงเส้น (draft = มวล ÷ ความกว้าง) · อัตราส่วนและสัดส่วน ·
+    การหาพื้นที่ของรูปสี่เหลี่ยม
+  </div>
+</section>
+
+<section class="card">
+  <h2>แนวคิดที่ 1 · ความหนาแน่น (Density)</h2>
+  <p>ความหนาแน่นบอกว่าวัตถุ “แน่น” เพียงใด คือมวลที่อยู่ในหนึ่งหน่วยปริมาตร</p>
+  <div class="eq">ความหนาแน่น = มวล ÷ ปริมาตร &nbsp;&nbsp;(ρ = m ÷ V)</div>
+  <p>Algodoo เป็นโปรแกรมแบบ <b>2 มิติ</b> จึงใช้ <b>พื้นที่</b> แทนปริมาตร: <b>มวล = ความหนาแน่น × พื้นที่</b>
+     ตัวเลขความหนาแน่นในหน้าต่าง Material ของโปรแกรมจึงเป็นค่าเทียบกันภายในโปรแกรม ไม่ใช่หน่วย kg/m³ ของโลกจริง
+     (โดยทั่วไปน้ำมีค่าประมาณ 1)</p>
+
+  <table>
+    <thead><tr><th>วัสดุ</th><th class="c">ความหนาแน่นจริง (g/cm³, โดยประมาณ)</th><th>เทียบกับน้ำ (1.00)</th></tr></thead>
+    <tbody>
+      <tr><td>ไม้สน</td><td class="c">0.4 – 0.6</td><td>เบากว่า → ลอย</td></tr>
+      <tr><td>น้ำแข็ง</td><td class="c">0.92</td><td>เบากว่าเล็กน้อย → ลอย (โผล่พ้นน้ำเพียงส่วนน้อย)</td></tr>
+      <tr><td>น้ำ</td><td class="c">1.00</td><td>—</td></tr>
+      <tr><td>เหล็กกล้า</td><td class="c">7.8</td><td>หนักกว่า → จม</td></tr>
+      <tr><td>ทองคำ</td><td class="c">19.3</td><td>หนักกว่ามาก → จม</td></tr>
+    </tbody>
+  </table>
+  <div class="callout key"><b class="t">กฎการลอย</b>
+    วัตถุลอยได้เมื่อ <b>ความหนาแน่นเฉลี่ย</b> ของวัตถุทั้งชิ้น (รวมช่องว่างอากาศที่อยู่ในตัวมัน) น้อยกว่าความหนาแน่นของน้ำ
+  </div>
+</section>
+
+<section class="card">
+  <h2>แนวคิดที่ 2 · หลักของอาร์คิมีดีส และเรือเหล็กที่ลอยได้</h2>
+  <p>วัตถุที่จมในของเหลวถูกดันขึ้นด้วย <b>แรงลอยตัว</b> เท่ากับ <b>น้ำหนักของน้ำที่ถูกวัตถุแทนที่</b></p>
+  <div class="grid2">
+    <div>
+      <ul>
+        <li>เรือลอยนิ่งเมื่อ <b>แรงลอยตัว = น้ำหนักเรือรวมสินค้า</b></li>
+        <li>ที่ความหนาแน่นน้ำ = 1 พื้นที่น้ำที่ถูกแทนที่ (m²) มีค่าเท่ากับมวลเรือ (หน่วยเทียบกัน)</li>
+        <li>ถ้าฐานเรือกว้าง W เมตร และจมลึก d เมตร พื้นที่ที่แทนที่น้ำ ≈ W × d</li>
+      </ul>
+      <div class="eq">d = มวลรวม ÷ W
+        <small>ระดับจม (draft) · เรือลอยได้เมื่อ d น้อยกว่าความสูงผนังเรือ H</small></div>
+    </div>
+    <div>
+      <h4>ตัวอย่างคำนวณ — เรือเหล็กรูปตัว U</h4>
+      <p class="muted">ฐานกว้าง W = 10 m · ผนังสูง H = 3 m · เหล็กหนา t = 0.1 m · ความหนาแน่นเหล็ก 7.8 · สินค้าคือทองสี่เหลี่ยมจัตุรัสด้าน 0.5 m (ความหนาแน่น 19.3)</p>
+      <table>
+        <tr><td>พื้นที่เหล็ก</td><td>10×0.1 + 2×(0.1×3) = <b>1.6</b> m²</td></tr>
+        <tr><td>มวลเรือ</td><td>1.6 × 7.8 = <b>12.48</b></td></tr>
+        <tr><td>มวลทอง</td><td>0.25 × 19.3 = <b>4.825</b></td></tr>
+        <tr><td>มวลรวม</td><td><b>17.305</b></td></tr>
+        <tr><td>ระดับจม d</td><td>17.305 ÷ 10 ≈ <b>1.73</b> m</td></tr>
+        <tr><td>เทียบกับ H</td><td>1.73 &lt; 3 → <b>ลอย</b> (ขอบเรือพ้นน้ำ ≈ 1.27 m)</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="callout warn"><b class="t">ข้อสังเกต</b>
+    เหล็กความหนาแน่น 7.8 จมเมื่อเป็นก้อนตัน แต่เมื่อขึ้นรูปเป็นถาดกลวง ความหนาแน่น<b>เฉลี่ย</b>ของทั้งลำ
+    (มวลรวม ÷ พื้นที่ที่ล้อมรอบ) ต่ำกว่า 1 จึงลอยได้ นี่คือสิ่งที่ทำให้เรือขนาดใหญ่ลอยน้ำได้
+  </div>
+
+  <h3>ลองปรับเรือด้วยตัวเอง (คำนวณตามสูตรข้างต้น)</h3>
+  <div class="grid2" style="grid-template-columns: 1fr 1.5fr">
+    <div class="widget">
+      <div class="ctl"><label>ความกว้างฐานเรือ W <span id="bW">10 m</span></label><input type="range" id="sW" min="4" max="14" step="0.5" value="10"></div>
+      <div class="ctl"><label>ความสูงผนังเรือ H <span id="bH">3 m</span></label><input type="range" id="sH" min="1" max="4" step="0.5" value="3"></div>
+      <div class="ctl"><label>ความหนาเหล็ก t <span id="bT">0.10 m</span></label><input type="range" id="sT" min="0.05" max="0.3" step="0.05" value="0.1"></div>
+      <div class="ctl"><label>ด้านของก้อนทอง s <span id="bS">0.50 m</span></label><input type="range" id="sS" min="0" max="1.2" step="0.05" value="0.5"></div>
+      <div class="readout">
+        <div>มวลรวม<b id="rM">–</b></div>
+        <div>ระดับจม d<b id="rD">–</b></div>
+        <div>ความหนาแน่นเฉลี่ยของเรือ<b id="rAvg">–</b></div>
+        <div>ขอบเรือพ้นน้ำ<b id="rF">–</b></div>
+      </div>
+      <div class="verdict" id="boatVerdict">–</div>
+    </div>
+    <svg class="diagram" id="boatSvg" viewBox="0 0 460 260" role="img" aria-label="แผนภาพเรือลอยในน้ำ"></svg>
+  </div>
+  <p class="muted" style="margin-top:6px">โมเดลนี้ง่ายกว่าโปรแกรมจริง (ไม่คิดเสถียรภาพ การเอียง และน้ำที่ไหลเข้าเรือ) จึงใช้เป็น <b>คำทำนาย</b> เพื่อนำไปเทียบกับผลใน Algodoo</p>
+</section>
+
+</div><!-- /learn -->
+
+<!-- ============================================================== งาน 1 -->
+<div id="t1" class="panel">
+
+<section class="card station">
+  <h2>งาน 1 · สร้างถังน้ำ <span class="tag">เตรียมฉาก</span></h2>
+  <ol class="steps">
+    <li>เปิดฉากใหม่ วาดพื้นและผนังซ้าย–ขวาด้วยเครื่องมือกล่อง (ขนาดใดก็ได้ ให้ถังกว้างพอวางวัตถุหลายชิ้น) แล้วล็อกให้อยู่กับที่ (static) เพื่อไม่ให้น้ำดันผนังล้ม</li>
+    <li>วาดสี่เหลี่ยมผืนผ้าให้เต็มพื้นที่ภายในถัง คลิกขวาเลือก Liquify (เปลี่ยนเป็นน้ำ)
+      <br><span class="muted">Liquify หนึ่งครั้งสร้างน้ำได้จำนวนจำกัด ถ้ากล่องใหญ่เกินไปจะได้น้ำตื้นกว่าที่วาด
+      ให้วาดกล่องเล็กหลายกล่องเรียงกันจนเต็มถัง แล้ว Liquify ทีละกล่อง</span></li>
+    <li>เปลี่ยนพื้นหลังเป็นโทนมืดเพื่อให้เห็นวัตถุและผิวน้ำชัดเจน (ตั้งค่าในเมนูฉาก/Scene)</li>
+    <li>เปิดเส้นตาราง (Grid) เพื่อใช้ประมาณระยะในแนวราบและแนวดิ่ง</li>
+  </ol>
+  <div class="grid2 shotpair">
+  <figure class="shot" data-src="images/s1-tank.png">
+    <img src="images/s1-tank.png" alt="ถังน้ำใน Algodoo" onerror="this.parentNode.classList.add('missing')">
+    <div class="ph"><div><b>ภาพที่ 1 · ถังน้ำที่สร้างเสร็จ</b>วางไฟล์ <code>images/s1-tank.png</code></div></div>
+    <figcaption><b>ตัวอย่าง · ภาพที่ 1</b> ถังน้ำพร้อมใช้งาน</figcaption>
+  </figure>
+  <div class="slot no-print" data-slot="t1" data-title="ภาพที่ 1 · ถังน้ำที่สร้างเสร็จ" data-hint="ถังน้ำเต็ม พื้นหลังมืด เปิดตาราง"></div>
+  </div>
+</section>
+
+</div><!-- /t1 -->
+
+<!-- ============================================================== งาน 2 -->
+<div id="t2" class="panel">
+
+<section class="card station">
+  <h2>งาน 2 · ห้องทดลองความหนาแน่น</h2>
+  <ol class="steps">
+    <li>วาดกล่อง 4 ก้อนเหนือถัง ให้มีขนาดใกล้เคียงกัน (ไม่ต้องเท่ากันพอดี)</li>
+    <li>คลิกขวาแต่ละก้อน เลือก Material กำหนดวัสดุเป็นไม้ น้ำแข็ง เหล็ก และทอง ตามลำดับ (หรือป้อนความหนาแน่นด้วยตนเอง) แล้วบันทึกค่าความหนาแน่นที่โปรแกรมแสดง</li>
+    <li><b>ทำนายก่อนกด Play</b> ว่าก้อนใดลอยหรือจม แล้วกด Play เพื่อตรวจผล</li>
+    <li>ลองเปลี่ยนความหนาแน่นของน้ำ (เช่น เพิ่มเป็น 1.5 แล้วเปรียบเทียบกับน้ำปกติ) และบันทึกก้อนที่เปลี่ยนผลการลอย</li>
+  </ol>
+  <div class="grid2 shotpair">
+  <figure class="shot" data-src="images/s3-density.png">
+    <img src="images/s3-density.png" alt="ก้อนวัสดุสี่ชนิดในถังน้ำ" onerror="this.parentNode.classList.add('missing')">
+    <div class="ph"><div><b>ภาพที่ 2 · ก้อนวัสดุ 4 ชนิดหลังกด Play</b>วางไฟล์ <code>images/s3-density.png</code></div></div>
+    <figcaption><b>ตัวอย่าง · ภาพที่ 2</b> ผลการทดลองความหนาแน่น</figcaption>
+  </figure>
+  <div class="slot no-print" data-slot="t2" data-title="ภาพที่ 2 · ก้อนวัสดุ 4 ชนิดหลังกด Play" data-hint="เห็นก้อนที่ลอยและก้อนที่จมชัดเจน"></div>
+  </div>
+  <div class="callout warn"><b class="t">ข้อควรทราบ</b>
+    ในโปรแกรม ความหนาแน่นของน้ำและของวัตถุเป็นค่าที่ตั้งแยกกัน การเปลี่ยนความหนาแน่นของน้ำมีผลต่อการลอย/จม
+  </div>
+</section>
+
+<section class="card ws">
+  <h3>ผลการทดลอง · งาน 2 ความหนาแน่นและการลอย–จม</h3>
+  <table>
+    <thead><tr><th>วัสดุ</th><th class="c">ความหนาแน่นใน Material</th><th class="c">ทำนาย (ลอย/จม)</th><th class="c">ผลจริง (ลอย/จม)</th><th class="c">ตรงกับคำทำนาย</th></tr></thead>
+    <tbody>
+      <tr><td>ไม้</td><td><input></td><td><select><option></option><option>ลอย</option><option>จม</option></select></td><td><select><option></option><option>ลอย</option><option>จม</option></select></td><td class="c"><input type="checkbox"></td></tr>
+      <tr><td>น้ำแข็ง</td><td><input></td><td><select><option></option><option>ลอย</option><option>จม</option></select></td><td><select><option></option><option>ลอย</option><option>จม</option></select></td><td class="c"><input type="checkbox"></td></tr>
+      <tr><td>เหล็ก</td><td><input></td><td><select><option></option><option>ลอย</option><option>จม</option></select></td><td><select><option></option><option>ลอย</option><option>จม</option></select></td><td class="c"><input type="checkbox"></td></tr>
+      <tr><td>ทอง</td><td><input></td><td><select><option></option><option>ลอย</option><option>จม</option></select></td><td><select><option></option><option>ลอย</option><option>จม</option></select></td><td class="c"><input type="checkbox"></td></tr>
+    </tbody>
+  </table>
+  <div class="q">2.1 ก้อนใดลอยโดยมีส่วนที่อยู่ใต้น้ำมาก ก้อนใดมีส่วนใต้น้ำน้อย เกี่ยวข้องกับความหนาแน่นอย่างไร</div>
+  <textarea class="ta" rows="3"></textarea>
+  <div class="q">2.2 เมื่อเพิ่มความหนาแน่นของน้ำ ก้อนใดเปลี่ยนจากจมเป็นลอย (หรือเปลี่ยนระดับจม) ความหนาแน่นของน้ำที่ตั้งคือ <input class="blank"></div>
+  <textarea class="ta" rows="2"></textarea>
+</section>
+
+</div><!-- /t2 -->
+
+<!-- ============================================================== งาน 3 -->
+<div id="t3" class="panel">
+
+<section class="card station">
+  <h2>งาน 3 · วิศวกรเรือ</h2>
+  <p class="muted">ไม่ต้องวาดให้ได้ขนาดตามตัวเลข วาดประมาณด้วยมือได้เลย และวัดระดับจมโดย<b>นับช่องตาราง</b> (Grid)</p>
+  <ol class="steps">
+    <li>วาดกล่องตันหนึ่งก้อน กำหนดวัสดุเป็นเหล็ก วางลงในน้ำแล้วกด Play สังเกตว่าลอยหรือจม แล้วลบก้อนนี้ออก</li>
+    <li>วาดเรือรูปตัว U ด้วยเครื่องมือโพลิกอน (Polygon) ให้ฐานกว้างและผนังบาง กำหนดวัสดุเป็นเหล็ก วางลงในถังแล้วกด Play
+      <br><span class="muted">ถ้าเรือจม ให้วาดใหม่ให้ฐานกว้างขึ้นหรือเหล็กบางลง</span></li>
+    <li>เมื่อเรือลอยนิ่ง นับจำนวนช่องตารางจากผิวน้ำลงไปถึงท้องเรือ (ประมาณครึ่งช่องได้) บันทึกเป็นระดับจมเมื่อยังไม่มีสินค้า</li>
+    <li>วาดก้อนทองเล็ก ๆ หนึ่งก้อน แล้วใช้ <kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>C</kbd> และ <kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>V</kbd> คัดลอก เพื่อให้ทุกก้อนเท่ากัน
+      วางทองลงกลางเรือทีละก้อน นับระดับจมหลังวางแต่ละก้อน จนกว่าเรือจะจม</li>
+    <li><b>ท้าทาย:</b> ออกแบบเรือลำที่ 2 ให้บรรทุกทองได้มากกว่าลำแรก แล้วนับว่าบรรทุกได้กี่ก้อนก่อนจม</li>
+  </ol>
+  <div class="grid2 shotpair">
+  <figure class="shot" data-src="images/s4-boat.png">
+    <img src="images/s4-boat.png" alt="เรือเหล็กบรรทุกทองลอยในน้ำ" onerror="this.parentNode.classList.add('missing')">
+    <div class="ph"><div><b>ภาพที่ 3 · เรือเหล็กบรรทุกทองลอยนิ่ง</b>วางไฟล์ <code>images/s4-boat.png</code></div></div>
+    <figcaption><b>ตัวอย่าง · ภาพที่ 3</b> เรือที่ลอยนิ่งพร้อมสินค้า</figcaption>
+  </figure>
+  <div class="slot no-print" data-slot="t3" data-title="ภาพที่ 3 · เรือเหล็กบรรทุกทองลอยนิ่ง" data-hint="เห็นผิวน้ำ ระดับท้องเรือ และตารางสำหรับวัด"></div>
+  </div>
+  <div class="callout key"><b class="t">เคล็ดลับ</b>
+    วางทองตรงกลางเรือเพื่อไม่ให้เรือเอียง และรอให้เรือหยุดโคลงก่อนนับช่องตาราง
+    ระดับจมใช้หน่วยเป็น “ช่อง” ไม่ต้องแปลงเป็นเมตร
+  </div>
+</section>
+
+<section class="card ws">
+  <h3>ผลการทดลอง · งาน 3 วิศวกรเรือ</h3>
+  <div class="q">3.1 ผลการลอย–จมของเหล็ก</div>
+  <table>
+    <thead><tr><th>วัตถุ</th><th class="c" style="width:24%">ลอย/จม</th></tr></thead>
+    <tbody>
+      <tr><td>ก้อนเหล็กตัน</td><td><select><option></option><option>ลอย</option><option>จม</option></select></td></tr>
+      <tr><td>เรือเหล็กรูปตัว U (ยังไม่มีสินค้า)</td><td><select><option></option><option>ลอย</option><option>จม</option></select></td></tr>
+    </tbody>
+  </table>
+  <p>บันทึกระดับจมของเรือลำที่ 1 เมื่อเพิ่มทองทีละก้อน (เมื่อเรือจมแล้ว แถวที่เหลือเว้นว่างได้)</p>
+  <table>
+    <thead><tr><th class="c" style="width:22%">จำนวนก้อนทอง</th><th class="c">ระดับจม (ช่องตาราง)</th><th class="c" style="width:24%">ลอย/จม</th></tr></thead>
+    <tbody>
+      <tr><td class="c">0</td><td><input></td><td><select><option></option><option>ลอย</option><option>จม</option></select></td></tr>
+      <tr><td class="c">1</td><td><input></td><td><select><option></option><option>ลอย</option><option>จม</option></select></td></tr>
+      <tr><td class="c">2</td><td><input></td><td><select><option></option><option>ลอย</option><option>จม</option></select></td></tr>
+      <tr class="opt"><td class="c">3</td><td><input></td><td><select><option></option><option>ลอย</option><option>จม</option></select></td></tr>
+      <tr class="opt"><td class="c">4</td><td><input></td><td><select><option></option><option>ลอย</option><option>จม</option></select></td></tr>
+      <tr class="opt"><td class="c">5</td><td><input></td><td><select><option></option><option>ลอย</option><option>จม</option></select></td></tr>
+      <tr class="opt"><td class="c">6</td><td><input></td><td><select><option></option><option>ลอย</option><option>จม</option></select></td></tr>
+      <tr class="opt"><td class="c">7</td><td><input></td><td><select><option></option><option>ลอย</option><option>จม</option></select></td></tr>
+    </tbody>
+  </table>
+  <div class="q">3.2 เมื่อเพิ่มทองทีละก้อน ระดับจมเพิ่มขึ้นครั้งละประมาณเท่ากันหรือไม่ เพราะเหตุใด</div>
+  <textarea class="ta" rows="3"></textarea>
+  <div class="q">3.3 เรือลำที่ 1 บรรทุกทองได้ <input class="blank"> ก้อนก่อนจม · เรือลำที่ 2 บรรทุกได้ <input class="blank"> ก้อน</div>
+  <div class="q">3.4 เรือลำที่ 2 ต่างจากลำที่ 1 อย่างไร และทำไมจึงบรรทุกได้มากกว่า (หรือน้อยกว่า)</div>
+  <textarea class="ta" rows="3"></textarea>
+</section>
+
+</div><!-- /t3 -->
+
+<!-- ============================================================== ส่งงาน -->
+<div id="submit" class="panel">
+
+<section class="card">
+  <h2>ข้อมูลผู้ส่งงาน</h2>
+  <div class="subbar" id="studentInfo">
+    <label>ชื่อ–สกุล<input id="stName" autocomplete="off" placeholder="ชื่อ นามสกุล"></label>
+    <label style="flex-basis:120px">ชั้น<input id="stClass" autocomplete="off" placeholder="เช่น ม.4/2"></label>
+    <label style="flex-basis:100px">เลขที่<input id="stNo" autocomplete="off" inputmode="numeric" placeholder="เช่น 12"></label>
+  </div>
+</section>
+
+<section class="card ws">
+  <h3>คำถามสรุปและอภิปราย</h3>
+  <div class="q">1. เรือเหล็กลอยได้ทั้งที่เหล็กมีความหนาแน่นมากกว่าน้ำ อธิบายด้วยคำว่า “ความหนาแน่นเฉลี่ย”</div>
+  <textarea class="ta" rows="3"></textarea>
+  <div class="q">2. ถ้าต้องการให้เรือบรรทุกสินค้าได้มากขึ้น ควรออกแบบเรืออย่างไร ใช้ผลจากงาน 3 ประกอบคำตอบ</div>
+  <textarea class="ta" rows="3"></textarea>
+</section>
+
+<section class="card no-print">
+  <h2>วิธีส่งงาน</h2>
+  <ol class="steps">
+    <li>ทำ <b>งาน 1–3</b> ใน Algodoo แล้วใส่ภาพหน้าจอลงใน <b>ช่อง “ภาพหน้าจอของคุณ”</b> ในแท็บของงานนั้น ทำได้ 3 วิธี
+      <ul>
+        <li><b>จับภาพหน้าจอ</b> — กดปุ่มแล้วเลือกหน้าต่าง Algodoo ในหน้าต่างแชร์หน้าจอ</li>
+        <li><b>วางภาพ</b> — จับภาพด้วย <kbd>Win</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> (Windows) หรือ <kbd>⌘</kbd>+<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>4</kbd> (Mac) แล้วคลิกในช่องภาพและกด <kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>V</kbd></li>
+        <li><b>อัปโหลดไฟล์</b> — เลือกไฟล์ภาพ หรือลากไฟล์มาวางในช่อง</li>
+      </ul></li>
+    <li>กรอกผลการทดลองในแท็บงาน 2 และงาน 3 และตอบคำถามสรุปด้านบน</li>
+    <li>กรอก <b>ชื่อ–สกุล ชั้น และเลขที่</b> ด้านบน แล้วกด <b>สร้าง PDF ส่งงาน</b> ไฟล์ PDF จะถูกดาวน์โหลดลงเครื่อง
+      แล้วนำไฟล์นั้นไปอัปโหลดในระบบส่งงานของรายวิชา</li>
+  </ol>
+  <div class="submit-acts">
+    <div class="status">ภาพหน้าจอ <b id="progShots">0/3</b> · <span id="saveStatus">บันทึกอัตโนมัติในเครื่องนี้</span></div>
+    <button class="btn primary" id="btnPdf" type="button">สร้าง PDF ส่งงาน</button>
+    <button class="btn danger" id="btnClear" type="button" title="ลบข้อมูลทั้งหมดในเครื่องนี้">ล้างข้อมูล</button>
+  </div>
+  <div class="callout warn"><b class="t">ข้อมูลถูกบันทึกในเบราว์เซอร์ของเครื่องนี้เท่านั้น</b>
+    ปิดแล้วเปิดหน้านี้ใหม่บนเครื่องเดิมได้ งานยังอยู่ แต่ถ้าย้ายเครื่องงานจะไม่ตามไป
+    เมื่อส่งงานเสร็จบนเครื่องที่ใช้ร่วมกัน ให้กด <b>ล้างข้อมูล</b>
+  </div>
+</section>
+
+</div><!-- /submit -->
+
+<footer>Fluids &amp; Optics Lab · Dynamic Software</footer>
+
+<dialog id="dlg"><form method="dialog">
+  <h3 style="margin-top:0">งานยังไม่ครบ</h3>
+  <p class="muted">รายการต่อไปนี้ยังว่างอยู่ ถ้าสร้าง PDF ตอนนี้ รายการเหล่านี้จะถูกระบุในไฟล์ว่ายังไม่ครบ</p>
+  <ul id="dlgList"></ul>
+  <div class="dlg-acts"><button class="btn" value="back">กลับไปทำต่อ</button><button class="btn primary" value="go">สร้าง PDF เลย</button></div>
+</form></dialog>
+</div><!-- /wrap -->
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tab').forEach(btn => btn.onclick = () => {
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b === btn));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === btn.dataset.tab));
+  window.scrollTo(0, 0);
+});
+
+/* ---------- boat calculator ---------- */
+const RHO_STEEL = 7.8, RHO_GOLD = 19.3, RHO_WATER = 1.0;
+function drawBoat() {
+  const W = +$('sW').value, H = +$('sH').value, t = +$('sT').value, s = +$('sS').value;
+  $('bW').textContent = W + ' m'; $('bH').textContent = H + ' m';
+  $('bT').textContent = t.toFixed(2) + ' m'; $('bS').textContent = s.toFixed(2) + ' m';
+  const hullArea = W * t + 2 * t * H;
+  const mass = hullArea * RHO_STEEL + s * s * RHO_GOLD;
+  const d = mass / (W * RHO_WATER);
+  const free = H - d;
+  const enclosed = W * H;                       // area enclosed by the hull outline
+  const avg = (hullArea * RHO_STEEL + s * s * RHO_GOLD) / enclosed;
+  const floats = d < H;
+  $('rM').textContent = mass.toFixed(2);
+  $('rD').textContent = d.toFixed(2) + ' m';
+  $('rAvg').textContent = avg.toFixed(2);
+  $('rF').textContent = floats ? free.toFixed(2) + ' m' : '–';
+  const v = $('boatVerdict');
+  v.className = 'verdict ' + (floats ? 'ok' : 'bad');
+  v.textContent = floats ? 'ผลทำนาย: ลอย' : 'ผลทำนาย: จม (d มากกว่าความสูงผนัง H)';
+
+  // drawing — scale 30 px per metre
+  const k = 30, cx = 230, waterY = 90, floorY = 240;
+  const keel = floats ? waterY + d * k : floorY;
+  const left = cx - (W * k) / 2, wpx = W * k, hpx = H * k, tpx = Math.max(2, t * k);
+  const topY = keel - hpx;
+  let g = `<rect x="0" y="0" width="460" height="${waterY}" fill="#f8fafc"/>`;
+  g += `<rect x="0" y="${waterY}" width="460" height="${floorY - waterY}" fill="#bfdbfe"/>`;
+  g += `<rect x="0" y="${floorY}" width="460" height="20" fill="#94a3b8"/>`;
+  // hull (U): bottom + two walls
+  g += `<rect x="${left}" y="${keel - tpx}" width="${wpx}" height="${tpx}" fill="#475569"/>`;
+  g += `<rect x="${left}" y="${topY}" width="${tpx}" height="${hpx}" fill="#475569"/>`;
+  g += `<rect x="${left + wpx - tpx}" y="${topY}" width="${tpx}" height="${hpx}" fill="#475569"/>`;
+  // cargo
+  if (s > 0) g += `<rect x="${cx - (s * k) / 2}" y="${keel - tpx - s * k}" width="${s * k}" height="${s * k}" fill="#f59e0b" stroke="#b45309"/>`;
+  // water re-drawn semi-transparent over the submerged part of the hull
+  g += `<rect x="0" y="${waterY}" width="460" height="${floorY - waterY}" fill="#60a5fa" opacity="0.28"/>`;
+  g += `<line x1="0" y1="${waterY}" x2="460" y2="${waterY}" stroke="#1d4ed8" stroke-width="2" stroke-dasharray="6 4"/>`;
+  g += `<text x="8" y="${waterY - 6}" font-size="12" fill="#1e3a8a" font-weight="700">ผิวน้ำ</text>`;
+  if (floats) {
+    g += `<line x1="${left - 10}" y1="${waterY}" x2="${left - 10}" y2="${keel}" stroke="#dc2626" stroke-width="2"/>`;
+    g += `<text x="${Math.max(4, left - 62)}" y="${(waterY + keel) / 2 + 4}" font-size="12" fill="#b91c1c" font-weight="800">d = ${d.toFixed(2)}</text>`;
+  } else {
+    g += `<text x="${cx}" y="${floorY - hpx - 8}" font-size="14" text-anchor="middle" fill="#b91c1c" font-weight="800">จม</text>`;
+  }
+  $('boatSvg').innerHTML = g;
+}
+['sW', 'sH', 'sT', 'sS'].forEach(id => $(id).oninput = drawBoat);
+drawBoat();
+
+/* ---------- screenshot slots: flag missing images (also for images that load late) ---------- */
+document.querySelectorAll('figure.shot img').forEach(img => {
+  if (img.complete && img.naturalWidth === 0) img.parentNode.classList.add('missing');
+});
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
+  integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+"use strict";
+/* =====================================================================
+   Student submission: screenshot slots, autosave, PDF
+   ===================================================================== */
+const LS_KEY = 'fol-week1-v3';             // v3: task 3 rewritten without fixed sizes (field order changed)
+const MAX_W = 1600;                       // screenshots are shrunk to this width
+const store = {};                          // slot key -> image dataURL (source of truth)
+
+/* ---------- tiny IndexedDB key-value store (images are too big for localStorage) ---------- */
+const idb = (() => {
+  let dbp;
+  const open = () => dbp || (dbp = new Promise((res, rej) => {
+    const r = indexedDB.open('fol-week1-v2', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('kv');
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  }));
+  const run = (mode, fn) => open().then(db => new Promise((res, rej) => {
+    const t = db.transaction('kv', mode), req = fn(t.objectStore('kv'));
+    t.oncomplete = () => res(req.result);
+    t.onerror = () => rej(t.error);
+  }));
+  const safe = p => p.catch(() => undefined);   // storage can be blocked (private window): keep working in memory
+  return {
+    get: k => safe(run('readonly', s => s.get(k))),
+    set: (k, v) => safe(run('readwrite', s => s.put(v, k))),
+    del: k => safe(run('readwrite', s => s.delete(k))),
+    clear: () => safe(run('readwrite', s => s.clear())),
+  };
+})();
+
+/* ---------- image helpers ---------- */
+const loadImg = src => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
+function shrink(source, w, h) {
+  const k = Math.min(1, MAX_W / w), c = document.createElement('canvas');
+  c.width = Math.round(w * k); c.height = Math.round(h * k);
+  c.getContext('2d').drawImage(source, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', 0.88);
+}
+async function blobToShot(blob) {
+  const url = URL.createObjectURL(blob);
+  try { const img = await loadImg(url); return shrink(img, img.naturalWidth, img.naturalHeight); }
+  finally { URL.revokeObjectURL(url); }
+}
+async function captureScreen() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) throw new Error('nocapture');
+  const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+  try {
+    const v = document.createElement('video');
+    v.muted = true; v.srcObject = stream; await v.play();
+    await new Promise(r => setTimeout(r, 450));         // let the first real frame arrive
+    return shrink(v, v.videoWidth, v.videoHeight);
+  } finally { stream.getTracks().forEach(t => t.stop()); }
+}
+async function readClipboardImage() {
+  if (!navigator.clipboard || !navigator.clipboard.read) throw new Error('noclipboard');
+  for (const item of await navigator.clipboard.read()) {
+    const type = item.types.find(t => t.startsWith('image/'));
+    if (type) return blobToShot(await item.getType(type));
+  }
+  throw new Error('noimage');
+}
+const MSG = {
+  nocapture: 'เบราว์เซอร์นี้จับภาพหน้าจอจากหน้าเว็บไม่ได้ ให้ใช้วิธีวางภาพ (Ctrl+V) หรืออัปโหลดไฟล์แทน',
+  noclipboard: 'เบราว์เซอร์ไม่อนุญาตให้อ่านคลิปบอร์ดจากปุ่ม ให้คลิกในช่องภาพแล้วกด Ctrl+V (Mac: ⌘+V) แทน',
+  noimage: 'ไม่พบภาพในคลิปบอร์ด ให้จับภาพหน้าจอก่อน (Win+Shift+S หรือ ⌘+Ctrl+Shift+4) แล้วลองใหม่',
+};
+function report(err) {
+  if (err && (err.name === 'NotAllowedError' || err.name === 'AbortError')) return;  // user cancelled the picker
+  alert(MSG[err && err.message] || 'ใส่ภาพไม่สำเร็จ: ' + (err && err.message || err));
+}
+
+/* ---------- screenshot slots ---------- */
+const SLOTS = [...document.querySelectorAll('.slot')];
+function renderSlot(slot) {
+  const src = store[slot.dataset.slot], view = slot.querySelector('.slot-view');
+  slot.classList.toggle('done', !!src);
+  slot.querySelector('.slot-status').textContent = src ? 'ใส่ภาพแล้ว ✓' : 'ยังไม่มีภาพ';
+  slot.querySelector('[data-act=remove]').hidden = !src;
+  view.innerHTML = src ? `<img src="${src}" alt="ภาพหน้าจอของนักเรียน">`
+    : `<div>คลิกที่นี่แล้วกด <kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>V</kbd> เพื่อวางภาพ<br>หรือลากไฟล์ภาพมาวาง<br><small>ภาพที่ต้องการ: ${slot.dataset.hint}</small></div>`;
+  $('progShots').textContent = SLOTS.filter(s => store[s.dataset.slot]).length + '/' + SLOTS.length;
+}
+async function setShot(slot, promise) {
+  try {
+    const src = await promise;
+    store[slot.dataset.slot] = src;
+    renderSlot(slot);
+    await idb.set(slot.dataset.slot, src);
+    savedNow();
+  } catch (e) { report(e); }
+}
+SLOTS.forEach(slot => {
+  slot.innerHTML = `
+    <div class="slot-head"><b>ภาพหน้าจอของคุณ · ${slot.dataset.title}</b><span class="slot-status"></span></div>
+    <div class="slot-view" tabindex="0" title="คลิกแล้วกด Ctrl+V เพื่อวางภาพ"></div>
+    <div class="slot-actions">
+      <button type="button" class="btn" data-act="capture">จับภาพหน้าจอ</button>
+      <button type="button" class="btn" data-act="paste">วางจากคลิปบอร์ด</button>
+      <label class="btn">อัปโหลดไฟล์<input type="file" accept="image/*" hidden></label>
+      <button type="button" class="btn danger" data-act="remove">ลบภาพ</button>
+    </div>`;
+  slot.querySelector('[data-act=capture]').onclick = () => setShot(slot, captureScreen());
+  slot.querySelector('[data-act=paste]').onclick = () => setShot(slot, readClipboardImage());
+  slot.querySelector('[data-act=remove]').onclick = async () => {
+    if (!confirm('ลบภาพนี้?')) return;
+    delete store[slot.dataset.slot]; renderSlot(slot); await idb.del(slot.dataset.slot); savedNow();
+  };
+  const file = slot.querySelector('input[type=file]');
+  file.onchange = () => { if (file.files[0]) setShot(slot, blobToShot(file.files[0])); file.value = ''; };
+  const view = slot.querySelector('.slot-view');
+  view.addEventListener('paste', e => {
+    const f = [...(e.clipboardData && e.clipboardData.files || [])].find(f => f.type.startsWith('image/'));
+    if (f) { e.preventDefault(); setShot(slot, blobToShot(f)); }
+    else { e.preventDefault(); report(new Error('noimage')); }
+  });
+  slot.addEventListener('dragover', e => { e.preventDefault(); slot.classList.add('drag'); });
+  slot.addEventListener('dragleave', () => slot.classList.remove('drag'));
+  slot.addEventListener('drop', e => {
+    e.preventDefault(); slot.classList.remove('drag');
+    const f = [...e.dataTransfer.files].find(f => f.type.startsWith('image/'));
+    if (f) setShot(slot, blobToShot(f));
+  });
+  renderSlot(slot);
+});
+
+/* ---------- autosave text fields (localStorage) ---------- */
+const FIELDS = [...document.querySelectorAll('#studentInfo input, .ws input:not([type=file]), .ws textarea, .ws select')];
+const fieldKey = (el, i) => el.type === 'radio' ? 'r:' + el.name : (el.id || 'f' + i);
+function savedNow() {
+  $('saveStatus').textContent = 'บันทึกแล้ว ' + new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+}
+function saveFields() {
+  const data = {};
+  FIELDS.forEach((el, i) => {
+    const k = fieldKey(el, i);
+    if (el.type === 'radio') { if (el.checked) data[k] = el.value; }
+    else data[k] = el.type === 'checkbox' ? el.checked : el.value;
+  });
+  try { localStorage.setItem(LS_KEY, JSON.stringify(data)); savedNow(); } catch (e) { /* storage blocked: keep going */ }
+}
+function loadFields() {
+  let data = {};
+  try { data = JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch (e) { /* ignore */ }
+  FIELDS.forEach((el, i) => {
+    const v = data[fieldKey(el, i)];
+    if (v === undefined) return;
+    if (el.type === 'radio') el.checked = el.value === v;
+    else if (el.type === 'checkbox') el.checked = !!v;
+    else el.value = v;
+  });
+}
+let saveTimer;
+FIELDS.forEach(el => el.addEventListener(el.type === 'radio' || el.type === 'checkbox' || el.tagName === 'SELECT' ? 'change' : 'input',
+  () => { clearTimeout(saveTimer); saveTimer = setTimeout(saveFields, 300); }));
+
+(async function restore() {
+  loadFields();
+  for (const slot of SLOTS) { const v = await idb.get(slot.dataset.slot); if (v) { store[slot.dataset.slot] = v; renderSlot(slot); } }
+})();
+
+$('btnClear').onclick = async () => {
+  if (!confirm('ลบชื่อ ภาพหน้าจอ และคำตอบทั้งหมดในเครื่องนี้?\n(ควรสร้าง PDF และส่งงานให้เรียบร้อยก่อน)')) return;
+  try { localStorage.removeItem(LS_KEY); } catch (e) { /* ignore */ }
+  await idb.clear();
+  location.reload();
+};
+
+/* ---------- PDF ---------- */
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function missingItems() {
+  const m = [];
+  if (!$('stName').value.trim()) m.push('ชื่อ–สกุล');
+  if (!$('stClass').value.trim()) m.push('ชั้น');
+  if (!$('stNo').value.trim()) m.push('เลขที่');
+  SLOTS.forEach(s => { if (!store[s.dataset.slot]) m.push('ภาพหน้าจอ: ' + s.dataset.title); });
+  const answerFields = FIELDS.filter(el => el.closest('.ws') && !el.closest('.opt') && el.type !== 'checkbox' && el.type !== 'radio');
+  const blanks = answerFields.filter(el => !el.value.trim()).length;
+  const radios = [...new Set(FIELDS.filter(el => el.type === 'radio').map(el => el.name))]
+    .filter(n => !document.querySelector(`.ws input[name="${n}"]:checked`)).length;
+  if (blanks + radios) m.push(`ช่องคำตอบที่ยังว่าง ${blanks + radios} ช่อง`);
+  return m;
+}
+function askToContinue(items) {
+  const dlg = $('dlg');
+  $('dlgList').innerHTML = items.map(t => `<li>${esc(t)}</li>`).join('');
+  dlg.returnValue = '';
+  dlg.showModal();
+  return new Promise(res => dlg.addEventListener('close', () => res(dlg.returnValue === 'go'), { once: true }));
+}
+/* turn a live form element into static text for the PDF */
+function staticCopy(el) {
+  const span = (cls, text) => { const s = document.createElement('span'); s.className = cls; s.textContent = text; return s; };
+  if (el.type === 'checkbox' || el.type === 'radio') return span('cbx', el.checked ? '✓' : '');
+  if (el.type === 'file') return document.createTextNode('');
+  if (el.tagName === 'TEXTAREA') { const d = document.createElement('div'); d.className = 'va' + (el.value.trim() ? '' : ' empty'); d.textContent = el.value.trim() || '(ไม่ได้ตอบ)'; return d; }
+  return el.value.trim() ? span('v', el.value.trim()) : span('v empty', '—');
+}
+function buildPdfDom(missing) {
+  const name = $('stName').value.trim(), cls = $('stClass').value.trim(), no = $('stNo').value.trim();
+  const root = document.createElement('div');
+  root.className = 'pdf-root';
+  root.innerHTML = `
+    <div class="pdf-head"><h1>ส่งงาน · Fluids &amp; Optics Lab</h1>
+      <p>Dynamic Software · Algodoo · แรงลอยตัวและความหนาแน่น</p></div>
+    <table class="pdf-info"><tr><th style="width:18%">ชื่อ–สกุล</th><td colspan="3">${esc(name || '—')}</td></tr>
+      <tr><th>ชั้น</th><td>${esc(cls || '—')}</td><th style="width:14%">เลขที่</th><td>${esc(no || '—')}</td></tr>
+      <tr><th>สร้างไฟล์เมื่อ</th><td colspan="3">${esc(new Date().toLocaleString('th-TH'))}</td></tr></table>
+    ${missing.length ? `<div class="pdf-warn"><b>รายการที่ยังไม่ครบ</b><ul>${missing.map(t => `<li>${esc(t)}</li>`).join('')}</ul></div>` : ''}
+    <section class="card"><h2>ภาพหน้าจอจาก Algodoo</h2>
+      ${SLOTS.map(s => `<div class="pdf-shot"><h4>${esc(s.dataset.title)}</h4>${store[s.dataset.slot]
+        ? `<img src="${store[s.dataset.slot]}">` : '<div class="pdf-none">ไม่มีภาพ</div>'}</div>`).join('')}
+    </section>`;
+  // answers: every results/question section (.ws) from the task tabs and the submit tab, in page order
+  const answers = document.createElement('div');
+  answers.className = 'pdf-pb';
+  document.querySelectorAll('.ws').forEach(live => {
+    const copy = live.cloneNode(true);
+    const liveEls = live.querySelectorAll('input, textarea, select');
+    copy.querySelectorAll('input, textarea, select').forEach((el, i) => el.replaceWith(staticCopy(liveEls[i])));
+    copy.querySelectorAll('.no-pdf, .no-print').forEach(el => el.remove());
+    answers.append(copy);
+  });
+  root.append(answers);
+  return root;
+}
+$('btnPdf').onclick = async () => {
+  if (typeof html2pdf === 'undefined') { alert('โหลดตัวสร้าง PDF ไม่สำเร็จ ตรวจการเชื่อมต่ออินเทอร์เน็ตแล้วรีเฟรชหน้า'); return; }
+  const missing = missingItems();
+  if (missing.length && !(await askToContinue(missing))) return;
+  const btn = $('btnPdf'), label = btn.textContent;
+  btn.disabled = true; btn.textContent = 'กำลังสร้าง PDF…';
+  try {
+    await document.fonts.ready;
+    const name = $('stName').value.trim(), cls = $('stClass').value.trim(), no = $('stNo').value.trim();
+    const safe = s => s.replace(/[\\/:*?"<>|\s]+/g, '-');
+    const filename = [safe(cls) || 'noClass', safe(no) || 'noNo', safe(name) || 'noname', 'FluidsOptics_week1'].join('_') + '.pdf';
+    // the PDF's built-in font has no Thai glyphs, so the page footer carries only ASCII (class digits, number)
+    const footer = `${cls} No.${no}`.replace(/[^\x20-\x7E]/g, '').trim();
+    await html2pdf().set({
+      margin: [10, 10, 12, 10],
+      filename,
+      image: { type: 'jpeg', quality: 0.92 },
+      html2canvas: { scale: 2, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0 },  // without scroll 0 the page offset shifts content down
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['css'], before: '.pdf-pb', avoid: ['.pdf-shot', 'tr', '.q', '.ans', '.va', '.pdf-info', '.pdf-warn'] },
+    }).from(buildPdfDom(missing)).toPdf().get('pdf').then(pdf => {
+      const n = pdf.internal.getNumberOfPages();
+      for (let i = 1; i <= n; i++) {
+        pdf.setPage(i); pdf.setFontSize(8); pdf.setTextColor(120);
+        pdf.text(`Fluids & Optics Lab  ${footer}  -  ${i}/${n}`, 200, 291, { align: 'right' });
+      }
+    }).save();
+  } catch (e) {
+    alert('สร้าง PDF ไม่สำเร็จ: ' + (e && e.message || e));
+  } finally {
+    btn.disabled = false; btn.textContent = label;
+  }
+};
+</script>
+</body>
+</html>
