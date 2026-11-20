@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Optics Web Lab — การหักเหของแสง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet" />
+<style>
+@font-face { font-family: 'SarabunLocal'; font-weight: 400; src: local('Sarabun'), url('fonts/Sarabun-Regular.ttf'); }
+@font-face { font-family: 'SarabunLocal'; font-weight: 600 800; src: local('Sarabun Bold'), url('fonts/Sarabun-Bold.ttf'); }
+
+:root {
+  --brand-h: 245;
+  --bg: oklch(0.98 0.01 var(--brand-h));
+  --surface: oklch(1 0 0);
+  --sunken: oklch(0.96 0.02 var(--brand-h));
+  --ink: oklch(0.2 0.05 var(--brand-h));
+  --muted: oklch(0.45 0.05 var(--brand-h));
+  --primary: oklch(0.58 0.18 var(--brand-h));
+  --primary-soft: oklch(0.93 0.04 var(--brand-h));
+  --accent: oklch(0.66 0.17 42);
+  --accent-soft: oklch(0.96 0.04 45);
+  --success: oklch(0.55 0.15 142);
+  --success-soft: oklch(0.95 0.04 142);
+  --danger: oklch(0.55 0.18 28);
+  --border: oklch(0.89 0.02 var(--brand-h));
+  --shadow: 0 6px 20px oklch(0 0 0 / 0.07);
+  --r: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'SarabunLocal', 'Sarabun', 'Noto Sans Thai', system-ui, sans-serif;
+  /* = --bg / --ink in hex: html2canvas (PDF export) reads body styles and cannot parse oklch */
+  background: #f3f9ff; color: #00182b; line-height: 1.6; font-size: 16px;
+}
+header {
+  background: linear-gradient(135deg, var(--primary), oklch(0.5 0.2 290));
+  color: #fff; padding: 18px 28px; box-shadow: var(--shadow);
+}
+header h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.01em; }
+header p { font-size: 14px; opacity: .92; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 18px 24px 48px; }
+@media (max-width: 600px) { .wrap { padding: 14px 16px 40px; } header { padding: 14px 16px; } }
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.tab {
+  font: inherit; font-weight: 700; font-size: 14.5px; padding: 9px 18px; border-radius: 999px;
+  background: var(--surface); border: 1px solid var(--border); color: var(--muted); cursor: pointer;
+}
+.tab:hover { border-color: var(--primary); color: var(--primary); }
+.tab.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.panel { display: none; }
+.panel.active { display: block; }
+
+section.card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+  padding: 20px 24px; margin-bottom: 18px; box-shadow: var(--shadow);
+}
+@media (max-width: 600px) { section.card { padding: 16px; } }
+h2 { font-size: 21px; font-weight: 800; margin-bottom: 10px; color: var(--primary); }
+h3 { font-size: 17px; font-weight: 800; margin: 14px 0 6px; }
+h4 { font-size: 15px; font-weight: 800; margin: 10px 0 4px; }
+p { margin-bottom: 8px; }
+ul, ol { margin: 4px 0 10px 22px; }
+li { margin-bottom: 3px; }
+.muted { color: var(--muted); font-size: 14px; }
+.eq {
+  font-family: 'Cambria Math', 'DejaVu Serif', Georgia, serif; font-size: 19px; font-weight: 600;
+  text-align: center; background: var(--sunken); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 10px 14px; margin: 10px 0;
+}
+.eq small { display: block; font-family: 'SarabunLocal', 'Sarabun', sans-serif; font-size: 13px; color: var(--muted); font-weight: 600; margin-top: 2px; }
+.callout { border-radius: var(--r); padding: 10px 14px; margin: 10px 0; font-size: 15px; border: 1px solid; }
+.callout.key { background: var(--primary-soft); border-color: oklch(0.85 0.07 var(--brand-h)); }
+.callout.warn { background: var(--accent-soft); border-color: oklch(0.85 0.08 45); }
+.callout.ok { background: var(--success-soft); border-color: oklch(0.8 0.1 142); }
+.callout b.t { display: block; margin-bottom: 2px; }
+
+table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; font-size: 15px; }
+th, td { border: 1px solid var(--border); padding: 7px 10px; text-align: left; vertical-align: top; }
+th { background: var(--sunken); font-weight: 800; }
+td.c, th.c { text-align: center; }
+.tscroll { overflow-x: auto; }
+
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+@media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
+
+/* steps */
+ol.steps { list-style: none; margin-left: 0; counter-reset: s; }
+ol.steps > li { counter-increment: s; position: relative; padding: 6px 0 6px 40px; margin-bottom: 4px; }
+ol.steps > li::before {
+  content: counter(s); position: absolute; left: 0; top: 6px; width: 28px; height: 28px; border-radius: 50%;
+  background: var(--primary); color: #fff; font-weight: 800; font-size: 14px; display: grid; place-items: center;
+}
+.station { border-left: 5px solid var(--accent); }
+.tag { display: inline-block; font-size: 12.5px; font-weight: 800; padding: 2px 10px; border-radius: 999px; background: var(--accent-soft); color: oklch(0.45 0.14 42); margin-left: 6px; vertical-align: middle; }
+kbd { font: inherit; font-size: 12px; background: #fff; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; }
+
+/* ---------- simulations ---------- */
+.sim { margin: 12px 0 10px; }
+.sim canvas { width: 100%; height: auto; display: block; border: 1px solid var(--border); border-radius: var(--r); background: #fff; }
+.sim canvas.drag { cursor: grab; touch-action: none; }
+.sim canvas.drag.dragging { cursor: grabbing; }
+/* calculator */
+#calcBtn { position: fixed; right: 16px; bottom: 16px; z-index: 50; box-shadow: var(--shadow); border-radius: 999px; padding: 10px 18px; }
+#calc { position: fixed; right: 16px; bottom: 66px; z-index: 50; width: min(320px, calc(100vw - 32px)); background: var(--surface);
+  border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 12px 32px oklch(0 0 0 / 0.18); padding: 12px; }
+#calc[hidden] { display: none; }
+#calc .top { display: flex; justify-content: space-between; align-items: center; font-weight: 800; color: var(--primary); margin-bottom: 6px; }
+#calc .top small { font-weight: 700; color: var(--muted); font-size: 12px; }
+#calc .top button { border: 0; background: none; font-size: 20px; cursor: pointer; color: var(--muted); line-height: 1; }
+#calcIn { width: 100%; font: inherit; font-size: 18px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; text-align: right; font-variant-numeric: tabular-nums; }
+#calcOut { text-align: right; font-size: 22px; font-weight: 800; min-height: 1.6em; padding: 2px 4px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+#calcOut.err { font-size: 14px; color: var(--danger); font-weight: 700; }
+#calc .keys { display: grid; grid-template-columns: repeat(5, 1fr); grid-auto-rows: 38px; gap: 6px; }
+#calc .keys button { font: inherit; font-weight: 700; font-size: 15px; height: 100%; line-height: 1; padding: 0; margin: 0; vertical-align: top; border-radius: 8px; border: 1px solid var(--border); background: var(--sunken); color: var(--ink); cursor: pointer; }
+#calc .keys button.fn { font-size: 13.5px; background: var(--primary-soft); }
+#calc .keys button.eq { background: var(--primary); border-color: var(--primary); color: #fff; }
+#calc .keys button:hover { border-color: var(--primary); }
+.simctl {
+  display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: end; margin-top: 10px;
+  background: var(--sunken); border: 1px solid var(--border); border-radius: var(--r); padding: 10px 12px;
+}
+.simctl label { display: flex; flex-direction: column; font-size: 13px; font-weight: 700; color: var(--muted); }
+.simctl select { width: auto; min-width: 150px; }
+.simctl .rng { flex: 1 1 160px; min-width: 150px; }
+.simctl .rng span { color: var(--primary); font-variant-numeric: tabular-nums; }
+.simctl input[type=range] { width: 100%; accent-color: var(--primary); }
+.simmsg { font-size: 13.5px; color: var(--danger); font-weight: 700; min-height: 1.3em; margin-top: 4px; }
+
+/* snapshot of a simulation, kept for the PDF */
+.snap { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; border: 2px dashed oklch(0.72 0.1 var(--brand-h)); border-radius: var(--r); padding: 10px 12px; background: var(--primary-soft); margin: 10px 0 4px; }
+.snap.done { border-style: solid; border-color: var(--success); background: var(--success-soft); }
+.snap-view { width: 220px; min-height: 70px; display: grid; place-items: center; background: #fff; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-size: 13px; text-align: center; padding: 4px; }
+.snap-view img { width: 100%; display: block; border-radius: 4px; }
+.snap-body { flex: 1 1 240px; }
+.snap-body b { display: block; font-size: 14.5px; }
+.snap-body small { display: block; color: var(--muted); font-size: 13px; margin-bottom: 6px; }
+.snap-status { font-weight: 800; color: var(--muted); font-size: 13.5px; }
+.snap.done .snap-status { color: oklch(0.4 0.13 142); }
+
+.hook { font-size: 17px; font-weight: 700; background: var(--accent-soft); border: 1px solid oklch(0.85 0.08 45); border-radius: var(--r); padding: 10px 14px; margin: 4px 0 10px; }
+details.discover { margin: 10px 0 12px; border: 1px solid oklch(0.8 0.1 142); background: var(--success-soft); border-radius: var(--r); padding: 8px 14px; }
+details.discover summary { cursor: pointer; font-weight: 800; color: oklch(0.38 0.13 142); }
+details.discover[open] summary { margin-bottom: 6px; }
+.stepper { display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 6px 8px; }
+.stepper span { font-size: 13.5px; font-weight: 700; margin-right: 4px; min-width: 112px; }
+.stepper small { display: block; font-size: 12px; font-weight: 600; color: var(--muted); }
+.stepper b { min-width: 1.4em; text-align: center; font-variant-numeric: tabular-nums; }
+.stepper .btn { padding: 2px 11px; font-size: 16px; }
+input.wide { font: inherit; width: 100%; max-width: 420px; border: 0; border-bottom: 1.5px solid var(--ink); background: var(--sunken); padding: 0 6px; color: var(--ink); }
+
+/* ---------- submission ---------- */
+.subbar { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: end; }
+.subbar label { display: flex; flex-direction: column; font-size: 12.5px; font-weight: 700; color: var(--muted); flex: 1 1 160px; }
+.subbar input { font: inherit; font-size: 15px; padding: 6px 9px; border: 1px solid var(--border); border-radius: 8px; color: var(--ink); }
+.submit-acts { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 8px 0 12px; }
+.submit-acts .status { font-size: 13px; color: var(--muted); margin-right: auto; }
+.submit-acts .status b { color: var(--ink); }
+.btn {
+  font: inherit; font-weight: 700; font-size: 14px; padding: 8px 14px; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--ink); cursor: pointer; white-space: nowrap;
+}
+.btn:hover { border-color: var(--primary); color: var(--primary); }
+.btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.btn.primary:hover { filter: brightness(1.08); color: #fff; }
+.btn.danger:hover { border-color: var(--danger); color: var(--danger); }
+.btn:disabled { opacity: .6; cursor: wait; }
+.btn.sm { font-size: 13px; padding: 6px 10px; }
+
+select { font: inherit; padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; width: 100%; background: #fff; color: var(--ink); }
+.ws td input, .ws td select {
+  width: 100%; min-width: 4.5em; font: inherit; color: var(--ink); border: 0; border-bottom: 1px dashed var(--border);
+  background: transparent; padding: 3px 2px; border-radius: 0;
+}
+.ws td input:focus, .ws td select:focus, input.blank:focus, textarea.ta:focus { outline: 2px solid oklch(0.8 0.1 var(--brand-h)); outline-offset: 1px; }
+input.blank {
+  font: inherit; width: 6.5em; border: 0; border-bottom: 1.5px solid var(--ink); background: var(--sunken);
+  padding: 0 4px; text-align: center; color: var(--ink);
+}
+textarea.ta {
+  display: block; width: 100%; font: inherit; color: var(--ink); border: 1px solid var(--border); border-radius: 8px;
+  padding: 6px 9px; min-height: 66px; resize: vertical; margin-bottom: 10px; background: #fff;
+}
+.q { margin: 10px 0 4px; font-weight: 700; break-inside: avoid; }
+.ws .info { font-size: 14.5px; }
+
+footer { text-align: center; color: var(--muted); font-size: 13px; padding: 10px; }
+
+dialog#dlg { border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; max-width: 460px; width: calc(100% - 32px); box-shadow: var(--shadow); color: var(--ink); }
+dialog#dlg::backdrop { background: oklch(0.2 0.05 var(--brand-h) / 0.4); }
+dialog#dlg ul { margin: 8px 0 14px 20px; font-size: 14.5px; max-height: 50vh; overflow: auto; }
+dialog#dlg .dlg-acts { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+
+/* ---------- PDF render (built off-screen, rasterised by html2pdf) ---------- */
+/* html2canvas cannot parse oklch(), so everything inside the PDF uses hex equivalents of the palette */
+.pdf-root {
+  --bg: #f3f9ff; --surface: #ffffff; --sunken: #e7f4ff; --ink: #00182b; --muted: #3d586f;
+  --primary: #007fdc; --primary-soft: #d3ebff; --accent: #e56731; --accent-soft: #ffeadc;
+  --success: #33862c; --success-soft: #e0f6dd; --danger: #c5372f; --border: #d0dce7; --answer: #03379a;
+  width: 190mm; font-size: 12.5px; line-height: 1.5; color: var(--ink); background: #fff;
+}
+.pdf-root section.card { box-shadow: none; padding: 8px 12px; margin-bottom: 8px; border-radius: 10px; }
+.pdf-root h2 { font-size: 17px; margin-bottom: 6px; }
+.pdf-root h3 { font-size: 14.5px; margin: 8px 0 4px; }
+.pdf-root table { font-size: 12px; margin: 4px 0 8px; }
+.pdf-root th, .pdf-root td { padding: 3px 6px; }
+.pdf-head { background: linear-gradient(135deg, #007fdc, #6741ca); color: #fff; padding: 12px 16px; border-radius: 10px; margin-bottom: 8px; }
+.pdf-head h1 { font-size: 19px; font-weight: 800; }
+.pdf-head p { font-size: 12.5px; margin: 0; }
+.pdf-warn { border: 1.5px solid var(--danger); background: #ffeeea; color: #861210; border-radius: 8px; padding: 6px 10px; margin-bottom: 8px; }
+.pdf-warn ul { margin: 2px 0 0 18px; }
+.pdf-shot { margin-bottom: 10px; }
+.pdf-shot h4 { margin: 0 0 4px; }
+.pdf-shot img { display: block; width: 100%; height: auto; border: 1px solid var(--border); border-radius: 6px; }
+.pdf-none { border: 2px dashed var(--danger); color: var(--danger); padding: 16px; text-align: center; border-radius: 8px; font-weight: 700; }
+.pdf-root .v { display: inline-block; min-width: 1.5em; color: var(--answer); font-weight: 600; }
+.pdf-root .v.empty, .pdf-root .va.empty { color: var(--danger); font-weight: 400; }
+.pdf-root .va { white-space: pre-wrap; border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; min-height: 2.1em; margin-bottom: 8px; color: var(--answer); font-weight: 600; }
+.pdf-root .tscroll { overflow: visible; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Optics Web Lab</h1>
+  <p>ห้องทดลองเสมือนบนเว็บ · การหักเหของแสง (Refraction) และกฎของสเนลล์</p>
+</header>
+
+<div class="wrap">
+
+<div class="tabs">
+  <button class="tab active" data-tab="a1">กิจกรรม 1 · การหักเหของแสง</button>
+  <button class="tab" data-tab="a2">กิจกรรม 2 · กับดักแสง</button>
+  <button class="tab" data-tab="g1">ชาเลนจ์ 1 · เลเซอร์ใต้น้ำ</button>
+  <button class="tab" data-tab="g2">ชาเลนจ์ 2 · นักล่าปลา</button>
+  <button class="tab" data-tab="submit">ส่งงาน</button>
+</div>
+
+<!-- ================================================================ กิจกรรม 1 -->
+<div id="a1" class="panel active">
+
+<section class="card station">
+  <h2>กิจกรรม 1 · การหักเหของแสง</h2>
+  <div class="hook">ทำไมแสงที่ส่องลงน้ำจึงเปลี่ยนทิศทาง และจะหักเหมากหรือน้อยขึ้นอยู่กับอะไร?</div>
+  <div class="sim">
+    <canvas id="c1" width="960" height="480" aria-label="เลเซอร์ยิงจากอากาศลงสู่ตัวกลาง พร้อมไม้โพรแทรกเตอร์"></canvas>
+    <div class="simctl">
+      <label>ตัวกลางด้านล่าง
+        <select id="s1med">
+          <option value="water">น้ำ (n = 1.33)</option><option value="glass">แก้ว (n = 1.50)</option>
+          <option value="dia">เพชร (n = 2.42)</option><option value="myst">ตัวกลางปริศนา X (n = ?)</option>
+        </select></label>
+      <label class="rng">มุมตกกระทบ θ₁ <span id="s1av"></span><input type="range" id="s1a" min="0" max="85" step="1" value="40"></label>
+    </div>
+  </div>
+  <ol class="steps">
+    <li>เลือกตัวกลางเป็น <b>น้ำ</b> แล้วลากเลเซอร์ในภาพ (หรือใช้แถบเลื่อน) ตั้งมุมตกกระทบ θ₁ เป็น 20°, 40°, 60° และ 80° ตามลำดับ</li>
+    <li>อ่าน <b>มุมหักเห θ₂</b> จากไม้โพรแทรกเตอร์ ตรงจุดที่ลำแสงในตัวกลางตัดขอบวงกลม (มีจุดสีแดงกำกับ) ทุกมุมวัดจาก <b>เส้นแนวฉาก</b> (เส้นประแนวดิ่ง) ไม่ใช่วัดจากรอยต่อระหว่างตัวกลาง</li>
+    <li>ลองเปลี่ยนเป็น <b>ตัวกลางปริศนา X</b> แล้วใช้ผลการวัดหาดรรชนีหักเหของตัวกลางนี้</li>
+  </ol>
+  <div class="snap" data-snap="a1" data-canvas="c1" data-title="ภาพที่ 1 · การหักเหของแสงเมื่อเข้าสู่น้ำที่ θ₁ = 60°" data-hint="ตั้งตัวกลางเป็นน้ำ θ₁ = 60° ให้เห็นจุดสีแดงบนไม้โพรแทรกเตอร์"></div>
+</section>
+
+<section class="card ws">
+  <h3>บันทึกผล · กิจกรรม 1 (อากาศ → น้ำ)</h3>
+  <div class="tscroll"><table>
+    <thead><tr><th class="c">θ₁</th><th class="c">θ₂ ที่วัดได้ (°)</th><th class="c">sin θ₁</th><th class="c">sin θ₂</th><th class="c">sin θ₁ ÷ sin θ₂</th></tr></thead>
+    <tbody>
+      <tr><td class="c">20°</td><td><input inputmode="decimal"></td><td><input inputmode="decimal"></td><td><input inputmode="decimal"></td><td><input inputmode="decimal"></td></tr>
+      <tr><td class="c">40°</td><td><input inputmode="decimal"></td><td><input inputmode="decimal"></td><td><input inputmode="decimal"></td><td><input inputmode="decimal"></td></tr>
+      <tr><td class="c">60°</td><td><input inputmode="decimal"></td><td><input inputmode="decimal"></td><td><input inputmode="decimal"></td><td><input inputmode="decimal"></td></tr>
+      <tr><td class="c">80°</td><td><input inputmode="decimal"></td><td><input inputmode="decimal"></td><td><input inputmode="decimal"></td><td><input inputmode="decimal"></td></tr>
+    </tbody>
+  </table></div>
+  <p class="muted">ใช้ปุ่ม <b>🧮 เครื่องคิดเลข</b> ที่มุมขวาล่าง (หน่วยองศา) หาค่า sin ตอบเป็นทศนิยม 2–3 ตำแหน่ง</p>
+  <div class="q">1.1 ค่าในช่องสุดท้าย (sin θ₁ ÷ sin θ₂) เปลี่ยนไปตามมุมหรือไม่ และตรงกับค่าใดของน้ำ</div>
+  <textarea class="ta" rows="2"></textarea>
+  <details class="discover no-pdf"><summary>สิ่งที่ค้นพบ · เปิดดูหลังตอบข้อ 1.1</summary>
+    <ul>
+      <li>อัตราส่วน sin θ₁ ÷ sin θ₂ <b>มีค่าคงที่</b> ทุกมุม และเท่ากับ <b>ดรรชนีหักเห n</b> ของน้ำ (1.33) นี่คือ <b>กฎของสเนลล์</b></li>
+      <li>แสงเดินทางในน้ำช้ากว่าในอากาศ จึงหักเห <b>เข้าหาเส้นแนวฉาก</b> (θ₂ &lt; θ₁) และยิ่งตัวกลางมี n มาก แสงก็ยิ่งเบนเข้าหาเส้นแนวฉากมากขึ้น</li>
+      <li>เมื่อ θ₁ = 0° แสงจะผ่านตรงลงไปโดยไม่เปลี่ยนทิศทาง</li>
+    </ul>
+    <div class="eq">n₁ · sin θ₁ = n₂ · sin θ₂
+      <small>อากาศ → น้ำ ที่ θ₁ = 40°: sin θ₂ = 1.00 × sin 40° ÷ 1.33 = 0.483 → θ₂ ≈ 28.9°</small></div>
+  </details>
+  <div class="q">1.2 ตัวกลางปริศนา X: ที่ θ₁ = 60° วัด θ₂ ได้ <input class="blank" inputmode="decimal"> ° ดังนั้น n ของ X ≈ <input class="blank" inputmode="decimal"></div>
+  <div class="q">1.3 ถ้ายิงแสงจากอากาศเข้าสู่ <b>แก้ว</b> (n = 1.50) ที่ θ₁ = 45° คำนวณได้ θ₂ = <input class="blank" inputmode="decimal"> ° (ตรวจคำตอบได้จากแบบจำลอง)</div>
+</section>
+
+</div><!-- /a1 -->
+
+<!-- ================================================================ กิจกรรม 2 -->
+<div id="a2" class="panel">
+
+<section class="card station">
+  <h2>กิจกรรม 2 · กับดักแสง</h2>
+  <div class="hook">ใยแก้วนำแสงส่งสัญญาณอินเทอร์เน็ตได้ไกลหลายกิโลเมตร โดยแสงไม่เล็ดลอดออกทางผนังสายได้อย่างไร?</div>
+  <div class="sim">
+    <canvas id="c2" width="960" height="480" aria-label="เลเซอร์ยิงจากในตัวกลางขึ้นสู่อากาศ พร้อมเครื่องวัดแสง"></canvas>
+    <div class="simctl">
+      <label>ตัวกลางที่เลเซอร์อยู่
+        <select id="s2med">
+          <option value="water">น้ำ (n = 1.33)</option><option value="glass">แก้ว (n = 1.50)</option><option value="dia">เพชร (n = 2.42)</option>
+        </select></label>
+      <label class="rng">มุมตกกระทบ θ <span id="s2av"></span><input type="range" id="s2a" min="0" max="80" step="0.5" value="30"></label>
+    </div>
+  </div>
+  <ol class="steps">
+    <li>ตอนนี้เลเซอร์อยู่ <b>ใต้น้ำ</b> และยิงแสงขึ้นสู่อากาศ สังเกตลำแสงที่ออกสู่อากาศ (หักเหออกจากเส้นแนวฉาก) และลำแสงที่สะท้อนกลับ</li>
+    <li>ค่อย ๆ เพิ่มมุม θ ดูตัวเลขบน <b>เครื่องวัดแสง</b> แล้วหา <b>มุมที่เล็กที่สุดที่ทำให้แสงออกสู่อากาศเหลือ 0.0%</b> มุมนี้คือ <b>มุมวิกฤต C</b> (ลากเลเซอร์ในภาพเพื่อปรับคร่าว ๆ แล้วคลิกแถบเลื่อนและกดปุ่มลูกศรบนแป้นพิมพ์ เพื่อปรับทีละ 0.5°)</li>
+    <li>ทำซ้ำกับแก้วและเพชร</li>
+  </ol>
+  <div class="snap" data-snap="a2" data-canvas="c2" data-title="ภาพที่ 2 · การสะท้อนกลับหมดในน้ำ" data-hint="ตัวกลางเป็นน้ำ มุมมากกว่ามุมวิกฤต เครื่องวัดแสงอ่านได้ 0.0%"></div>
+</section>
+
+<section class="card ws">
+  <h3>บันทึกผล · กิจกรรม 2</h3>
+  <table>
+    <thead><tr><th>ตัวกลาง</th><th class="c">n</th><th class="c">มุมวิกฤต C ที่หาได้ (°)</th><th class="c">sin C</th><th class="c">1 ÷ n</th></tr></thead>
+    <tbody>
+      <tr><td>น้ำ</td><td class="c">1.33</td><td><input inputmode="decimal"></td><td><input inputmode="decimal"></td><td><input inputmode="decimal"></td></tr>
+      <tr><td>แก้ว</td><td class="c">1.50</td><td><input inputmode="decimal"></td><td><input inputmode="decimal"></td><td><input inputmode="decimal"></td></tr>
+      <tr><td>เพชร</td><td class="c">2.42</td><td><input inputmode="decimal"></td><td><input inputmode="decimal"></td><td><input inputmode="decimal"></td></tr>
+    </tbody>
+  </table>
+  <div class="q">2.1 เมื่อเทียบค่า sin C กับ 1 ÷ n พบอะไร และตัวกลางที่มี n มากจะมีมุมวิกฤตมากหรือน้อย</div>
+  <textarea class="ta" rows="2"></textarea>
+  <details class="discover no-pdf"><summary>สิ่งที่ค้นพบ · เปิดดูหลังตอบข้อ 2.1</summary>
+    <ul>
+      <li>เมื่อแสงเดินทางจากตัวกลางที่มี n มากไปยังตัวกลางที่มี n น้อย แสงจะหักเหออกจากเส้นแนวฉาก และเมื่อมุมตกกระทบเท่ากับ <b>มุมวิกฤต C</b> แสงจะหักเหเลียดไปตามรอยต่อพอดี (มุมหักเห 90°)</li>
+      <li>ถ้ามุมตกกระทบ <b>มากกว่า</b> มุมวิกฤต แสงจะออกไปไม่ได้เลยและสะท้อนกลับทั้งหมด เรียกว่า <b>การสะท้อนกลับหมด (total internal reflection)</b></li>
+      <li>ใยแก้วนำแสงใช้หลักนี้ แสงตกกระทบผนังด้านในด้วยมุมที่มากกว่ามุมวิกฤต จึงสะท้อนต่อไปตามสายโดยไม่เล็ดลอดออก</li>
+    </ul>
+    <div class="eq">sin C = n₂ ÷ n₁ = 1 ÷ n  (เมื่อออกสู่อากาศ)
+      <small>น้ำ: sin C = 1 ÷ 1.33 = 0.752 → C ≈ 48.8° · ยิ่ง n มาก มุมวิกฤตยิ่งเล็ก</small></div>
+  </details>
+  <div class="q">2.2 เพชรที่เจียระไนแล้วดูแวววาวกว่าแก้วที่เจียระไนเป็นรูปทรงเดียวกัน ใช้ผลจากตารางอธิบายว่าเพราะเหตุใด</div>
+  <textarea class="ta" rows="2"></textarea>
+</section>
+
+</div><!-- /a2 -->
+
+<!-- ================================================================ ชาเลนจ์ 1 -->
+<div id="g1" class="panel">
+
+<section class="card station">
+  <h2>ชาเลนจ์ 1 · เลเซอร์ใต้น้ำ <span class="tag">เกม</span></h2>
+  <div class="hook">ยิงเลเซอร์จากทุ่นที่ผิวน้ำให้โดนเป้าใต้น้ำ ยิ่งยิงน้อยครั้งยิ่งได้ดาวมาก คำนวณก่อนยิง!</div>
+  <div class="callout key"><b class="t">กติกา</b>
+    เลเซอร์ติดอยู่บนทุ่นที่ผิวน้ำ (n ของน้ำ = 1.33) ตั้งมุม θ₁ วัดจากแนวดิ่ง แล้วกด <b>ยิง!</b> · แต่ละด่านบอก <b>มุม θ₂</b> ของเป้า คือมุมระหว่างแนวดิ่งกับแนวจากทุ่นไปยังเป้า<br>
+    ดาวของแต่ละด่าน: ยิงโดนในครั้งแรก ★★★ · ยิง 2–3 ครั้ง ★★ · มากกว่านั้น ★ ·
+    ถ้าคิดว่าเป้า <b>ยิงไม่ถึง</b> ไม่ว่าจะตั้งมุมเท่าใด ให้กดปุ่ม “เป้านี้ยิงไม่ถึง” (นับเป็นการยิง 1 ครั้ง)
+  </div>
+  <div class="sim">
+    <canvas id="c3" width="960" height="480" aria-label="เลเซอร์บนทุ่นยิงลงหาเป้าใต้น้ำ"></canvas>
+    <div class="simctl">
+      <label>ด่าน
+        <select id="s3lv"><option value="0">ด่าน 1</option><option value="1">ด่าน 2</option><option value="2">ด่าน 3</option></select></label>
+      <label class="rng">มุมเลเซอร์ θ₁ <span id="s3av"></span><input type="range" id="s3a" min="0" max="89.5" step="0.5" value="20"></label>
+      <button class="btn primary" id="s3fire" type="button">ยิง!</button>
+      <button class="btn" id="s3none" type="button">เป้านี้ยิงไม่ถึง</button>
+    </div>
+    <div class="simmsg" id="s3msg"></div>
+  </div>
+  <ol class="steps">
+    <li><b>ขั้นที่ 1:</b> อ่านมุม θ₂ ของเป้าในด่านนั้น (มีเส้นประสีเขียวจากทุ่นไปยังเป้ากำกับไว้) ลำแสงในน้ำต้องทำมุมนี้จึงจะโดนเป้า</li>
+    <li><b>ขั้นที่ 2:</b> ใช้กฎของสเนลล์ sin θ₁ = 1.33 × sin θ₂ หาค่า sin θ₁ แล้วกด sin⁻¹ บนเครื่องคิดเลขเพื่อหา θ₁ จากนั้นตั้งมุมและยิง</li>
+    <li>เส้นประสีเทาคือแนวที่แสงจะไปถ้า <b>ไม่เกิดการหักเห</b> ให้เทียบกับลำแสงจริง</li>
+  </ol>
+  <div class="snap" data-snap="g1" data-canvas="c3" data-title="ภาพที่ 3 · เลเซอร์โดนเป้าด่าน 1" data-hint="บันทึกภาพตอนยิงโดนเป้า ให้เห็นมุมที่ตั้งและจำนวนดาว"></div>
+</section>
+
+<section class="card ws">
+  <h3>บันทึกผล · ชาเลนจ์ 1 เลเซอร์ใต้น้ำ</h3>
+  <div class="tscroll"><table>
+    <thead><tr><th>ด่าน</th><th class="c">sin θ₁ = 1.33 × sin θ₂</th><th class="c">θ₁ ที่คำนวณ (°)</th><th class="c">ยิงกี่ครั้ง</th><th class="c" style="width:16%">ดาว</th></tr></thead>
+    <tbody>
+      <tr><td>1 (θ₂ = 30°)</td><td><input inputmode="decimal"></td><td><input inputmode="decimal"></td><td><input inputmode="numeric"></td>
+        <td><select><option></option><option>ไม่ผ่าน</option><option>★</option><option>★★</option><option>★★★</option></select></td></tr>
+      <tr><td>2 (θ₂ = 45°)</td><td><input inputmode="decimal"></td><td><input inputmode="decimal"></td><td><input inputmode="numeric"></td>
+        <td><select><option></option><option>ไม่ผ่าน</option><option>★</option><option>★★</option><option>★★★</option></select></td></tr>
+      <tr><td>3 (θ₂ = 60°)</td><td><input inputmode="decimal"></td><td><input inputmode="decimal"></td><td><input inputmode="numeric"></td>
+        <td><select><option></option><option>ไม่ผ่าน</option><option>★</option><option>★★</option><option>★★★</option></select></td></tr>
+    </tbody>
+  </table></div>
+  <p class="muted">ถ้าหา θ₁ ไม่ได้ ให้เขียนในช่อง θ₁ ว่า “ไม่มี”</p>
+  <div class="q">3.1 ด่าน 3 ยิงโดนได้หรือไม่ อธิบายจากตัวเลขที่คำนวณ</div>
+  <textarea class="ta" rows="2"></textarea>
+  <details class="discover no-pdf"><summary>สิ่งที่ค้นพบ · เปิดดูหลังผ่านทั้ง 3 ด่าน</summary>
+    <ul>
+      <li>ถ้าเล็งตรงไปที่เป้า แสงจะหักเหเข้าหาเส้นแนวฉากเมื่อลงน้ำ จึง <b>ไปไม่ถึง</b> เป้า ต้องตั้งมุมให้ <b>เอียงมากกว่า</b> แนวเล็งตรง</li>
+      <li>แม้ยิงเกือบเลียดผิวน้ำ (θ₁ → 90°) มุมหักเหในน้ำก็มากที่สุดได้เพียงเท่ากับ <b>มุมวิกฤต 48.8°</b> เป้าที่ต้องการ θ₂ มากกว่านี้จึงยิงจากอากาศไม่ถึง</li>
+    </ul>
+    <div class="eq">sin θ₁ = 1.33 × sin θ₂
+      <small>ถ้าได้ sin θ₁ มากกว่า 1 แปลว่าไม่มีมุมใดในอากาศที่ยิงถึงเป้าได้</small></div>
+  </details>
+</section>
+
+</div><!-- /g1 -->
+
+<!-- ================================================================ ชาเลนจ์ 2 -->
+<div id="g2" class="panel">
+
+<section class="card station">
+  <h2>ชาเลนจ์ 2 · นักล่าปลา <span class="tag">เกม</span></h2>
+  <div class="hook">ชาวประมงพื้นบ้านรู้ว่าต้องแทงฉมวก “ลึกกว่าที่ตาเห็น” ปลาอยู่ลึกจริงเท่าไร?</div>
+  <div class="callout key"><b class="t">กติกา</b>
+    ชาวประมงมองลงน้ำ <b>เกือบตั้งฉาก</b> สเกลด้านซ้ายใช้วัดความลึก (m) ·
+    <b>อุ่นเครื่อง:</b> ใส่แว่นเอกซเรย์ เห็นทั้งตำแหน่งจริงของปลาและภาพที่ตาเห็น ·
+    <b>ภารกิจ:</b> เห็นแค่ภาพปลา ตั้งความลึกของฉมวกแล้วแทง จับปลาให้ครบ 3 ตัว ·
+    แทงรวม 3 ครั้ง ★★★ · ไม่เกิน 5 ครั้ง ★★ · มากกว่านั้น ★
+  </div>
+  <div class="sim">
+    <canvas id="c4" width="960" height="480" aria-label="ชาวประมงแทงฉมวกจับปลาในน้ำ"></canvas>
+    <div class="simctl">
+      <label>โหมด
+        <select id="s4mode"><option value="warm">อุ่นเครื่อง (แว่นเอกซเรย์)</option><option value="game">ภารกิจล่าปลา</option></select></label>
+      <label class="rng">ความลึกที่แทงฉมวก <span id="s4dv"></span><input type="range" id="s4d" min="0.2" max="3" step="0.05" value="1"></label>
+      <button class="btn primary" id="s4go" type="button">แทง!</button>
+      <button class="btn" id="s4next" type="button">ปลาตัวถัดไป</button>
+      <button class="btn" id="s4reset" type="button">เริ่มภารกิจใหม่</button>
+    </div>
+    <div class="simmsg" id="s4msg"></div>
+  </div>
+  <ol class="steps">
+    <li><b>อุ่นเครื่อง:</b> อ่านความลึกจริงและความลึกที่ตาเห็นของปลา A, B, C จากสเกล บันทึกลงตาราง แล้วหาความสัมพันธ์</li>
+    <li><b>ภารกิจ:</b> อ่านความลึกที่ตาเห็นของปลาแต่ละตัว คำนวณความลึกจริง ตั้งความลึกของฉมวก แล้วกด <b>แทง!</b></li>
+  </ol>
+  <div class="snap" data-snap="g2" data-canvas="c4" data-title="ภาพที่ 4 · จับปลาได้ครบ 3 ตัว" data-hint="บันทึกภาพหลังจับปลาตัวที่ 3 ได้ ให้เห็นจำนวนครั้งที่แทงและดาว"></div>
+</section>
+
+<section class="card ws">
+  <h3>บันทึกผล · ชาเลนจ์ 2 นักล่าปลา</h3>
+  <h4>อุ่นเครื่อง (แว่นเอกซเรย์)</h4>
+  <table>
+    <thead><tr><th>ปลา</th><th class="c">ความลึกจริง (m)</th><th class="c">ความลึกที่ตาเห็น (m)</th><th class="c">ความลึกจริง ÷ ความลึกที่ตาเห็น</th></tr></thead>
+    <tbody>
+      <tr><td>A</td><td><input inputmode="decimal"></td><td><input inputmode="decimal"></td><td><input inputmode="decimal"></td></tr>
+      <tr><td>B</td><td><input inputmode="decimal"></td><td><input inputmode="decimal"></td><td><input inputmode="decimal"></td></tr>
+      <tr><td>C</td><td><input inputmode="decimal"></td><td><input inputmode="decimal"></td><td><input inputmode="decimal"></td></tr>
+    </tbody>
+  </table>
+  <details class="discover no-pdf"><summary>สิ่งที่ค้นพบ · เปิดดูหลังอุ่นเครื่อง</summary>
+    <ul>
+      <li>แสงจากปลาหักเหออกจากเส้นแนวฉากเมื่อออกจากน้ำ แต่สมองของเราเข้าใจว่าแสงเดินทางเป็นเส้นตรง จึงเห็นปลาอยู่ <b>ตื้นกว่า</b> ตำแหน่งจริง เรียกว่า <b>ความลึกปรากฏ</b></li>
+      <li>เมื่อมองเกือบตั้งฉาก ความลึกจริงเป็น n เท่าของความลึกปรากฏพอดี (n คือดรรชนีหักเหของน้ำ)</li>
+    </ul>
+    <div class="eq">ความลึกจริง = ความลึกที่ตาเห็น × n
+      <small>น้ำ n = 1.33 · ปลาที่เห็นลึก 0.60 m อยู่ลึกจริง 0.60 × 1.33 ≈ 0.80 m</small></div>
+  </details>
+  <h4>ภารกิจล่าปลา</h4>
+  <table>
+    <thead><tr><th>ปลา</th><th class="c">ความลึกที่ตาเห็น (m)</th><th class="c">ความลึกจริงที่คำนวณ (m)</th><th class="c" style="width:20%">จับได้</th></tr></thead>
+    <tbody>
+      <tr><td>ตัวที่ 1</td><td><input inputmode="decimal"></td><td><input inputmode="decimal"></td><td><select><option></option><option>ได้</option><option>ไม่ได้</option></select></td></tr>
+      <tr><td>ตัวที่ 2</td><td><input inputmode="decimal"></td><td><input inputmode="decimal"></td><td><select><option></option><option>ได้</option><option>ไม่ได้</option></select></td></tr>
+      <tr><td>ตัวที่ 3</td><td><input inputmode="decimal"></td><td><input inputmode="decimal"></td><td><select><option></option><option>ได้</option><option>ไม่ได้</option></select></td></tr>
+    </tbody>
+  </table>
+  <div class="q">แทงรวม <input class="blank" inputmode="numeric"> ครั้ง · ได้
+    <select style="width:auto"><option></option><option>★</option><option>★★</option><option>★★★</option></select></div>
+  <div class="q">อธิบายวิธีคิด: ถ้าแทงตรงความลึกที่ตาเห็นจะเกิดอะไรขึ้น และแก้อย่างไร</div>
+  <textarea class="ta" rows="2"></textarea>
+</section>
+
+</div><!-- /g2 -->
+
+<!-- ================================================================ ส่งงาน -->
+<div id="submit" class="panel">
+
+<section class="card">
+  <h2>ข้อมูลผู้ส่งงาน</h2>
+  <div class="subbar" id="studentInfo">
+    <label>ชื่อ–สกุล<input id="stName" autocomplete="off" placeholder="ชื่อ นามสกุล"></label>
+    <label style="flex-basis:120px">ชั้น<input id="stClass" autocomplete="off" placeholder="เช่น ม.4/2"></label>
+    <label style="flex-basis:100px">เลขที่<input id="stNo" autocomplete="off" inputmode="numeric" placeholder="เช่น 12"></label>
+  </div>
+</section>
+
+<section class="card ws">
+  <h3>คำถามสรุป</h3>
+  <div class="q">1. หลอดดูดที่แช่ในแก้วน้ำดูเหมือนหักงอตรงผิวน้ำ อธิบายด้วยการหักเหของแสง</div>
+  <textarea class="ta" rows="3"></textarea>
+  <div class="q">2. สระว่ายน้ำลึกจริง 2.0 m เมื่อมองลงไปเกือบตั้งฉากจะเห็นลึกประมาณกี่เมตร และเหตุใดจึงควรระวังก่อนกระโดดลงสระ</div>
+  <textarea class="ta" rows="2"></textarea>
+</section>
+
+<section class="card">
+  <h2>วิธีส่งงาน</h2>
+  <ol class="steps">
+    <li>ทำ <b>กิจกรรม 1–2 และชาเลนจ์ 1–2</b> กรอกผลในแต่ละแท็บ และกด <b>บันทึกภาพผลการทดลอง</b> ใต้แบบจำลองของทุกแท็บ</li>
+    <li>ตอบคำถามสรุปด้านบน และกรอก <b>ชื่อ–สกุล ชั้น และเลขที่</b></li>
+    <li>กด <b>สร้าง PDF ส่งงาน</b> เครื่องจะดาวน์โหลดไฟล์ PDF ให้ แล้วนำไฟล์นั้นไปอัปโหลดในระบบส่งงานของรายวิชา</li>
+  </ol>
+  <div class="submit-acts">
+    <div class="status">ภาพผลการทดลอง <b id="progShots">0/4</b> · <span id="saveStatus">บันทึกอัตโนมัติในเครื่องนี้</span></div>
+    <button class="btn primary" id="btnPdf" type="button">สร้าง PDF ส่งงาน</button>
+    <button class="btn danger" id="btnClear" type="button" title="ลบข้อมูลทั้งหมดในเครื่องนี้">ล้างข้อมูล</button>
+  </div>
+  <div class="callout warn"><b class="t">ข้อมูลบันทึกไว้ในเบราว์เซอร์ของเครื่องนี้เท่านั้น</b>
+    ปิดแล้วเปิดหน้านี้ใหม่บนเครื่องเดิมได้ งานยังอยู่ แต่ถ้าย้ายเครื่องงานจะไม่ตามไป
+    เมื่อส่งงานเสร็จบนเครื่องที่ใช้ร่วมกัน ให้กด <b>ล้างข้อมูล</b>
+  </div>
+</section>
+
+</div><!-- /submit -->
+
+<footer>Optics Web Lab · Dynamic Software</footer>
+
+<dialog id="dlg"><form method="dialog">
+  <h3 style="margin-top:0">งานยังไม่ครบ</h3>
+  <p class="muted">รายการต่อไปนี้ยังว่างอยู่ ถ้าสร้าง PDF ตอนนี้ รายการเหล่านี้จะถูกระบุในไฟล์ว่ายังไม่ครบ</p>
+  <ul id="dlgList"></ul>
+  <div class="dlg-acts"><button class="btn" value="back">กลับไปทำต่อ</button><button class="btn primary" value="go">สร้าง PDF เลย</button></div>
+</form></dialog>
+</div><!-- /wrap -->
+
+<button class="btn primary" id="calcBtn" type="button">🧮 เครื่องคิดเลข</button>
+<div id="calc" hidden role="dialog" aria-label="เครื่องคิดเลข">
+  <div class="top">เครื่องคิดเลข <small>หน่วยมุม: องศา</small><button id="calcX" type="button" aria-label="ปิด">×</button></div>
+  <input id="calcIn" autocomplete="off" spellcheck="false" placeholder="เช่น sin(40)÷sin(29)">
+  <div id="calcOut"></div>
+  <div class="keys">
+    <button class="fn" data-k="sin(">sin</button><button class="fn" data-k="cos(">cos</button><button class="fn" data-k="tan(">tan</button><button class="fn" data-k="√(">√</button><button class="fn" data-k="^">xʸ</button>
+    <button class="fn" data-k="sin⁻¹(">sin⁻¹</button><button class="fn" data-k="cos⁻¹(">cos⁻¹</button><button class="fn" data-k="tan⁻¹(">tan⁻¹</button><button>(</button><button>)</button>
+    <button>7</button><button>8</button><button>9</button><button>÷</button><button>C</button>
+    <button>4</button><button>5</button><button>6</button><button>×</button><button>⌫</button>
+    <button>1</button><button>2</button><button>3</button><button>−</button><button class="fn" data-k="Ans">Ans</button>
+    <button>0</button><button>.</button><button>π</button><button>+</button><button class="eq">=</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const FONT = "'Sarabun', 'SarabunLocal', 'Noto Sans Thai', sans-serif";
+const D2R = Math.PI / 180;
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tab').forEach(btn => btn.onclick = () => {
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b === btn));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === btn.dataset.tab));
+  window.scrollTo(0, 0);
+});
+
+/* ---------- canvas helpers ---------- */
+function txt(g, s, x, y, o = {}) {
+  g.font = `${o.weight || 700} ${o.size || 14}px ${FONT}`;
+  g.fillStyle = o.color || '#0f172a';
+  g.textAlign = o.align || 'left';
+  g.textBaseline = o.base || 'alphabetic';
+  g.fillText(s, x, y);
+}
+function pill(g, s, x, y, o = {}) {           // left-aligned label on a white rounded background
+  g.font = `${o.weight || 700} ${o.size || 14}px ${FONT}`;
+  const w = g.measureText(s).width, h = (o.size || 14) * 1.5;
+  g.fillStyle = 'rgba(255,255,255,0.88)'; g.beginPath(); g.roundRect(x - 5, y - h / 2, w + 10, h, 6); g.fill();
+  txt(g, s, x, y, o);
+}
+function line(g, x1, y1, x2, y2) { g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); }
+function rrect(g, x, y, w, h, r) { g.beginPath(); g.roundRect(x, y, w, h, r); }
+function lcd(g, x, y, w, h, text) {          // a digital instrument display
+  g.fillStyle = '#0b1220'; rrect(g, x, y, w, h, 5); g.fill();
+  txt(g, text, x + w - 8, y + h / 2 + 1, { size: Math.round(h * 0.62), color: '#4ade80', align: 'right', base: 'middle' });
+}
+function beam(g, x1, y1, x2, y2, a) {        // a laser beam with a soft glow; a = brightness 0..1
+  if (a <= 0.001) return;
+  g.save(); g.lineCap = 'round';
+  g.strokeStyle = `rgba(239,68,68,${0.22 * a})`; g.lineWidth = 11; line(g, x1, y1, x2, y2);
+  g.strokeStyle = `rgba(220,38,38,${a})`; g.lineWidth = 3; line(g, x1, y1, x2, y2);
+  g.restore();
+}
+function laserBody(g, x, y, ang) {           // nozzle at (x, y), pointing along canvas angle ang
+  g.save(); g.translate(x, y); g.rotate(ang);
+  g.fillStyle = '#334155'; rrect(g, -74, -10, 66, 20, 5); g.fill();
+  g.fillStyle = '#94a3b8'; g.fillRect(-9, -6, 9, 12);
+  g.fillStyle = '#ef4444'; g.fillRect(-62, -3, 12, 6);
+  g.restore();
+}
+function dashedLine(g, x1, y1, x2, y2, color, w = 1.5) {
+  g.save(); g.setLineDash([7, 6]); g.strokeStyle = color; g.lineWidth = w; line(g, x1, y1, x2, y2); g.restore();
+}
+/* distance along (dx, dy) from (x, y) until the ray leaves the box [x0, x1] × [y0, y1] */
+function toEdge(x, y, dx, dy, x0, x1, y0, y1) {
+  let t = Infinity;
+  if (dx > 1e-9) t = Math.min(t, (x1 - x) / dx); else if (dx < -1e-9) t = Math.min(t, (x0 - x) / dx);
+  if (dy > 1e-9) t = Math.min(t, (y1 - y) / dy); else if (dy < -1e-9) t = Math.min(t, (y0 - y) / dy);
+  return t;
+}
+/* fraction of light reflected at a boundary (unpolarised Fresnel); 1 beyond the critical angle */
+function fresnel(n1, n2, ti) {
+  const st = n1 / n2 * Math.sin(ti);
+  if (st >= 1) return 1;
+  const ci = Math.cos(ti), ct = Math.sqrt(1 - st * st);
+  const rs = ((n1 * ci - n2 * ct) / (n1 * ci + n2 * ct)) ** 2, rp = ((n1 * ct - n2 * ci) / (n1 * ct + n2 * ci)) ** 2;
+  return (rs + rp) / 2;
+}
+const MEDIA = {
+  water: { n: 'น้ำ', v: 1.33, rgb: '59,130,246' },
+  glass: { n: 'แก้ว', v: 1.50, rgb: '20,184,166' },
+  dia:   { n: 'เพชร', v: 2.42, rgb: '100,116,139' },
+  myst:  { n: 'ตัวกลางปริศนา X', v: 1.60, rgb: '168,85,247', hide: true },
+};
+
+/* ---------- one animation loop; only the visible activity is simulated ---------- */
+const SIMS = [];
+let lastT = performance.now();
+function frame(t) {
+  const dt = Math.min(0.05, (t - lastT) / 1000); lastT = t;
+  for (const s of SIMS) if ($(s.panel).classList.contains('active')) { s.step(dt); s.draw(); }
+  requestAnimationFrame(frame);
+}
+
+/* =====================================================================
+   กิจกรรม 1 · air → medium, read θ₂ off a full-circle protractor
+   ===================================================================== */
+(() => {
+  const cv = $('c1'), g = cv.getContext('2d'), W = cv.width, H = cv.height;
+  const O = { x: 560, y: 250 }, R = 175, LEN = 225;
+  const labels = () => { $('s1av').textContent = $('s1a').value + '°'; };
+  $('s1a').addEventListener('input', labels);
+
+  function protractor() {
+    g.fillStyle = 'rgba(255,255,255,0.5)'; g.beginPath(); g.arc(O.x, O.y, R, 0, 2 * Math.PI); g.fill();
+    g.strokeStyle = '#334155'; g.lineWidth = 1.6; g.beginPath(); g.arc(O.x, O.y, R, 0, 2 * Math.PI); g.stroke();
+    g.lineWidth = 1; g.beginPath();
+    for (let a = 0; a < 360; a++) {                            // a = angle from the downward normal
+      const len = a % 10 === 0 ? 16 : a % 5 === 0 ? 10 : 5, s = Math.sin(a * D2R), c = Math.cos(a * D2R);
+      g.moveTo(O.x + R * s, O.y + R * c); g.lineTo(O.x + (R - len) * s, O.y + (R - len) * c);
+    }
+    g.stroke();
+    for (let a = 0; a < 360; a += 10) {                        // labels: angle from the nearer normal
+      const v = a <= 90 ? a : a >= 270 ? 360 - a : Math.abs(180 - a);
+      txt(g, String(v), O.x + (R - 28) * Math.sin(a * D2R), O.y + (R - 28) * Math.cos(a * D2R), { size: 12, color: '#334155', align: 'center', base: 'middle' });
+    }
+  }
+  function draw() {
+    const M = MEDIA[$('s1med').value], t1 = +$('s1a').value * D2R;
+    const t2 = Math.asin(Math.sin(t1) / M.v), Rf = fresnel(1, M.v, t1);
+    g.fillStyle = '#ffffff'; g.fillRect(0, 0, W, O.y);
+    g.fillStyle = '#ffffff'; g.fillRect(0, O.y, W, H - O.y);
+    g.fillStyle = `rgba(${M.rgb},0.2)`; g.fillRect(0, O.y, W, H - O.y);
+    g.strokeStyle = `rgba(${M.rgb},1)`; g.lineWidth = 2.5; line(g, 0, O.y, W, O.y);
+    txt(g, 'อากาศ (n = 1.00)', 20, O.y - 14, { size: 16, color: '#475569' });
+    txt(g, `${M.n} (n = ${M.hide ? '?' : M.v.toFixed(2)})`, 20, O.y + 30, { size: 16, color: '#1e293b' });
+    protractor();
+    dashedLine(g, O.x, O.y - R - 22, O.x, O.y + R + 22, '#64748b');
+    txt(g, 'เส้นแนวฉาก', O.x + 6, O.y + R + 20, { size: 13, color: '#475569' });
+
+    const P = { x: O.x - LEN * Math.sin(t1), y: O.y - LEN * Math.cos(t1) };
+    beam(g, P.x, P.y, O.x, O.y, 1);
+    const rl = toEdge(O.x, O.y, Math.sin(t1), -Math.cos(t1), 0, W, 0, O.y);
+    beam(g, O.x, O.y, O.x + rl * Math.sin(t1), O.y - rl * Math.cos(t1), clamp(Rf * 1.6, 0.06, 1));
+    const dx = Math.sin(t2), dy = Math.cos(t2), tl = toEdge(O.x, O.y, dx, dy, 0, W, O.y, H);
+    beam(g, O.x, O.y, O.x + tl * dx, O.y + tl * dy, 1 - Rf);
+    g.fillStyle = '#dc2626'; g.strokeStyle = '#fff'; g.lineWidth = 2;
+    g.beginPath(); g.arc(O.x + R * dx, O.y + R * dy, 6, 0, 2 * Math.PI); g.fill(); g.stroke();
+    laserBody(g, P.x, P.y, Math.atan2(Math.cos(t1), Math.sin(t1)));
+
+    txt(g, `มุมตกกระทบ θ₁ = ${$('s1a').value}°`, 20, 34, { size: 19 });
+    txt(g, 'θ₂ = ? อ่านจากไม้โพรแทรกเตอร์ (จุดสีแดง)', 20, 60, { size: 15, weight: 600, color: '#475569' });
+  }
+  labels();
+  SIMS.push({ panel: 'a1', step() {}, draw });
+})();
+
+/* =====================================================================
+   กิจกรรม 2 · medium → air, critical angle and total internal reflection
+   ===================================================================== */
+(() => {
+  const cv = $('c2'), g = cv.getContext('2d'), W = cv.width, H = cv.height;
+  const O = { x: 430, y: 210 }, LEN = 230;
+  const labels = () => { $('s2av').textContent = (+$('s2a').value).toFixed(1) + '°'; };
+  $('s2a').addEventListener('input', labels);
+  function draw() {
+    const M = MEDIA[$('s2med').value], t = +$('s2a').value * D2R;
+    const st = M.v * Math.sin(t), tir = st >= 1, tt = tir ? 0 : Math.asin(st), Rf = fresnel(M.v, 1, t), T = tir ? 0 : 1 - Rf;
+    g.fillStyle = '#ffffff'; g.fillRect(0, 0, W, H);
+    g.fillStyle = `rgba(${M.rgb},0.22)`; g.fillRect(0, O.y, W, H - O.y);
+    g.strokeStyle = `rgba(${M.rgb},1)`; g.lineWidth = 2.5; line(g, 0, O.y, W, O.y);
+    txt(g, 'อากาศ (n = 1.00)', 20, O.y - 14, { size: 16, color: '#475569' });
+    txt(g, `${M.n} (n = ${M.v.toFixed(2)})`, 20, O.y + 30, { size: 16, color: '#1e293b' });
+    dashedLine(g, O.x, 70, O.x, H - 10, '#64748b');
+    txt(g, 'เส้นแนวฉาก', O.x + 6, H - 14, { size: 13, color: '#475569' });
+
+    // angle of incidence, between the downward normal and the incoming beam
+    if (t > 0.01) {
+      g.strokeStyle = '#0f172a'; g.lineWidth = 1.5; g.beginPath(); g.arc(O.x, O.y, 62, Math.PI / 2, Math.PI / 2 + t); g.stroke();
+      const m = Math.PI / 2 + t / 2;
+      txt(g, 'θ', O.x + 80 * Math.cos(m), O.y + 80 * Math.sin(m), { size: 17, align: 'center', base: 'middle' });
+    }
+    const P = { x: O.x - LEN * Math.sin(t), y: O.y + LEN * Math.cos(t) };
+    beam(g, P.x, P.y, O.x, O.y, 1);
+    const rl = toEdge(O.x, O.y, Math.sin(t), Math.cos(t), 0, W, O.y, H);
+    beam(g, O.x, O.y, O.x + rl * Math.sin(t), O.y + rl * Math.cos(t), clamp(Rf, 0.07, 1));
+    if (!tir) {
+      const dx = Math.sin(tt), dy = -Math.cos(tt), tl = toEdge(O.x, O.y, dx, dy, 0, W, 0, O.y);
+      beam(g, O.x, O.y, O.x + tl * dx, O.y + tl * dy, Math.max(T, 0.04));
+    }
+    laserBody(g, P.x, P.y, Math.atan2(-Math.cos(t), Math.sin(t)));
+
+    txt(g, `แสงเดินทางจาก${M.n}ออกสู่อากาศ · θ = ${(t / D2R).toFixed(1)}°`, 20, 34, { size: 19 });
+    if (tir) txt(g, 'สะท้อนกลับหมด!', 20, 64, { size: 22, weight: 800, color: '#b91c1c' });
+
+    // light meter
+    const B = { x: 700, y: 70, w: 236, h: 104 };
+    g.fillStyle = '#f1f5f9'; g.strokeStyle = '#64748b'; g.lineWidth = 2; rrect(g, B.x, B.y, B.w, B.h, 10); g.fill(); g.stroke();
+    txt(g, 'เครื่องวัดแสง', B.x + 14, B.y + 26, { size: 15 });
+    txt(g, 'แสงที่ออกสู่อากาศ', B.x + 14, B.y + 46, { size: 13, weight: 600, color: '#475569' });
+    lcd(g, B.x + 14, B.y + 56, B.w - 28, 36, `${(T * 100).toFixed(1)} %`);
+  }
+  labels();
+  SIMS.push({ panel: 'a2', step() {}, draw });
+})();
+
+/* =====================================================================
+   ชาเลนจ์ 1 · laser on a buoy at the surface; hit targets under water
+   ===================================================================== */
+(() => {
+  const cv = $('c3'), g = cv.getContext('2d'), W = cv.width, H = cv.height;
+  const NW = 1.33, K = 100, SURF = 110, BED = 450, LX = 120, HIT = 0.08;
+  const LV = [{ a: 30, y: 3 }, { a: 45, y: 2 }, { a: 60, y: 1.5 }].map(L => ({ ...L, x: L.y * Math.tan(L.a * D2R) }));   // θ₂ of each target, depth (m)
+  const shots = [0, 0, 0], solved = [false, false, false];
+  let lv = 0, fireT = -1, lastHit = false;
+  const stars = s => s <= 1 ? 3 : s <= 3 ? 2 : 1;
+  const msg = t => { $('s3msg').textContent = t; };
+  const labels = () => { $('s3av').textContent = (+$('s3a').value).toFixed(1) + '°'; };
+  const angles = () => { const t1 = +$('s3a').value * D2R; return { t1, t2: Math.asin(Math.sin(t1) / NW) }; };
+  function hits() {                                         // perpendicular distance from the target to the beam
+    const { t2 } = angles(), T = LV[lv], s = Math.sin(t2), c = Math.cos(t2);
+    return T.x * s + T.y * c > 0 && Math.abs(T.x * c - T.y * s) <= HIT;
+  }
+  $('s3a').addEventListener('input', () => { labels(); fireT = -1; msg(''); });
+  $('s3lv').onchange = () => { lv = +$('s3lv').value; fireT = -1; msg(''); };
+  $('s3fire').onclick = () => { if (fireT >= 0 && fireT < 1) return; fireT = 0; msg(''); };
+  $('s3none').onclick = () => {
+    fireT = -1;
+    if (solved[lv]) { msg('ผ่านด่านนี้แล้ว ลองเล่นด่านอื่น'); return; }
+    shots[lv]++;
+    if (lv === 2) { solved[lv] = true; msg('ถูกต้อง! เป้านี้ยิงจากผิวน้ำไม่ถึงจริง ๆ'); }
+    else msg('ไม่ใช่! เป้านี้ยิงถึงได้ ลองคำนวณใหม่ (นับเป็นการยิง 1 ครั้ง)');
+  };
+  function step(dt) {
+    if (fireT < 0 || fireT >= 1) return;
+    fireT = Math.min(1, fireT + dt / 0.8);
+    if (fireT >= 1) {
+      lastHit = hits();
+      if (!solved[lv]) { shots[lv]++; if (lastHit) solved[lv] = true; }
+      msg(lastHit ? '' : 'พลาดเป้า! ดูว่าแสงไปทางไหน แล้วคำนวณใหม่');
+    }
+  }
+  function draw() {
+    const { t1, t2 } = angles(), T = LV[lv], tx = LX + T.x * K, ty = SURF + T.y * K;
+    const sky = g.createLinearGradient(0, 0, 0, SURF); sky.addColorStop(0, '#e0f2fe'); sky.addColorStop(1, '#f8fafc');
+    g.fillStyle = sky; g.fillRect(0, 0, W, SURF);
+    const sea = g.createLinearGradient(0, SURF, 0, BED); sea.addColorStop(0, '#bfdbfe'); sea.addColorStop(1, '#3b82f6');
+    g.fillStyle = sea; g.fillRect(0, SURF, W, BED - SURF);
+    g.fillStyle = '#e7d3a7'; g.fillRect(0, BED, W, H - BED);
+    // metre grid measured from the buoy
+    g.strokeStyle = 'rgba(255,255,255,0.55)'; g.lineWidth = 1;
+    for (let m = 0.5; m <= 3.4; m += 0.5) line(g, LX, SURF + m * K, 600, SURF + m * K);
+    for (let m = 0.5; m <= 4.8; m += 0.5) line(g, LX + m * K, SURF, LX + m * K, BED);
+    for (let m = 1; m <= 3; m++) txt(g, `${m} m`, LX - 10, SURF + m * K, { size: 13, color: '#0f172a', align: 'right', base: 'middle' });
+    for (let m = 1; m <= 4; m++) txt(g, `${m} m`, LX + m * K, BED + 20, { size: 13, color: '#0f172a', align: 'center' });
+    txt(g, 'ความลึก', LX - 10, SURF + 50, { size: 12, color: '#0f172a', align: 'right' });
+    txt(g, 'ระยะราบจากทุ่น', LX, BED + 20, { size: 12, color: '#0f172a', align: 'right' });
+    g.strokeStyle = '#1d4ed8'; g.lineWidth = 2.5; line(g, 0, SURF, W, SURF);
+
+    // target
+    [[14, '#dc2626'], [9, '#ffffff'], [4, '#dc2626']].forEach(([r, c]) => { g.fillStyle = c; g.beginPath(); g.arc(tx, ty, r, 0, 2 * Math.PI); g.fill(); });
+    // given angle to the target: line from the buoy, measured from the vertical
+    dashedLine(g, LX, SURF, LX, SURF + 1.2 * K, '#0f766e', 1.5);
+    dashedLine(g, LX, SURF, tx, ty, '#0f766e', 2);
+    g.strokeStyle = '#0f766e'; g.lineWidth = 2; g.beginPath(); g.arc(LX, SURF, 70, Math.PI / 2 - T.a * D2R, Math.PI / 2); g.stroke();
+    const am = Math.PI / 2 - T.a * D2R / 2;
+
+    // straight-aim line, then the real beam
+    const ad = toEdge(LX, SURF, Math.sin(t1), Math.cos(t1), 0, W, SURF, BED);
+    dashedLine(g, LX, SURF, LX + ad * Math.sin(t1), SURF + ad * Math.cos(t1), 'rgba(30,41,59,0.6)', 2);
+    if (fireT >= 0) {
+      const dx = Math.sin(t2), dy = Math.cos(t2), L = toEdge(LX, SURF, dx, dy, 0, W, SURF, BED) * fireT;
+      beam(g, LX, SURF, LX + L * dx, SURF + L * dy, 1);
+      if (fireT >= 1 && lastHit) {
+        g.strokeStyle = '#facc15'; g.lineWidth = 3;
+        for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; line(g, tx + 18 * Math.cos(a), ty + 18 * Math.sin(a), tx + 30 * Math.cos(a), ty + 30 * Math.sin(a)); }
+      }
+    }
+    // labels on top of the beam
+    pill(g, `θ₂ = ${T.a}°`, LX + 105 * Math.cos(am), SURF + 105 * Math.sin(am), { size: 15, color: '#0f766e', base: 'middle' });
+    pill(g, `เป้า: θ₂ = ${T.a}°`, tx + 26, ty, { size: 15, color: '#0f172a', base: 'middle' });
+    // buoy + laser
+    g.fillStyle = '#f97316'; g.strokeStyle = '#7c2d12'; g.lineWidth = 2;
+    g.beginPath(); g.ellipse(LX, SURF + 4, 30, 11, 0, 0, 2 * Math.PI); g.fill(); g.stroke();
+    laserBody(g, LX, SURF - 2, Math.atan2(Math.cos(t1), Math.sin(t1)));
+    txt(g, `θ₁ = ${(t1 / D2R).toFixed(1)}°`, LX + 40, SURF - 40, { size: 17 });
+
+    // score card
+    const P = { x: 640, y: 124, w: 296, h: 300 };
+    g.fillStyle = 'rgba(255,255,255,0.94)'; rrect(g, P.x, P.y, P.w, P.h, 14); g.fill();
+    txt(g, `ด่าน ${lv + 1} / 3`, P.x + 18, P.y + 34, { size: 20 });
+    txt(g, `ยิงไป ${shots[lv]} ครั้ง`, P.x + 18, P.y + 64, { size: 16, weight: 600, color: '#334155' });
+    if (solved[lv]) txt(g, lv === 2 ? 'ผ่าน! ตอบถูกว่ายิงไม่ถึง' : 'โดนเป้า! ผ่านด่าน', P.x + 18, P.y + 96, { size: 17, color: '#15803d' });
+    else if (fireT >= 1 && !lastHit) txt(g, 'พลาดเป้า', P.x + 18, P.y + 96, { size: 17, color: '#b91c1c' });
+    else txt(g, 'คำนวณมุมก่อนยิง', P.x + 18, P.y + 96, { size: 17, color: '#475569' });
+    LV.forEach((_, i) => {
+      const y = P.y + 150 + i * 44;
+      txt(g, `ด่าน ${i + 1}`, P.x + 18, y, { size: 16, weight: 600, color: '#334155' });
+      if (solved[i]) { const n = stars(shots[i]); txt(g, '★'.repeat(n) + '☆'.repeat(3 - n), P.x + 92, y + 2, { size: 26, color: '#f59e0b' }); }
+      else txt(g, '—', P.x + 92, y, { size: 16, color: '#94a3b8' });
+      txt(g, `${shots[i]} ครั้ง`, P.x + P.w - 18, y, { size: 14, weight: 600, color: '#64748b', align: 'right' });
+    });
+  }
+  labels();
+  SIMS.push({ panel: 'g1', step, draw });
+})();
+
+/* =====================================================================
+   ชาเลนจ์ 2 · apparent depth: the fish is seen at (real depth ÷ n)
+   ===================================================================== */
+(() => {
+  const cv = $('c4'), g = cv.getContext('2d'), W = cv.width, H = cv.height;
+  const NW = 1.33, K = 100, SURF = 120, BED = 445, RX = 70, FX = 520, TOL = 0.08, TOP = -0.75;
+  const WARM = [{ k: 'A', x: 300, d: 0.8 }, { k: 'B', x: 520, d: 1.6 }, { k: 'C', x: 740, d: 2.4 }];
+  const GAME = [1.2, 2.0, 2.8];
+  let fi = 0, tip = TOP, goal = TOP, thrusts = 0, res = '';
+  const caught = [false, false, false];
+  const mode = () => $('s4mode').value;
+  const msg = t => { $('s4msg').textContent = t; };
+  const labels = () => { $('s4dv').textContent = (+$('s4d').value).toFixed(2) + ' m'; };
+  const done = () => caught.every(Boolean);
+  const stars = () => thrusts <= 3 ? 3 : thrusts <= 5 ? 2 : 1;
+  function ctl() {
+    const game = mode() === 'game';
+    ['s4go', 's4next', 's4reset', 's4d'].forEach(id => { $(id).disabled = !game; });
+  }
+  $('s4d').addEventListener('input', labels);
+  $('s4mode').onchange = () => { goal = TOP; res = ''; msg(''); ctl(); };
+  $('s4go').onclick = () => {
+    if (caught[fi]) { msg('จับตัวนี้ได้แล้ว กด “ปลาตัวถัดไป”'); return; }
+    if (Math.abs(tip - goal) > 0.01 && goal > 0) return;     // spear still moving
+    goal = +$('s4d').value; res = 'moving'; msg('');
+  };
+  $('s4next').onclick = () => {
+    const nxt = [1, 2, 0].map(k => (fi + k) % 3).find(i => !caught[i]);
+    if (nxt === undefined) { msg('จับครบ 3 ตัวแล้ว!'); return; }
+    fi = nxt; goal = TOP; res = ''; msg('');
+  };
+  $('s4reset').onclick = () => { caught.fill(false); thrusts = 0; fi = 0; goal = TOP; res = ''; msg(''); };
+
+  function step(dt) {
+    const sp = 3.2 * dt;
+    tip += clamp(goal - tip, -sp, sp);
+    if (res === 'moving' && Math.abs(tip - goal) < 1e-6) {
+      thrusts++;
+      const err = goal - GAME[fi];
+      if (Math.abs(err) <= TOL) { caught[fi] = true; res = 'hit'; msg(done() ? '' : 'จับได้! กด “ปลาตัวถัดไป”'); }
+      else { res = 'miss'; msg(err < 0 ? 'พลาด! ฉมวกตื้นไป ปลาตกใจว่ายหนี ลองใหม่' : 'พลาด! ฉมวกลึกไป ปลาตกใจว่ายหนี ลองใหม่'); }
+    }
+    if (res === 'miss' && Math.abs(tip - goal) < 1e-6) { /* hold until the next thrust */ }
+  }
+  function fish(x, y, o = {}) {
+    g.save(); g.globalAlpha = o.alpha ?? 1; g.translate(x, y); g.scale(o.s || 1, o.s || 1); x = 0; y = 0;
+    g.fillStyle = o.fill || '#fb923c'; g.strokeStyle = o.ink || '#7c2d12'; g.lineWidth = 2;
+    if (o.dash) g.setLineDash([5, 4]);
+    g.beginPath(); g.moveTo(x + 30, y); g.lineTo(x + 52, y - 15); g.lineTo(x + 52, y + 15); g.closePath(); g.fill(); g.stroke();
+    g.beginPath(); g.ellipse(x, y, 35, 15, 0, 0, 2 * Math.PI); g.fill(); g.stroke();
+    g.setLineDash([]); g.fillStyle = '#0f172a'; g.beginPath(); g.arc(x - 21, y - 3, 3, 0, 2 * Math.PI); g.fill();
+    g.restore();
+  }
+  function guide(x, d, color) {                             // horizontal reading line from a fish to the scale
+    dashedLine(g, RX + 2, SURF + d * K, x - 38, SURF + d * K, color, 1.4);
+  }
+  function draw() {
+    const game = mode() === 'game';
+    const sky = g.createLinearGradient(0, 0, 0, SURF); sky.addColorStop(0, '#e0f2fe'); sky.addColorStop(1, '#f8fafc');
+    g.fillStyle = sky; g.fillRect(0, 0, W, SURF);
+    const sea = g.createLinearGradient(0, SURF, 0, BED); sea.addColorStop(0, '#a5d8f3'); sea.addColorStop(1, '#2563eb');
+    g.fillStyle = sea; g.fillRect(0, SURF, W, BED - SURF);
+    g.fillStyle = '#d6b77a'; g.fillRect(0, BED, W, H - BED);
+    g.strokeStyle = '#1d4ed8'; g.lineWidth = 2.5; line(g, 0, SURF, W, SURF);
+
+    // depth scale
+    g.fillStyle = '#fef9c3'; g.fillRect(RX - 40, SURF, 42, 3.05 * K);
+    g.strokeStyle = '#0f172a'; g.lineWidth = 1.2; g.beginPath();
+    for (let k = 0; k <= 30; k++) { const y = SURF + k * 0.1 * K, len = k % 5 === 0 ? 16 : 8; g.moveTo(RX + 2, y); g.lineTo(RX + 2 - len, y); }
+    g.stroke();
+    for (let k = 0; k <= 30; k += 5) txt(g, (k / 10).toFixed(1), RX - 18, SURF + k * 0.1 * K, { size: 12, color: '#0f172a', align: 'right', base: 'middle' });
+    txt(g, 'ความลึก (m)', RX - 38, SURF - 8, { size: 13, color: '#0f172a' });
+
+    if (!game) {
+      WARM.forEach(f => {
+        const da = f.d / NW;
+        guide(f.x, f.d, '#7c2d12'); guide(f.x, da, '#0f766e');
+        fish(f.x, SURF + f.d * K);
+        fish(f.x, SURF + da * K, { alpha: 0.55, fill: '#99f6e4', ink: '#0f766e', dash: true });
+        txt(g, `ปลา ${f.k} · ตำแหน่งจริง`, f.x - 34, SURF + f.d * K + 32, { size: 13, color: '#431407' });
+        txt(g, 'ภาพที่ตาเห็น', f.x - 34, SURF + da * K - 22, { size: 13, color: '#134e4a' });
+      });
+      txt(g, 'โหมดอุ่นเครื่อง · แว่นเอกซเรย์', W - 20, 34, { size: 18, align: 'right' });
+      txt(g, 'ปลาสีส้ม = ตำแหน่งจริง · ปลาขอบเส้นประ = ภาพที่ตาเห็น', W - 20, 60, { size: 14, weight: 600, color: '#334155', align: 'right' });
+      return;
+    }
+
+    const real = GAME[fi], da = real / NW, got = caught[fi];
+    guide(FX, da, '#0f766e');
+    fish(FX, SURF + (got ? real : da) * K, got ? {} : { fill: '#fdba74' });
+    if (got) {
+      fish(FX, SURF + da * K, { alpha: 0.45, fill: '#99f6e4', ink: '#0f766e', dash: true });
+      txt(g, 'ภาพที่ตาเห็น', FX + 62, SURF + da * K + 5, { size: 13, color: '#134e4a' });
+      txt(g, `ตำแหน่งจริง ${real.toFixed(2)} m`, FX + 62, SURF + real * K + 5, { size: 13, color: '#431407' });
+    }
+    // boat, fisher and spear
+    g.fillStyle = '#92400e'; g.beginPath(); g.moveTo(FX - 110, SURF - 26); g.lineTo(FX + 110, SURF - 26); g.lineTo(FX + 86, SURF + 6); g.lineTo(FX - 86, SURF + 6); g.closePath(); g.fill();
+    g.strokeStyle = '#1e293b'; g.lineWidth = 3; g.fillStyle = '#1e293b';
+    g.beginPath(); g.arc(FX - 40, SURF - 82, 9, 0, 2 * Math.PI); g.fill();
+    line(g, FX - 40, SURF - 72, FX - 40, SURF - 42); line(g, FX - 40, SURF - 42, FX - 50, SURF - 26); line(g, FX - 40, SURF - 42, FX - 30, SURF - 26);
+    const ty = SURF + tip * K;
+    line(g, FX - 40, SURF - 64, FX, SURF - 64);
+    g.strokeStyle = '#64748b'; g.lineWidth = 4; line(g, FX, SURF - 96, FX, ty);
+    g.fillStyle = '#334155'; g.beginPath(); g.moveTo(FX, ty + 14); g.lineTo(FX - 7, ty - 2); g.lineTo(FX + 7, ty - 2); g.closePath(); g.fill();
+
+    // score card
+    const P = { x: 676, y: 140, w: 262, h: 236 };
+    g.fillStyle = 'rgba(255,255,255,0.94)'; rrect(g, P.x, P.y, P.w, P.h, 14); g.fill();
+    txt(g, `ปลาตัวที่ ${fi + 1} / 3`, P.x + 18, P.y + 34, { size: 20 });
+    txt(g, `แทงไปแล้ว ${thrusts} ครั้ง`, P.x + 18, P.y + 64, { size: 16, weight: 600, color: '#334155' });
+    txt(g, `จับได้ ${caught.filter(Boolean).length} / 3 ตัว`, P.x + 18, P.y + 92, { size: 16, weight: 600, color: '#334155' });
+    for (let i = 0; i < 3; i++) fish(P.x + 46 + i * 76, P.y + 132, caught[i] ? { s: 0.75 } : { s: 0.75, alpha: 0.25, fill: '#cbd5e1', ink: '#94a3b8' });
+    if (done()) {
+      const n = stars();
+      txt(g, 'จับครบแล้ว!', P.x + 18, P.y + 186, { size: 18, color: '#15803d' });
+      txt(g, '★'.repeat(n) + '☆'.repeat(3 - n), P.x + 18, P.y + 222, { size: 32, color: '#f59e0b' });
+    } else if (res === 'hit') txt(g, 'จับได้!', P.x + 18, P.y + 186, { size: 18, color: '#15803d' });
+    else if (res === 'miss') txt(g, 'พลาด!', P.x + 18, P.y + 186, { size: 18, color: '#b91c1c' });
+    txt(g, 'ภารกิจล่าปลา', W - 20, 34, { size: 18, align: 'right' });
+  }
+  labels(); ctl();
+  SIMS.push({ panel: 'g2', step, draw });
+})();
+
+/* ---------- drag on a canvas to set its slider (the slider stays for fine steps with the arrow keys) ---------- */
+function dragToSlider(canvasId, sliderId, valueAt) {
+  const cv = $(canvasId), sl = $(sliderId);
+  cv.classList.add('drag');
+  const set = e => {
+    if (sl.disabled) return;
+    const r = cv.getBoundingClientRect();
+    const v = valueAt((e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height);
+    if (!isFinite(v)) return;
+    const st = +sl.step || 1, q = clamp(Math.round(v / st) * st, +sl.min, +sl.max);
+    if (+sl.value === q) return;
+    sl.value = q; sl.dispatchEvent(new Event('input'));
+  };
+  cv.addEventListener('pointerdown', e => { if (sl.disabled) return; cv.setPointerCapture(e.pointerId); cv.classList.add('dragging'); set(e); });
+  cv.addEventListener('pointermove', e => { if (cv.hasPointerCapture(e.pointerId)) set(e); });
+  const end = () => cv.classList.remove('dragging');
+  cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
+}
+const deg = r => r / D2R;
+dragToSlider('c1', 's1a', (x, y) => deg(Math.atan2(560 - x, 250 - y)));               // laser above-left of the entry point
+dragToSlider('c2', 's2a', (x, y) => deg(Math.atan2(430 - x, y - 210)));               // laser below-left of the entry point
+dragToSlider('c3', 's3a', (x, y) => deg(y > 110 ? Math.atan2(x - 120, y - 110)        // point where to aim under water,
+                                                : Math.atan2(120 - x, 110 - y)));     // or grab the laser body above the buoy
+dragToSlider('c4', 's4d', (x, y) => (y - 120) / 100);                                 // drag the spear tip to a depth
+
+/* ---------- calculator (degrees) ---------- */
+(() => {
+  const inp = $('calcIn'), out = $('calcOut');
+  let ans = 0;
+  $('calcBtn').onclick = () => { $('calc').hidden = !$('calc').hidden; if (!$('calc').hidden) inp.focus(); };
+  $('calcX').onclick = () => { $('calc').hidden = true; };
+  const sin = d => Math.sin(d * D2R), cos = d => Math.cos(d * D2R), tan = d => Math.tan(d * D2R);
+  const asin = x => Math.asin(x) / D2R, acos = x => Math.acos(x) / D2R, atan = x => Math.atan(x) / D2R;
+  function evaluate() {
+    const src = inp.value.trim();
+    if (!src) return;
+    let e = src.toLowerCase().replace(/\s+/g, '')
+      .replace(/sin⁻¹/g, 'asin').replace(/cos⁻¹/g, 'acos').replace(/tan⁻¹/g, 'atan')
+      .replace(/×|x/g, '*').replace(/÷/g, '/').replace(/−/g, '-').replace(/√/g, 'sqrt').replace(/,/g, '.')
+      .replace(/π|pi/g, `(${Math.PI})`).replace(/ans/g, `(${ans})`).replace(/\^/g, '**')
+      .replace(/(\d|\))(?=[a-df-z(])/g, '$1*');                                           // 2sin(30) → 2*sin(30)
+    e += ')'.repeat(Math.max(0, (e.match(/\(/g) || []).length - (e.match(/\)/g) || []).length));   // close open brackets, like a real calculator
+    if (e.replace(/asin|acos|atan|sin|cos|tan|sqrt/g, '').match(/[^0-9+\-*/().e]/)) { show('มีตัวอักษรที่เครื่องคิดเลขไม่รู้จัก', true); return; }
+    let v;
+    try { v = Function('sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'sqrt', `"use strict";return (${e});`)(sin, cos, tan, asin, acos, atan, Math.sqrt); }
+    catch { show('รูปแบบไม่ถูกต้อง ตรวจวงเล็บและเครื่องหมาย', true); return; }
+    if (typeof v !== 'number' || Number.isNaN(v)) { show('ไม่มีค่า (sin⁻¹ และ cos⁻¹ รับได้เฉพาะ −1 ถึง 1)', true); return; }
+    if (!isFinite(v)) { show('หารด้วยศูนย์ หรือค่าใหญ่เกินไป', true); return; }
+    ans = +v.toPrecision(10);
+    show('= ' + String(Math.abs(ans) < 1e-10 ? 0 : ans), false);
+  }
+  function show(t, err) { out.textContent = t; out.classList.toggle('err', err); }
+  function put(s) {
+    const a = inp.selectionStart ?? inp.value.length, b = inp.selectionEnd ?? a;
+    inp.value = inp.value.slice(0, a) + s + inp.value.slice(b);
+    inp.focus(); inp.setSelectionRange(a + s.length, a + s.length);
+  }
+  document.querySelectorAll('#calc .keys button').forEach(k => k.onclick = () => {
+    const v = k.dataset.k ?? k.textContent;
+    if (v === '=') evaluate();
+    else if (v === 'C') { inp.value = ''; show('', false); inp.focus(); }
+    else if (v === '⌫') { const a = inp.selectionStart, b = inp.selectionEnd;
+      if (a !== b) put(''); else if (a > 0) { inp.value = inp.value.slice(0, a - 1) + inp.value.slice(a); inp.focus(); inp.setSelectionRange(a - 1, a - 1); } }
+    else put(v);
+  });
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); evaluate(); } });
+})();
+
+requestAnimationFrame(frame);
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
+  integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+"use strict";
+/* =====================================================================
+   Student submission: simulation snapshots, autosave, PDF
+   ===================================================================== */
+const LS_KEY = 'owl-week2-v1';
+const store = {};                          // snapshot key -> image dataURL (source of truth)
+
+/* ---------- tiny IndexedDB key-value store (images are too big for localStorage) ---------- */
+const idb = (() => {
+  let dbp;
+  const open = () => dbp || (dbp = new Promise((res, rej) => {
+    const r = indexedDB.open('owl-week2-v1', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('kv');
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  }));
+  const run = (mode, fn) => open().then(db => new Promise((res, rej) => {
+    const t = db.transaction('kv', mode), req = fn(t.objectStore('kv'));
+    t.oncomplete = () => res(req.result);
+    t.onerror = () => rej(t.error);
+  }));
+  const safe = p => p.catch(() => undefined);   // storage can be blocked (private window): keep working in memory
+  return {
+    get: k => safe(run('readonly', s => s.get(k))),
+    set: (k, v) => safe(run('readwrite', s => s.put(v, k))),
+    del: k => safe(run('readwrite', s => s.delete(k))),
+    clear: () => safe(run('readwrite', s => s.clear())),
+  };
+})();
+
+/* ---------- snapshots of the simulations ---------- */
+const SNAPS = [...document.querySelectorAll('.snap')];
+function renderSnap(s) {
+  const src = store[s.dataset.snap];
+  s.classList.toggle('done', !!src);
+  s.querySelector('.snap-status').textContent = src ? 'บันทึกภาพแล้ว ✓' : 'ยังไม่ได้บันทึกภาพ';
+  s.querySelector('[data-act=remove]').hidden = !src;
+  s.querySelector('[data-act=take]').textContent = src ? 'บันทึกภาพใหม่' : 'บันทึกภาพผลการทดลอง';
+  s.querySelector('.snap-view').innerHTML = src ? `<img src="${src}" alt="ภาพผลการทดลอง">` : 'ยังไม่มีภาพ';
+  $('progShots').textContent = SNAPS.filter(x => store[x.dataset.snap]).length + '/' + SNAPS.length;
+}
+SNAPS.forEach(s => {
+  s.innerHTML = `
+    <div class="snap-view"></div>
+    <div class="snap-body">
+      <b>${s.dataset.title}</b><small>${s.dataset.hint}</small>
+      <span class="snap-status"></span><br>
+      <button type="button" class="btn primary sm" data-act="take"></button>
+      <button type="button" class="btn danger sm" data-act="remove">ลบภาพ</button>
+    </div>`;
+  s.querySelector('[data-act=take]').onclick = async () => {
+    const src = $(s.dataset.canvas).toDataURL('image/jpeg', 0.9);
+    store[s.dataset.snap] = src; renderSnap(s);
+    await idb.set(s.dataset.snap, src); savedNow();
+  };
+  s.querySelector('[data-act=remove]').onclick = async () => {
+    if (!confirm('ลบภาพนี้?')) return;
+    delete store[s.dataset.snap]; renderSnap(s); await idb.del(s.dataset.snap); savedNow();
+  };
+  renderSnap(s);
+});
+
+/* ---------- autosave text fields (localStorage) ---------- */
+const FIELDS = [...document.querySelectorAll('#studentInfo input, .ws input, .ws textarea, .ws select')];
+const fieldKey = (el, i) => el.id || 'f' + i;
+function savedNow() {
+  $('saveStatus').textContent = 'บันทึกแล้ว ' + new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+}
+function saveFields() {
+  const data = {};
+  FIELDS.forEach((el, i) => { data[fieldKey(el, i)] = el.value; });
+  try { localStorage.setItem(LS_KEY, JSON.stringify(data)); savedNow(); } catch (e) { /* storage blocked: keep going */ }
+}
+function loadFields() {
+  let data = {};
+  try { data = JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch (e) { /* ignore */ }
+  FIELDS.forEach((el, i) => { const v = data[fieldKey(el, i)]; if (v !== undefined) el.value = v; });
+}
+let saveTimer;
+FIELDS.forEach(el => el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input',
+  () => { clearTimeout(saveTimer); saveTimer = setTimeout(saveFields, 300); }));
+
+(async function restore() {
+  loadFields();
+  for (const s of SNAPS) { const v = await idb.get(s.dataset.snap); if (v) { store[s.dataset.snap] = v; renderSnap(s); } }
+})();
+
+$('btnClear').onclick = async () => {
+  if (!confirm('ลบชื่อ ภาพผลการทดลอง และคำตอบทั้งหมดในเครื่องนี้?\n(ควรสร้าง PDF และส่งงานให้เรียบร้อยก่อน)')) return;
+  try { localStorage.removeItem(LS_KEY); } catch (e) { /* ignore */ }
+  await idb.clear();
+  location.reload();
+};
+
+/* ---------- PDF ---------- */
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function missingItems() {
+  const m = [];
+  if (!$('stName').value.trim()) m.push('ชื่อ–สกุล');
+  if (!$('stClass').value.trim()) m.push('ชั้น');
+  if (!$('stNo').value.trim()) m.push('เลขที่');
+  SNAPS.forEach(s => { if (!store[s.dataset.snap]) m.push('ภาพผลการทดลอง: ' + s.dataset.title); });
+  const blanks = FIELDS.filter(el => el.closest('.ws') && !el.value.trim()).length;
+  if (blanks) m.push(`ช่องคำตอบที่ยังว่าง ${blanks} ช่อง`);
+  return m;
+}
+function askToContinue(items) {
+  const dlg = $('dlg');
+  $('dlgList').innerHTML = items.map(t => `<li>${esc(t)}</li>`).join('');
+  dlg.returnValue = '';
+  dlg.showModal();
+  return new Promise(res => dlg.addEventListener('close', () => res(dlg.returnValue === 'go'), { once: true }));
+}
+/* turn a live form element into static content for the PDF */
+function staticCopy(el) {
+  const span = (cls, text) => { const s = document.createElement('span'); s.className = cls; s.textContent = text; return s; };
+  if (el.tagName === 'TEXTAREA') { const d = document.createElement('div'); d.className = 'va' + (el.value.trim() ? '' : ' empty'); d.textContent = el.value.trim() || '(ไม่ได้ตอบ)'; return d; }
+  return el.value.trim() ? span('v', el.value.trim()) : span('v empty', '—');
+}
+function buildPdfDom(missing) {
+  const name = $('stName').value.trim(), cls = $('stClass').value.trim(), no = $('stNo').value.trim();
+  const root = document.createElement('div');
+  root.className = 'pdf-root';
+  root.innerHTML = `
+    <div class="pdf-head"><h1>ส่งงาน · Optics Web Lab</h1>
+      <p>ห้องทดลองเสมือนบนเว็บ · การหักเหของแสงและกฎของสเนลล์</p></div>
+    <table class="pdf-info"><tr><th style="width:18%">ชื่อ–สกุล</th><td colspan="3">${esc(name || '—')}</td></tr>
+      <tr><th>ชั้น</th><td>${esc(cls || '—')}</td><th style="width:14%">เลขที่</th><td>${esc(no || '—')}</td></tr>
+      <tr><th>สร้างไฟล์เมื่อ</th><td colspan="3">${esc(new Date().toLocaleString('th-TH'))}</td></tr></table>
+    ${missing.length ? `<div class="pdf-warn"><b>รายการที่ยังไม่ครบ</b><ul>${missing.map(t => `<li>${esc(t)}</li>`).join('')}</ul></div>` : ''}
+    <section class="card"><h2>ภาพผลการทดลอง</h2>
+      ${SNAPS.map(s => `<div class="pdf-shot"><h4>${esc(s.dataset.title)}</h4>${store[s.dataset.snap]
+        ? `<img src="${store[s.dataset.snap]}" width="${$(s.dataset.canvas).width}" height="${$(s.dataset.canvas).height}">` : '<div class="pdf-none">ไม่มีภาพ</div>'}</div>`).join('')}
+    </section>`;
+  // answers: every worksheet section (.ws) in page order, each starting on a new page
+  document.querySelectorAll('.ws').forEach(live => {
+    const copy = live.cloneNode(true);
+    const liveEls = live.querySelectorAll('input, textarea, select');
+    copy.querySelectorAll('input, textarea, select').forEach((el, i) => el.replaceWith(staticCopy(liveEls[i])));
+    copy.querySelectorAll('.no-pdf').forEach(el => el.remove());
+    const wrap = document.createElement('div'); wrap.className = 'pdf-pb'; wrap.append(copy);
+    root.append(wrap);
+  });
+  return root;
+}
+$('btnPdf').onclick = async () => {
+  if (typeof html2pdf === 'undefined') { alert('โหลดตัวสร้าง PDF ไม่สำเร็จ ตรวจการเชื่อมต่ออินเทอร์เน็ตแล้วรีเฟรชหน้า'); return; }
+  const missing = missingItems();
+  if (missing.length && !(await askToContinue(missing))) return;
+  const btn = $('btnPdf'), label = btn.textContent;
+  btn.disabled = true; btn.textContent = 'กำลังสร้าง PDF…';
+  try {
+    await document.fonts.ready;
+    const name = $('stName').value.trim(), cls = $('stClass').value.trim(), no = $('stNo').value.trim();
+    const safe = s => s.replace(/[\\/:*?"<>|\s]+/g, '-');
+    const filename = [safe(cls) || 'noClass', safe(no) || 'noNo', safe(name) || 'noname', 'OpticsWebLab_week2'].join('_') + '.pdf';
+    // the PDF's built-in font has no Thai glyphs, so the page footer carries only ASCII (class digits, number)
+    const footer = `${cls} No.${no}`.replace(/[^\x20-\x7E]/g, '').trim();
+    await html2pdf().set({
+      margin: [10, 10, 12, 10],
+      filename,
+      image: { type: 'jpeg', quality: 0.92 },
+      html2canvas: { scale: 2, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0 },  // without scroll 0 the page offset shifts content down
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['css'], before: '.pdf-pb', avoid: ['.pdf-shot', 'tr', '.q', '.va', '.pdf-info', '.pdf-warn'] },
+    }).from(buildPdfDom(missing)).toPdf().get('pdf').then(pdf => {
+      const n = pdf.internal.getNumberOfPages();
+      for (let i = 1; i <= n; i++) {
+        pdf.setPage(i); pdf.setFontSize(8); pdf.setTextColor(120);
+        pdf.text(`Optics Web Lab  ${footer}  -  ${i}/${n}`, 200, 291, { align: 'right' });
+      }
+    }).save();
+  } catch (e) {
+    alert('สร้าง PDF ไม่สำเร็จ: ' + (e && e.message || e));
+  } finally {
+    btn.disabled = false; btn.textContent = label;
+  }
+};
+</script>
+</body>
+</html>
